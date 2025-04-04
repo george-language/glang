@@ -1,15 +1,15 @@
 import sys
+import os.path
 from src.language import run
-from src.errors import WrongFileTypeError
 
 
 file_path = sys.argv[1]
 
-if file_path.endswith('.glang'):
+if file_path.endswith('.glang') and os.path.exists(file_path):
     with open(file_path, 'r') as f:
         text = f.read()
 
-        result, error = run(text)
+        result, error = run(file_path, text)
 
         if error:
             print(error.asString())
@@ -18,4 +18,4 @@ if file_path.endswith('.glang'):
             print(result)
 
 else:
-    print(WrongFileTypeError(f'"{file_path}" is not a ".glang" file.').asString())
+    print(f'Wrong File Type: "{file_path}" is not a ".glang" file.')
