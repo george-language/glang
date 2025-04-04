@@ -1,2 +1,2 @@
 # GeorgeLanguage
-GeorgeLanguage - The programming language for everyone!
+The simple programming language for everyone!
