@@ -1,4 +1,5 @@
 from src.nodes import NumberNode, BinaryOperatorNode, UnaryOperatorNode
+from src.values import Number
 from src.errors import IllegalCharError, InvalidSyntaxError
 
 DIGITS = '0123456789'
@@ -249,6 +250,92 @@ class Parser:
         return result.success(left)
 
 
+class Interpreter:
+    def visit(self, node, context):
+        method_name = f'visit_{type(node).__name__}'
+        method = getattr(self, method_name, self.noVisitMethod)
+
+        return method(node, context)
+
+    def noVisitMethod(self, node, context):
+        raise Exception(f'No visit_{type(node).__name__} method defined')
+
+    def visit_NumberNode(self, node: NumberNode, context):
+        return RuntimeResult().success(Number(node.token.value).setContext(context).setPos(node.pos_start, node.pos_end))
+
+    def visit_BinaryOperatorNode(self, node: BinaryOperatorNode, context):
+        result = RuntimeResult()
+        left = result.register(self.visit(node.left_node, context))
+
+        if result.error:
+            return result
+
+        right = result.register(self.visit(node.right_node, context))
+
+        if result.error:
+            return result
+
+        if node.op_token.type == TT_PLUS:
+            number, error = left.addedTo(right)
+        elif node.op_token.type == TT_MINUS:
+            number, error = left.subtractedBy(right)
+        elif node.op_token.type == TT_MUL:
+            number, error = left.multipliedBy(right)
+        elif node.op_token.type == TT_DIV:
+            number, error = left.dividedBy(right)
+
+        if error:
+            return result.failure(error)
+
+        else:
+            return result.success(number.setPos(node.pos_start, node.pos_end))
+
+    def visit_UnaryOperatorNode(self, node: UnaryOperatorNode, context):
+        result = RuntimeResult()
+        number = result.register(self.visit(node.node, context))
+
+        if result.error:
+            return result
+
+        error = None
+
+        if node.op_token.type == TT_MINUS:
+            number, error = number.multipliedBy(Number(-1))
+
+        if error:
+            return result.failure(error)
+
+        else:
+            return result.success(number.setPos(node.pos_start, node.pos_end))
+
+
+class RuntimeResult:
+    def __init__(self):
+        self.value = None
+        self.error = None
+
+    def register(self, result):
+        if result.error:
+            self.error = result.error
+
+        return result.value
+
+    def success(self, value):
+        self.value = value
+        return self
+
+    def failure(self, error):
+        self.error = error
+        return self
+
+
+class Context:
+    def __init__(self, display_name, parent=None, parent_entry_pos=None):
+        self.display_name = display_name
+        self.parent = parent
+        self.parent_entry_pos = parent_entry_pos
+
+
 def run(file_name: str, text: str):
     lexer = Lexer(file_name, text)
     tokens, error = lexer.makeTokens()
@@ -259,4 +346,11 @@ def run(file_name: str, text: str):
     parser = Parser(tokens)
     ast = parser.parse()
 
-    return ast.node, ast.error
+    if ast.error:
+        return None, ast.error
+
+    interpreter = Interpreter()
+    context = Context('<program>')
+    result = interpreter.visit(ast.node, context)
+
+    return result.value, result.error
