@@ -40,5 +40,9 @@ class Number:
 
             return Number(self.value / other.value).setContext(self.context), None
 
+    def poweredBy(self, other):
+        if isinstance(other, Number):
+            return Number(self.value ** other.value).setContext(self.context), None
+
     def __repr__(self):
         return f'{self.value}'

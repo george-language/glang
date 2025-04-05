@@ -9,6 +9,7 @@ TT_PLUS = 'PLUS'
 TT_MINUS = 'MINUS'
 TT_MUL = 'MUL'
 TT_DIV = 'DIV'
+TT_POW = 'POW'
 TT_LPAREN = 'LPAREN'
 TT_RPAREN = 'RPAREN'
 TT_EOF = 'EOF'
@@ -93,6 +94,10 @@ class Lexer:
 
             elif self.current_char == '/':
                 tokens.append(Token(TT_DIV, pos_start=self.pos))
+                self.advance()
+
+            elif self.current_char == '^':
+                tokens.append(Token(TT_POW, pos_start=self.pos))
                 self.advance()
 
             elif self.current_char == '(':
@@ -186,20 +191,11 @@ class Parser:
 
         return result
 
-    def factor(self) -> ParseResult:
+    def atom(self):
         result = ParseResult()
         token = self.current_token
 
-        if token.type in (TT_PLUS, TT_MINUS):
-            result.register(self.advance())
-            factor = result.register(self.factor())
-
-            if result.error:
-                return result
-
-            return result.success(UnaryOperatorNode(token, factor))
-
-        elif token.type in (TT_INT, TT_FLOAT):
+        if token.type in (TT_INT, TT_FLOAT):
             result.register(self.advance())
             return result.success(NumberNode(token))
 
@@ -224,23 +220,43 @@ class Parser:
             token.pos_start, token.pos_end, 'Expected type int or float'
         ))
 
+    def power(self):
+        return self.binaryOperator(self.atom, (TT_POW), self.factor)
+
+    def factor(self) -> ParseResult:
+        result = ParseResult()
+        token = self.current_token
+
+        if token.type in (TT_PLUS, TT_MINUS):
+            result.register(self.advance())
+            factor = result.register(self.factor())
+
+            if result.error:
+                return result
+
+            return result.success(UnaryOperatorNode(token, factor))
+
+        return self.power()
+
     def term(self):
         return self.binaryOperator(self.factor, (TT_MUL, TT_DIV))
 
     def expr(self):
         return self.binaryOperator(self.term, (TT_PLUS, TT_MINUS))
 
-    def binaryOperator(self, func, op_tokens):
-        result = ParseResult()
-        left = result.register(func())
+    def binaryOperator(self, func_a, ops, func_b=None):
+        if func_b is None:
+            func_b = func_a
 
+        result = ParseResult()
+        left = result.register(func_a())
         if result.error:
             return result
 
-        while self.current_token.type in op_tokens:
+        while self.current_token.type in ops:
             op_token = self.current_token
             result.register(self.advance())
-            right = result.register(func())
+            right = result.register(func_b())
 
             if result.error:
                 return result
@@ -283,6 +299,8 @@ class Interpreter:
             number, error = left.multipliedBy(right)
         elif node.op_token.type == TT_DIV:
             number, error = left.dividedBy(right)
+        elif node.op_token.type == TT_POW:
+            number, error = left.poweredBy(right)
 
         if error:
             return result.failure(error)
