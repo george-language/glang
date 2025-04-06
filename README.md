@@ -1,3 +1,5 @@
+<img src="resources/icons/george_language_icon.svg" width="125">
+
 # George Language
 Programming, _Simplified_.
 
