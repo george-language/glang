@@ -44,5 +44,11 @@ class Number:
         if isinstance(other, Number):
             return Number(self.value ** other.value).setContext(self.context), None
 
+    def copy(self):
+        copy = Number(self.value)
+        copy.setPos(self.pos_start, self.pos_end)
+        copy.setContext(self.context)
+        return copy
+
     def __repr__(self):
         return f'{self.value}'
