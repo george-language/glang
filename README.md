@@ -15,3 +15,8 @@ smt x = 10
 
 shoutout(x) 
 ```
+
+| Syntax                     | Purpose                            |
+|----------------------------|------------------------------------|
+| `smt [var_name] = [value]` | Assigning a variable               |
+| `shoutout([value])`        | Printing an output to the terminal |

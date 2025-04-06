@@ -261,7 +261,7 @@ class Parser:
                 ))
 
         return result.failure(InvalidSyntaxError(
-            token.pos_start, token.pos_end, 'Expected int, float, identifier'
+            token.pos_start, token.pos_end, 'Expected "smt", int, float, identifier, "+", "-" or "("'
         ))
 
     def power(self):
