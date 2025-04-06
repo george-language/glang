@@ -1,5 +1,5 @@
-# GeorgeLanguage
-The simple programming language for everyone!
+# George Language
+Programming, _Simplified_.
 
 ```
 smt my_var = oppositeof yes
@@ -27,8 +27,19 @@ greet()
 print("We have reached the end of our program. I hope you enjoyed!")
 ```
 
-GeorgeLanguage was created to simplify programming syntax with common day-to-day language and more _expressive_ 
-functions. Instead of using `var` for variables, we use `smt` to represent a "something":
+# Why make George Language?
+Well, it all started as a joke. You see, one of our team members has a cute pug named George. One day we said 
+"Why not make a language named after George with a simple syntax?" And that's when it was born.
+
+George Language makes programming syntax more expressive; think of it like turning "not" into "opposite of", it 
+turns the word "not" into an easier to understand value, meaning "the opposite of something". George Language 
+already does this by replacing the `not` keyword with `oppositeof`:
+
+```
+smt x = oppositeof true # false!
+```
+
+Another great example is instead of using `var` for variables, we use `smt` to represent "something":
 
 ```
 smt x = 10
@@ -36,15 +47,17 @@ smt x = 10
 
 A full list of all functions and built-ins is listed below:
 
-| Syntax                                    | Purpose                                            |
-|-------------------------------------------|----------------------------------------------------|
-| `smt [var_name] = [value]`                | Assign a variable                                  |
-| `shoutout([value])`                       | Print an output to the terminal                    |
-| `call [function_name]([args])`            | Define a callable function                         |
-| `true`                                    | Value representing `True`                          |
-| `false`                                   | Value representing `False`                         |
-| `nothing`                                 | Value representing `Null` or `None`                |
-| `oppositeof [value]`                      | Return the opposite of a value                     |
-| `walk [var_name] = [a] through [b] do []` | For loop                                           |
-| `while [condition] do []`                 | While loop                                         |
-| `end`                                     | Specify the ending of a `call`, `walk`, or `while` |
+| Syntax                                    | Purpose                                                            |
+|-------------------------------------------|--------------------------------------------------------------------|
+| `smt [var_name] = [value]`                | Assign a variable                                                  |
+| `shoutout([value])`                       | Print an output to the terminal                                    |
+| `call [function_name]([args])`            | Define a callable function                                         |
+| `true`                                    | Value representing `True`                                          |
+| `false`                                   | Value representing `False`                                         |
+| `nothing`                                 | Value representing `Null` or `None`                                |
+| `oppositeof [value]`                      | Return the opposite of a value                                     |
+| `[value] and [value]`                     | Return `true` if `[value]` and `[value]` otherwise return `false`  |
+| `[value] or [value]`                      | Return `true` if one `[value]` is correct otherwise return `false` |
+| `walk [var_name] = [a] through [b] do []` | For loop                                                           |
+| `while [condition] do []`                 | While loop                                                         |
+| `end`                                     | Specify the ending of a `call`, `walk`, or `while`                 |
