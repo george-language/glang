@@ -44,6 +44,41 @@ class Number:
         if isinstance(other, Number):
             return Number(self.value ** other.value).setContext(self.context), None
 
+    def getComparisonEq(self, other):
+        if isinstance(other, Number):
+            return Number(int(self.value == other.value)).setContext(self.context), None
+
+    def getComparisonNe(self, other):
+        if isinstance(other, Number):
+            return Number(int(self.value != other.value)).setContext(self.context), None
+
+    def getComparisonLt(self, other):
+        if isinstance(other, Number):
+            return Number(int(self.value < other.value)).setContext(self.context), None
+
+    def getComparisonGt(self, other):
+        if isinstance(other, Number):
+            return Number(int(self.value > other.value)).setContext(self.context), None
+
+    def getComparisonLte(self, other):
+        if isinstance(other, Number):
+            return Number(int(self.value <= other.value)).setContext(self.context), None
+
+    def getComparisonGte(self, other):
+        if isinstance(other, Number):
+            return Number(int(self.value >= other.value)).setContext(self.context), None
+
+    def andedBy(self, other):
+        if isinstance(other, Number):
+            return Number(int(self.value and other.value)).setContext(self.context), None
+
+    def oredBy(self, other):
+        if isinstance(other, Number):
+            return Number(int(self.value or other.value)).setContext(self.context), None
+
+    def notted(self):
+        return Number(1 if self.value == 0 else 0).setContext(self.context), None
+
     def copy(self):
         copy = Number(self.value)
         copy.setPos(self.pos_start, self.pos_end)

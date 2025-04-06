@@ -47,3 +47,8 @@ class RunTimeError(Error):
             ctx = ctx.parent
 
         return 'Traceback (most recent call last):\n' + result
+
+
+class ExpectedCharacterError(Error):
+    def __init__(self, pos_start, pos_end, details):
+        super().__init__(pos_start, pos_end, 'Expected Character', details)
