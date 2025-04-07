@@ -1,39 +1,35 @@
 <img src="resources/icons/george_language_icon.svg" width="125">
 
 # George Language
-Programming, _Simplified_.
+George Language is an interpreted language where program syntax is represented as a dog 
+doing day-to-day activities.
 
 ```
-smt my_var = oppositeof yes
+smt my_var = oppositeof true 
 
-# For loop!
-walk i = 0 through 10 do
-    bark(i) # print i to the terminal
-    if i == 5
-        smt my_var = yes # redeclare the variable
-        end # end the loop
-end # end the loop by default
+# Lets go for a walk!
+walk i = 0 through 10 then
+    bark("i is equal to: " + i)
+    if i == 5 then
+        smt my_var = true
+        isleepnow
+isleepnow
 
 # Greet someone!
 funky greet(name)
     bark("Hello, " + name + "!")
-end
+isleepnow
 
-greet()
-
-# Greet someone on a single line!
-funky greet(name) -> bark("Hello, " + name + "!")
-
-greet()
+greet("George")
 
 bark("We have reached the end of our program. I hope you enjoyed!")
 ```
 
-# Why make George Language?
+## Why make George Language?
 Well, it all started as a joke. You see, one of our team members has a cute pug named George. One day we said 
-"Why not make a language named after George with a simple syntax?" And that's when it was born.
+"Why not make a language named after George with a cute syntax?" And that's when it was born.
 
-George Language makes programming syntax more expressive; think of it like turning "not" into "opposite of", it 
+George Language makes programming more expressive; think of it like turning "not" into "opposite of", it 
 turns the word "not" into an easier to understand value, meaning "the opposite of something". George Language 
 already does this by replacing the `not` keyword with `oppositeof`:
 
@@ -47,19 +43,26 @@ Another great example is instead of using `var` for variables, we use `smt` to r
 smt x = 10
 ```
 
-A full list of all functions and built-ins is listed below:
+## Is it fast?
+George Language gets performance matching languages like Python (as it is implemented in Python.) 
+It uses a very light type checker, but nothing large that creates a major overhead. It also 
+doesn't require a garbage collector, as that is already managed by Python. This makes George
+Language **FAST** for many applications.
 
-| Syntax                                    | Purpose                                                            |
-|-------------------------------------------|--------------------------------------------------------------------|
-| `smt [var_name] = [value]`                | Assign a variable                                                  |
-| `bark([value])`                           | Print an output to the terminal                                    |
-| `funky [function_name]([args])`           | Define a callable function                                         |
-| `true`                                    | Value representing `True`                                          |
-| `false`                                   | Value representing `False`                                         |
-| `nothing`                                 | Value representing `Null` or `None`                                |
-| `oppositeof [value]`                      | Return the opposite of a value                                     |
-| `[value] and [value]`                     | Return `true` if `[value]` and `[value]` otherwise return `false`  |
-| `[value] or [value]`                      | Return `true` if one `[value]` is correct otherwise return `false` |
-| `walk [var_name] = [a] through [b] do []` | For loop                                                           |
-| `while [condition] do []`                 | While loop                                                         |
-| `end`                                     | Specify the ending of a `call`, `walk`, or `while`                 |
+# Keywords, values, built-ins, and more
+A full list of all keywords, values, and built-ins is listed below:
+
+| Syntax                                          | Purpose                                                            |
+|-------------------------------------------------|--------------------------------------------------------------------|
+| `smt [var_name] = [value]`                      | Assign a variable                                                  |
+| `bark([value])`                                 | Print an output to the terminal                                    |
+| `funky [function_name]([args])`                 | Define a callable function                                         |
+| `true`                                          | Value representing `True`                                          |
+| `false`                                         | Value representing `False`                                         |
+| `nothing`                                       | Value representing `Null` or `None`                                |
+| `oppositeof [value]`                            | Return the opposite of a value                                     |
+| `[value] and [value]`                           | Return `true` if `[value]` and `[value]` otherwise return `false`  |
+| `[value] or [value]`                            | Return `true` if one `[value]` is correct otherwise return `false` |
+| `walk [var_name] = [a] through [b] then <expr>` | For loop                                                           |
+| `while [condition] then <expr>`                 | While loop                                                         |
+| `isleepnow`                                     | Specify the ending of a `funky`, `walk`, or `while`                |
