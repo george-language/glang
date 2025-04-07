@@ -1,8 +1,8 @@
 <img src="resources/icons/george_language_icon.svg" width="125">
 
 # George Language
-George Language is an interpreted language where program syntax is represented as a dog 
-doing day-to-day activities.
+George Language is a dynamically-typed, interpreted programming language where program syntax is 
+represented as a dog doing day-to-day activities.
 
 ```
 smt my_var = oppositeof true 
