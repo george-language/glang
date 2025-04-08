@@ -1,4 +1,4 @@
-from src.nodes import NumberNode, BinaryOperatorNode, UnaryOperatorNode, VariableAssignNode, VariableAccessNode
+from src.nodes import NumberNode, BinaryOperatorNode, UnaryOperatorNode, VariableAssignNode, VariableAccessNode, IfNode
 from src.symbol_table import SymbolTable
 from src.values import Number
 from src.errors import IllegalCharError, InvalidSyntaxError, RunTimeError, ExpectedCharacterError
@@ -30,7 +30,11 @@ KEYWORDS = [
     'smt',
     'and',
     'or',
-    'oppositeof'
+    'oppositeof',
+    'if',
+    'then',
+    'alsoif',
+    'otherwise'
 ]
 
 
@@ -293,6 +297,77 @@ class Parser:
 
         return result
 
+    def ifExpr(self):
+        result = ParseResult()
+        cases = []
+        else_case = None
+
+        if not self.current_token.matches(TT_KEYWORD, 'if'):
+            return result.failure(InvalidSyntaxError(
+                self.current_token.pos_start, self.current_token.pos_end,
+                'Expected "if"'
+            ))
+
+        result.registerAdvancement()
+        self.advance()
+
+        condition = result.register(self.expr())
+
+        if result.error:
+            return result
+
+        if not self.current_token.matches(TT_KEYWORD, 'then'):
+            return result.failure(InvalidSyntaxError(
+                self.current_token.pos_start, self.current_token.pos_end,
+                'Expected "then"'
+            ))
+
+        result.registerAdvancement()
+        self.advance()
+
+        expr = result.register(self.expr())
+
+        if result.error:
+            return result
+
+        cases.append((condition, expr))
+
+        while self.current_token.matches(TT_KEYWORD, 'alsoif'):
+            result.registerAdvancement()
+            self.advance()
+
+            condition = result.register(self.expr())
+
+            if result.error:
+                return result
+
+            if not self.current_token.matches(TT_KEYWORD, 'then'):
+                return result.failure(InvalidSyntaxError(
+                    self.current_token.pos_start, self.current_token.pos_end,
+                    'Expected "then"'
+                ))
+
+            result.registerAdvancement()
+            self.advance()
+
+            expr = result.register(self.expr())
+
+            if result.error:
+                return result
+
+            cases.append((condition, expr))
+
+        if self.current_token.matches(TT_KEYWORD, 'otherwise'):
+            result.registerAdvancement()
+            self.advance()
+
+            else_case = result.register(self.expr())
+
+            if result.error:
+                return result
+
+        return result.success(IfNode(cases, else_case))
+
     def atom(self):
         result = ParseResult()
         token = self.current_token
@@ -325,6 +400,14 @@ class Parser:
                     self.current_token.pos_start, self.current_token.pos_end,
                     'Expected ")"'
                 ))
+
+        elif token.matches(TT_KEYWORD, 'if'):
+            if_expr = result.register(self.ifExpr())
+
+            if result.error:
+                return result
+
+            return result.success(if_expr)
 
         return result.failure(InvalidSyntaxError(
             token.pos_start, token.pos_end, 'Expected "smt", int, float, identifier, "+", "-" or "("'
@@ -551,6 +634,33 @@ class Interpreter:
 
         else:
             return result.success(number.setPos(node.pos_start, node.pos_end))
+
+    def visit_IfNode(self, node, context):
+        result = RuntimeResult()
+
+        for condition, expr in node.cases:
+            condition_value = result.register(self.visit(condition, context))
+
+            if result.error:
+                return result
+
+            if condition_value.isTrue():
+                expr_value = result.register(self.visit(expr, context))
+
+                if result.error:
+                    return result
+
+                return result.success(expr_value)
+
+        if node.else_case:
+            else_value = result.register(self.visit(node.else_case, context))
+
+            if result.error:
+                return result
+
+            return result.success(else_value)
+
+        return result.success(None)
 
 
 class RuntimeResult:

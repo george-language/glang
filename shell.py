@@ -18,5 +18,5 @@ while True:
     if error:
         print(error.asString())
 
-    else:
+    elif result:
         print(result)

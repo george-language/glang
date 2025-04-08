@@ -85,5 +85,8 @@ class Number:
         copy.setContext(self.context)
         return copy
 
+    def isTrue(self):
+        return self.value != 0
+
     def __repr__(self):
         return f'{self.value}'
