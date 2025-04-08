@@ -1,4 +1,5 @@
-from src.nodes import NumberNode, BinaryOperatorNode, UnaryOperatorNode, VariableAssignNode, VariableAccessNode, IfNode
+from src.nodes import NumberNode, BinaryOperatorNode, UnaryOperatorNode, VariableAssignNode, VariableAccessNode, IfNode, \
+    ForNode, WhileNode
 from src.symbol_table import SymbolTable
 from src.values import Number
 from src.errors import IllegalCharError, InvalidSyntaxError, RunTimeError, ExpectedCharacterError
@@ -34,7 +35,11 @@ KEYWORDS = [
     'if',
     'then',
     'alsoif',
-    'otherwise'
+    'otherwise',
+    'walk',
+    'through',
+    'step',
+    'while'
 ]
 
 
@@ -368,6 +373,117 @@ class Parser:
 
         return result.success(IfNode(cases, else_case))
 
+    def forExpr(self):
+        result = ParseResult()
+
+        if not self.current_token.matches(TT_KEYWORD, 'walk'):
+            return result.failure(InvalidSyntaxError(
+                self.current_token.pos_start, self.current_token.pos_end,
+                'Expected "walk"'
+            ))
+
+        result.registerAdvancement()
+        self.advance()
+
+        if self.current_token.type != TT_IDENTIFIER:
+            return result.failure(InvalidSyntaxError(
+                self.current_token.pos_start, self.current_token.pos_end,
+                'Expected identifier'
+            ))
+
+        var_name = self.current_token
+        result.registerAdvancement()
+        self.advance()
+
+        if self.current_token.type != TT_EQ:
+            return result.failure(InvalidSyntaxError(
+                self.current_token.pos_start, self.current_token.pos_end,
+                'Expected "="'
+            ))
+
+        result.registerAdvancement()
+        self.advance()
+
+        start_value = result.register(self.expr())
+
+        if result.error:
+            return result
+
+        if not self.current_token.matches(TT_KEYWORD, 'through'):
+            return result.failure(InvalidSyntaxError(
+                self.current_token.pos_start, self.current_token.pos_end,
+                'Expected "through"'
+            ))
+
+        result.registerAdvancement()
+        self.advance()
+
+        end_value = result.register(self.expr())
+
+        if result.error:
+            return result
+
+        if self.current_token.matches(TT_KEYWORD, 'step'):
+            result.registerAdvancement()
+            self.advance()
+
+            step_value = result.register(self.expr())
+
+            if result.error:
+                return result
+
+        else:
+            step_value = None
+
+        if not self.current_token.matches(TT_KEYWORD, 'then'):
+            return result.failure(InvalidSyntaxError(
+                self.current_token.pos_start, self.current_token.pos_end,
+                'Expected "then"'
+            ))
+
+        result.registerAdvancement()
+        self.advance()
+
+        body = result.register(self.expr())
+
+        if result.error:
+            return result
+
+        return result.success(ForNode(var_name, start_value, end_value, step_value, body))
+
+    def whileExpr(self):
+        result = ParseResult()
+
+        if not self.current_token.matches(TT_KEYWORD, 'while'):
+            return result.failure(InvalidSyntaxError(
+                self.current_token.pos_start, self.current_token.pos_end,
+                'Expected "while"'
+            ))
+
+        result.registerAdvancement()
+        self.advance()
+
+        condition = result.register(self.expr())
+
+        if result.error:
+            return result
+
+        if not self.current_token.matches(TT_KEYWORD, 'then'):
+            return result.failure(InvalidSyntaxError(
+                self.current_token.pos_start, self.current_token.pos_end,
+                'Expected "then"'
+            ))
+
+        result.registerAdvancement()
+        self.advance()
+
+        body = result.register(self.expr())
+
+        if result.error:
+            return result
+
+        return result.success(WhileNode(condition, body))
+
     def atom(self):
         result = ParseResult()
         token = self.current_token
@@ -408,6 +524,22 @@ class Parser:
                 return result
 
             return result.success(if_expr)
+
+        elif token.matches(TT_KEYWORD, 'walk'):
+            for_expr = result.register(self.forExpr())
+
+            if result.error:
+                return result
+
+            return result.success(for_expr)
+
+        elif token.matches(TT_KEYWORD, 'while'):
+            while_expr = result.register(self.whileExpr())
+
+            if result.error:
+                return result
+
+            return result.success(while_expr)
 
         return result.failure(InvalidSyntaxError(
             token.pos_start, token.pos_end, 'Expected "smt", int, float, identifier, "+", "-" or "("'
@@ -545,7 +677,7 @@ class Interpreter:
 
     def visit_VariableAccessNode(self, node: VariableAccessNode, context):
         result = RuntimeResult()
-        var_name = node.var_name_tokem.value
+        var_name = node.var_name_token.value
         value = context.symbol_table.get(var_name)
 
         if not value:
@@ -659,6 +791,66 @@ class Interpreter:
                 return result
 
             return result.success(else_value)
+
+        return result.success(None)
+
+    def visit_ForNode(self, node, context):
+        result = RuntimeResult()
+
+        start_value = result.register(self.visit(node.start_value_node, context))
+
+        if result.error:
+            return result
+
+        end_value = result.register(self.visit(node.end_value_node, context))
+
+        if result.error:
+            return result
+
+        if node.step_value_node:
+            step_value = result.register(self.visit(node.step_value_node, context))
+
+            if result.error:
+                return result
+
+        else:
+            step_value = Number(1)
+
+        i = start_value.value
+
+        if step_value.value >= 0:
+            condition = lambda: i < end_value.value
+
+        else:
+            condition = lambda: i > end_value.value
+
+        while condition():
+            context.symbol_table.set(node.var_name_token.value, Number(i))
+            i += step_value.value
+
+            result.register(self.visit(node.body_node, context))
+
+            if result.error:
+                return result
+
+        return result.success(None)
+
+    def visit_WhileNode(self, node, context):
+        result = RuntimeResult()
+
+        while True:
+            condition = result.register(self.visit(node.condition_node, context))
+
+            if result.error:
+                return result
+
+            if not condition.isTrue():
+                break
+
+            result.register(self.visit(node.body_node, context))
+
+            if result.error:
+                return result
 
         return result.success(None)
 
