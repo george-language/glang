@@ -5,6 +5,8 @@ George Language is a dynamically-typed, interpreted programming language where p
 represented as a dog doing day-to-day activities.
 
 ```
+getnewtoy math_pi from "modules/math.glang"
+
 smt my_var = oppositeof true 
 
 # Lets go for a walk!
@@ -22,6 +24,7 @@ isleepnow
 
 greet("George")
 
+bark("Pi is equal to: " + math_pi)
 bark("We have reached the end of our program. I hope you enjoyed!")
 ```
 
@@ -52,17 +55,18 @@ Language **FAST** for many applications.
 # Keywords, values, built-ins, and more
 A full list of all keywords, values, and built-ins is listed below:
 
-| Syntax                                                   | Purpose                                                            |
-|----------------------------------------------------------|--------------------------------------------------------------------|
-| `smt [var_name] = [value]`                               | Assign a variable                                                  |
-| `bark([value])`                                          | Print an output to the terminal                                    |
-| `func [function_name]([args])`                           | Define a callable function                                         |
-| `true`                                                   | Value representing `True`                                          |
-| `false`                                                  | Value representing `False`                                         |
-| `nothing`                                                | Value representing `Null` or `None`                                |
-| `oppositeof [value]`                                     | Return the opposite of a value                                     |
-| `[value] and [value]`                                    | Return `true` if `[value]` and `[value]` otherwise return `false`  |
-| `[value] or [value]`                                     | Return `true` if one `[value]` is correct otherwise return `false` |
-| `walk [var_name] = [a] through [b] step [i] then <expr>` | For loop (step argument is optional)                               |
-| `while [condition] then <expr>`                          | While loop                                                         |
-| `isleepnow`                                              | Specify the ending of a `funky`, `walk`, or `while`                |
+| Syntax                                                   | Purpose                                                                               |
+|----------------------------------------------------------|---------------------------------------------------------------------------------------|
+| `smt [var_name] = [value]`                               | Assign a variable, can either be a number, string (`"string"`), or anonymous function |
+| `bark([value])`                                          | Print an output to the terminal                                                       |
+| `func [function_name]([args])`                           | Define a callable function                                                            |
+| `true`                                                   | Value representing `True`                                                             |
+| `false`                                                  | Value representing `False`                                                            |
+| `nothing`                                                | Value representing `Null` or `None`                                                   |
+| `oppositeof [value]`                                     | Return the opposite of a value                                                        |
+| `[value] and [value]`                                    | Return `true` if `[value]` and `[value]` otherwise return `false`                     |
+| `[value] or [value]`                                     | Return `true` if one `[value]` is correct otherwise return `false`                    |
+| `walk [var_name] = [a] through [b] step [i] then <expr>` | For loop (step argument is optional)                                                  |
+| `while [condition] then <expr>`                          | While loop                                                                            |
+| `getnewtoy [var_names, functions] from [glang_file]`     | Import variables, functions, or lists into your program from another program file     |
+| `isleepnow`                                              | Specify the ending of a `funky`, `walk`, or `while`                                   |
