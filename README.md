@@ -52,17 +52,17 @@ Language **FAST** for many applications.
 # Keywords, values, built-ins, and more
 A full list of all keywords, values, and built-ins is listed below:
 
-| Syntax                                          | Purpose                                                            |
-|-------------------------------------------------|--------------------------------------------------------------------|
-| `smt [var_name] = [value]`                      | Assign a variable                                                  |
-| `bark([value])`                                 | Print an output to the terminal                                    |
-| `funky [function_name]([args])`                 | Define a callable function                                         |
-| `true`                                          | Value representing `True`                                          |
-| `false`                                         | Value representing `False`                                         |
-| `nothing`                                       | Value representing `Null` or `None`                                |
-| `oppositeof [value]`                            | Return the opposite of a value                                     |
-| `[value] and [value]`                           | Return `true` if `[value]` and `[value]` otherwise return `false`  |
-| `[value] or [value]`                            | Return `true` if one `[value]` is correct otherwise return `false` |
-| `walk [var_name] = [a] through [b] then <expr>` | For loop                                                           |
-| `while [condition] then <expr>`                 | While loop                                                         |
-| `isleepnow`                                     | Specify the ending of a `funky`, `walk`, or `while`                |
+| Syntax                                                   | Purpose                                                            |
+|----------------------------------------------------------|--------------------------------------------------------------------|
+| `smt [var_name] = [value]`                               | Assign a variable                                                  |
+| `bark([value])`                                          | Print an output to the terminal                                    |
+| `func [function_name]([args])`                           | Define a callable function                                         |
+| `true`                                                   | Value representing `True`                                          |
+| `false`                                                  | Value representing `False`                                         |
+| `nothing`                                                | Value representing `Null` or `None`                                |
+| `oppositeof [value]`                                     | Return the opposite of a value                                     |
+| `[value] and [value]`                                    | Return `true` if `[value]` and `[value]` otherwise return `false`  |
+| `[value] or [value]`                                     | Return `true` if one `[value]` is correct otherwise return `false` |
+| `walk [var_name] = [a] through [b] step [i] then <expr>` | For loop (step argument is optional)                               |
+| `while [condition] then <expr>`                          | While loop                                                         |
+| `isleepnow`                                              | Specify the ending of a `funky`, `walk`, or `while`                |
