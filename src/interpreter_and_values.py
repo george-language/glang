@@ -2,7 +2,8 @@ from src.tokens_and_keywords import *
 from src.context import Context
 from src.runtime_result import RuntimeResult
 from src.symbol_table import SymbolTable
-from src.nodes import NumberNode, VariableAccessNode, VariableAssignNode, BinaryOperatorNode, UnaryOperatorNode
+from src.nodes import NumberNode, VariableAccessNode, VariableAssignNode, BinaryOperatorNode, UnaryOperatorNode, \
+    StringNode
 from src.errors import RunTimeError
 
 
@@ -19,6 +20,9 @@ class Interpreter:
     def visit_NumberNode(self, node: NumberNode, context):
         return RuntimeResult().success(
             Number(node.token.value).setContext(context).setPos(node.pos_start, node.pos_end))
+
+    def visit_StringNode(self, node: StringNode, context):
+        return RuntimeResult().success(String(node.token.value).setContext(context).setPos(node.pos_start, node.pos_end))
 
     def visit_VariableAccessNode(self, node: VariableAccessNode, context):
         result = RuntimeResult()
@@ -429,7 +433,46 @@ class Number(Value):
         return self.value != 0
 
     def __repr__(self):
-        return f'{self.value}'
+        return f'<number: {self.value}>'
+
+
+class String(Value):
+    def __init__(self, value):
+        super().__init__()
+        self.value = value
+
+    def addedTo(self, other):
+        if isinstance(other, String):
+            return String(self.value + other.value).setContext(self.context), None
+
+        else:
+            return None, Value.illegalOperation(self, other)
+
+    def multipliedBy(self, other):
+        if isinstance(other, Number):
+            return String(self.value * other.value).setContext(self.context), None
+
+        else:
+            return None, Value.illegalOperation(self, other)
+
+    def subtractedBy(self, other):
+        if isinstance(other, String):
+            return String(other.value).setContext(self.context), None
+
+        else:
+            return None, Value.illegalOperation(self, other)
+
+    def isTrue(self):
+        return len(self.value) > 0
+
+    def copy(self):
+        copy = String(self.value)
+        copy.setPos(self.pos_start, self.pos_end)
+        copy.setContext(self.context)
+        return copy
+
+    def __repr__(self):
+        return f'<string: {self.value}>'
 
 
 class Function(Value):
@@ -467,9 +510,9 @@ class Function(Value):
 
     def copy(self):
         copy = Function(self.name, self.body_node, self.arg_names)
-        copy.setContext(self.context)
         copy.setPos(self.pos_start, self.pos_end)
+        copy.setContext(self.context)
         return copy
 
     def __repr__(self):
-        return f'<function {self.name}>'
+        return f'<function: {self.name}>'

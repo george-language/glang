@@ -77,6 +77,9 @@ class Lexer:
             elif self.current_char in LETTERS + '_':
                 tokens.append(self.makeIdentifier())
 
+            elif self.current_char == '"':
+                tokens.append(self.makeString())
+
             elif self.current_char == '+':
                 tokens.append(Token(TT_PLUS, pos_start=self.pos))
                 self.advance()
@@ -157,6 +160,34 @@ class Lexer:
 
         else:
             return Token(TT_FLOAT, float(num_str), pos_start, self.pos)
+
+    def makeString(self) -> Token:
+        string = ''
+        pos_start = self.pos.copy()
+        escape_char = False
+        self.advance()
+
+        escape_chars = {
+            'n': '\n',
+            't': '\t',
+        }
+
+        while self.current_char is not None and (self.current_char != '"' or escape_char):
+            if escape_char:
+                string += escape_chars.get(self.current_char, self.current_char)
+
+            else:
+                if self.current_char == '\\':
+                    escape_char = True
+
+                else:
+                    string += self.current_char
+
+            self.advance()
+            escape_char = False
+
+        self.advance()
+        return Token(TT_STR, string, pos_start=pos_start, pos_end=self.pos)
 
     def makeIdentifier(self) -> Token:
         id_str = ''
@@ -518,6 +549,12 @@ class Parser:
             result.registerAdvancement()
             self.advance()
             return result.success(NumberNode(token))
+
+        if token.type == TT_STR:
+            result.registerAdvancement()
+            self.advance()
+
+            return result.success(StringNode(token))
 
         elif token.type == TT_IDENTIFIER:
             result.registerAdvancement()
