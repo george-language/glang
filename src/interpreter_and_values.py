@@ -3,7 +3,7 @@ from src.context import Context
 from src.runtime_result import RuntimeResult
 from src.symbol_table import SymbolTable
 from src.nodes import NumberNode, VariableAccessNode, VariableAssignNode, BinaryOperatorNode, UnaryOperatorNode, \
-    StringNode
+    StringNode, ListNode
 from src.errors import RunTimeError
 
 
@@ -22,7 +22,20 @@ class Interpreter:
             Number(node.token.value).setContext(context).setPos(node.pos_start, node.pos_end))
 
     def visit_StringNode(self, node: StringNode, context):
-        return RuntimeResult().success(String(node.token.value).setContext(context).setPos(node.pos_start, node.pos_end))
+        return RuntimeResult().success(
+            String(node.token.value).setContext(context).setPos(node.pos_start, node.pos_end))
+
+    def visit_ListNode(self, node: ListNode, context):
+        result = RuntimeResult()
+        elements = []
+
+        for element in node.element_nodes:
+            elements.append(result.register(self.visit(element, context)))
+
+            if result.error:
+                return result
+
+        return result.success(List(elements).setContext(context).setPos(node.pos_start, node.pos_end))
 
     def visit_VariableAccessNode(self, node: VariableAccessNode, context):
         result = RuntimeResult()
@@ -145,6 +158,7 @@ class Interpreter:
 
     def visit_ForNode(self, node, context):
         result = RuntimeResult()
+        elements = []
 
         start_value = result.register(self.visit(node.start_value_node, context))
 
@@ -177,15 +191,16 @@ class Interpreter:
             context.symbol_table.set(node.var_name_token.value, Number(i))
             i += step_value.value
 
-            result.register(self.visit(node.body_node, context))
+            elements.append(result.register(self.visit(node.body_node, context)))
 
             if result.error:
                 return result
 
-        return result.success(None)
+        return result.success(List(elements).setContext(context).setPos(node.pos_start, node.pos_end))
 
     def visit_WhileNode(self, node, context):
         result = RuntimeResult()
+        elements = []
 
         while True:
             condition = result.register(self.visit(node.condition_node, context))
@@ -196,12 +211,12 @@ class Interpreter:
             if not condition.isTrue():
                 break
 
-            result.register(self.visit(node.body_node, context))
+            elements.append(result.register(self.visit(node.body_node, context)))
 
             if result.error:
                 return result
 
-        return result.success(None)
+        return result.success(List(elements).setContext(context).setPos(node.pos_start, node.pos_end))
 
     def visit_FunctionDefinitionNode(self, node, context):
         result = RuntimeResult()
@@ -210,7 +225,7 @@ class Interpreter:
         body_node = node.body_node
         arg_names = [arg_name.value for arg_name in node.arg_name_tokens]
         func_value = Function(func_name, body_node, arg_names).setContext(context).setPos(node.pos_start,
-                                                                                            node.pos_end)
+                                                                                          node.pos_end)
 
         if node.var_name_token:
             context.symbol_table.set(func_name, func_value)
@@ -473,6 +488,71 @@ class String(Value):
 
     def __repr__(self):
         return f'<string: {self.value}>'
+
+
+class List(Value):
+    def __init__(self, elements):
+        super().__init__()
+        self.elements = elements
+
+    def addedTo(self, other):
+        if isinstance(other, List):
+            new_list = self.copy()
+            new_list.elements.extend(other.elements)
+
+            return new_list, None
+
+        else:
+            None, Value.illegalOperation(self, other)
+
+    def subtractedBy(self, other):
+        if isinstance(other, Number):
+            new_list = self.copy()
+
+            try:
+                new_list.elements.pop(other.value)
+
+                return new_list, None
+
+            except:
+                return None, RunTimeError(
+                    other.pos_start, other.pos_end,
+                    'List index is out of bounds',
+                    self.context
+                )
+
+        else:
+            None, Value.illegalOperation(self, other)
+
+    def multipliedBy(self, other):
+        new_list = self.copy()
+        new_list.elements.append(other)
+
+        return new_list, None
+
+    def poweredBy(self, other):
+        if isinstance(other, Number):
+            try:
+                return self.elements[other.value], None
+
+            except:
+                return None, RunTimeError(
+                    other.pos_start, other.pos_end,
+                    'List index is out of bounds',
+                    self.context
+                )
+        else:
+            return None, Value.illegalOperation(self, other)
+
+    def copy(self):
+        copy = List(self.elements[:])
+        copy.setPos(self.pos_start, self.pos_end)
+        copy.setContext(self.context)
+
+        return copy
+
+    def __repr__(self):
+        return f'<list: [{", ".join([str(x) for x in self.elements])}]>'
 
 
 class Function(Value):

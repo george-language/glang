@@ -107,6 +107,14 @@ class Lexer:
                 tokens.append(Token(TT_RPAREN, pos_start=self.pos))
                 self.advance()
 
+            elif self.current_char == '[':
+                tokens.append(Token(TT_LSQUARE, pos_start=self.pos))
+                self.advance()
+
+            elif self.current_char == ']':
+                tokens.append(Token(TT_RSQUARE, pos_start=self.pos))
+                self.advance()
+
             elif self.current_char == '!':
                 tok, error = self.makeNotEquals()
 
@@ -310,6 +318,57 @@ class Parser:
 
         return result
 
+    def listExpr(self):
+        result = ParseResult()
+        element_nodes = []
+        pos_start = self.current_token.pos_start.copy()
+
+        if self.current_token.type != TT_LSQUARE:
+            return result.failure(InvalidSyntaxError(
+                self.current_token.pos_start, self.current_token.pos_end,
+                'Expected "["'
+            ))
+
+        result.registerAdvancement()
+        self.advance()
+
+        if self.current_token.type == TT_RSQUARE:
+            result.registerAdvancement()
+            self.advance()
+
+        else:
+            element_nodes.append(result.register(self.expr()))
+
+            if result.error:
+                return result.failure(InvalidSyntaxError(
+                    self.current_token.pos_start, self.current_token.pos_end,
+                    'Expected "]", "smt", "if", "walk", "while", "func", int, float, identifier, "+", "-", "(", "[" or "oppositeof"'
+                ))
+
+            while self.current_token.type == TT_COMMA:
+                result.registerAdvancement()
+                self.advance()
+
+                element_nodes.append(result.register(self.expr()))
+
+                if result.error:
+                    return result
+
+            if self.current_token.type != TT_RSQUARE:
+                return result.failure(InvalidSyntaxError(
+                    self.current_token.pos_start, self.current_token.pos_end,
+                    'Expected "," or "]"'
+                ))
+
+            result.registerAdvancement()
+            self.advance()
+
+        return result.success(ListNode(
+            element_nodes,
+            pos_start,
+            self.current_token.pos_end.copy()
+        ))
+
     def ifExpr(self):
         result = ParseResult()
         cases = []
@@ -492,6 +551,77 @@ class Parser:
 
         return result.success(WhileNode(condition, body))
 
+    def arithmeticExpr(self):
+        return self.binaryOperator(self.term, (TT_PLUS, TT_MINUS))
+
+    def comparisonExpr(self):
+        result = ParseResult()
+
+        if self.current_token.matches(TT_KEYWORD, 'oppositeof'):
+            op_token = self.current_token
+            result.registerAdvancement()
+            self.advance()
+
+            node = result.register(self.comparisonExpr())
+
+            if result.error:
+                return result
+
+            return result.success(UnaryOperatorNode(op_token, node))
+
+        node = result.register(self.binaryOperator(self.arithmeticExpr, (TT_EE, TT_NE, TT_LT, TT_GT, TT_LTE, TT_GTE)))
+
+        if result.error:
+            return result.failure(InvalidSyntaxError(
+                self.current_token.pos_start, self.current_token.pos_end,
+                'Expected int, float, identifier, "+", "-", "(", "[" or "oppositeof"'
+
+            ))
+
+        return result.success(node)
+
+    def expr(self):
+        result = ParseResult()
+
+        if self.current_token.matches(TT_KEYWORD, 'smt'):
+            result.registerAdvancement()
+            self.advance()
+
+            if self.current_token.type != TT_IDENTIFIER:
+                return result.failure(InvalidSyntaxError(
+                    self.current_token.pos_start, self.current_token.pos_end,
+                    'Expected identifier'
+                ))
+
+            var_name = self.current_token
+            result.registerAdvancement()
+            self.advance()
+
+            if self.current_token.type != TT_EQ:
+                return result.failure(InvalidSyntaxError(
+                    self.current_token.pos_start, self.current_token.pos_end,
+                    'Expected "="'
+                ))
+
+            result.registerAdvancement()
+            self.advance()
+            expr = result.register(self.expr())
+
+            if result.error:
+                return result
+
+            return result.success(VariableAssignNode(var_name, expr))
+
+        node = result.register(self.binaryOperator(self.comparisonExpr, ((TT_KEYWORD, 'and'), (TT_KEYWORD, 'or'))))
+
+        if result.error:
+            return result.failure(InvalidSyntaxError(
+                self.current_token.pos_start, self.current_token.pos_end,
+                'Expected "smt", "if", "walk", "while", "func", int, float, identifier, "+", "-", "(", "[" or "oppositeof"'
+            ))
+
+        return result.success(node)
+
     def call(self):
         result = ParseResult()
         atom = result.register(self.atom())
@@ -516,7 +646,7 @@ class Parser:
                     return result.failure(InvalidSyntaxError(
                         self.current_token.pos_start, self.current_token.pos_end,
                         'Expected ")", "smt", "if", "walk", "while", "func", int, float, identifier, "+", "-", '
-                        '"(" or "oppositeof"'
+                        '"(", "[" or "oppositeof"'
                     ))
 
                 while self.current_token.type == TT_COMMA:
@@ -561,7 +691,7 @@ class Parser:
             self.advance()
             return result.success(VariableAccessNode(token))
 
-        elif token.type in (TT_LPAREN, TT_RPAREN):
+        elif token.type == TT_LPAREN:
             result.registerAdvancement()
             self.advance()
             expr = result.register(self.expr())
@@ -579,6 +709,14 @@ class Parser:
                     self.current_token.pos_start, self.current_token.pos_end,
                     'Expected ")"'
                 ))
+
+        elif token.type == TT_LSQUARE:
+            list_expr = result.register(self.listExpr())
+
+            if result.error:
+                return result
+
+            return result.success(list_expr)
 
         elif token.matches(TT_KEYWORD, 'if'):
             if_expr = result.register(self.ifExpr())
@@ -614,7 +752,7 @@ class Parser:
 
         return result.failure(InvalidSyntaxError(
             token.pos_start, token.pos_end, 'Expected "smt", "if", "walk", "while", "func", int, float, identifier, '
-                                            '"+", "-" or "("'
+                                            '"+", "-" "(" or "["'
         ))
 
     def power(self):
@@ -638,77 +776,6 @@ class Parser:
 
     def term(self):
         return self.binaryOperator(self.factor, (TT_MUL, TT_DIV))
-
-    def arithmeticExpr(self):
-        return self.binaryOperator(self.term, (TT_PLUS, TT_MINUS))
-
-    def comparisonExpr(self):
-        result = ParseResult()
-
-        if self.current_token.matches(TT_KEYWORD, 'oppositeof'):
-            op_token = self.current_token
-            result.registerAdvancement()
-            self.advance()
-
-            node = result.register(self.comparisonExpr())
-
-            if result.error:
-                return result
-
-            return result.success(UnaryOperatorNode(op_token, node))
-
-        node = result.register(self.binaryOperator(self.arithmeticExpr, (TT_EE, TT_NE, TT_LT, TT_GT, TT_LTE, TT_GTE)))
-
-        if result.error:
-            return result.failure(InvalidSyntaxError(
-                self.current_token.pos_start, self.current_token.pos_end,
-                'Expected int, float, identifier, "+", "-", "(" or "NOT"'
-
-            ))
-
-        return result.success(node)
-
-    def expr(self):
-        result = ParseResult()
-
-        if self.current_token.matches(TT_KEYWORD, 'smt'):
-            result.registerAdvancement()
-            self.advance()
-
-            if self.current_token.type != TT_IDENTIFIER:
-                return result.failure(InvalidSyntaxError(
-                    self.current_token.pos_start, self.current_token.pos_end,
-                    'Expected identifier'
-                ))
-
-            var_name = self.current_token
-            result.registerAdvancement()
-            self.advance()
-
-            if self.current_token.type != TT_EQ:
-                return result.failure(InvalidSyntaxError(
-                    self.current_token.pos_start, self.current_token.pos_end,
-                    'Expected "="'
-                ))
-
-            result.registerAdvancement()
-            self.advance()
-            expr = result.register(self.expr())
-
-            if result.error:
-                return result
-
-            return result.success(VariableAssignNode(var_name, expr))
-
-        node = result.register(self.binaryOperator(self.comparisonExpr, ((TT_KEYWORD, 'and'), (TT_KEYWORD, 'or'))))
-
-        if result.error:
-            return result.failure(InvalidSyntaxError(
-                self.current_token.pos_start, self.current_token.pos_end,
-                'Expected "smt", "if", "walk", "while", "func", int, float, identifier, "+", "-", "(" or "oppositeof"'
-            ))
-
-        return result.success(node)
 
     def functionDefinition(self):
         result = ParseResult()
