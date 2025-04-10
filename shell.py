@@ -19,4 +19,4 @@ while True:
         print(error.asString())
 
     elif result:
-        print(result)
+        print(f'Debug: {repr(result)}')
