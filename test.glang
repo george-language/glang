@@ -1,7 +1,7 @@
-smt a = 0
+object a = 0
 
 while a < 10 then
-    smt a = a + 1
+    ignore
 isleepnow
 
 bark(a)

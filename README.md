@@ -5,15 +5,15 @@ George Language is a dynamically-typed, interpreted programming language where p
 represented as a dog doing day-to-day activities.
 
 ```
-getnewtoy math_pi from "modules/math.glang"
+gettoy math_pi from "modules/math.glang"
 
-smt my_var = oppositeof true 
+object my_var = oppositeof true 
 
 # Lets go for a walk!
 walk i = 0 through 10 then
     bark("i is equal to: " + i)
     if i == 5 then
-        smt my_var = true
+        object my_var = true
         isleepnow
 isleepnow
 
@@ -37,13 +37,13 @@ turns the word "not" into an easier to understand value, meaning "the opposite o
 already does this by replacing the `not` keyword with `oppositeof`:
 
 ```
-smt x = oppositeof true # false!
+object x = oppositeof true # false!
 ```
 
-Another great example is instead of using `var` for variables, we use `smt` to represent "something":
+Another great example is instead of using `var` for variables, we use `object` to represent an "object":
 
 ```
-smt x = 10
+object x = 10
 ```
 
 ## Is it fast?
@@ -57,7 +57,7 @@ A full list of all keywords, values, and built-ins is listed below:
 
 | Syntax                                                   | Purpose                                                                               |
 |----------------------------------------------------------|---------------------------------------------------------------------------------------|
-| `smt [var_name] = [value]`                               | Assign a variable, can either be a number, string (`"string"`), or anonymous function |
+| `object [var_name] = [value]`                               | Assign a variable, can either be a number, string (`"string"`), or anonymous function |
 | `bark([value])`                                          | Print an output to the terminal                                                       |
 | `func [function_name]([args])`                           | Define a callable function                                                            |
 | `true`                                                   | Value representing `True`                                                             |

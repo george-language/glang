@@ -132,7 +132,7 @@ class Interpreter:
     def visit_IfNode(self, node, context):
         result = RuntimeResult()
 
-        for condition, expr in node.cases:
+        for condition, expr, should_return_null in node.cases:
             condition_value = result.register(self.visit(condition, context))
 
             if result.error:
@@ -144,17 +144,18 @@ class Interpreter:
                 if result.error:
                     return result
 
-                return result.success(expr_value)
+                return result.success(Number.null if should_return_null else expr_value)
 
         if node.else_case:
-            else_value = result.register(self.visit(node.else_case, context))
+            expr, should_return_null = node.else_case
+            else_value = result.register(self.visit(expr, context))
 
             if result.error:
                 return result
 
-            return result.success(else_value)
+            return result.success(Number.null if should_return_null else else_value)
 
-        return result.success(None)
+        return result.success(Number.null)
 
     def visit_ForNode(self, node, context):
         result = RuntimeResult()
@@ -196,7 +197,10 @@ class Interpreter:
             if result.error:
                 return result
 
-        return result.success(List(elements).setContext(context).setPos(node.pos_start, node.pos_end))
+        return result.success(
+            Number.null if node.should_return_null else List(elements).setContext(
+                context).setPos(node.pos_start, node.pos_end)
+        )
 
     def visit_WhileNode(self, node, context):
         result = RuntimeResult()
@@ -216,7 +220,9 @@ class Interpreter:
             if result.error:
                 return result
 
-        return result.success(List(elements).setContext(context).setPos(node.pos_start, node.pos_end))
+        return result.success(Number.null if node.should_return_null else
+                              List(elements).setContext(context).setPos(node.pos_start, node.pos_end)
+                              )
 
     def visit_FunctionDefinitionNode(self, node, context):
         result = RuntimeResult()
@@ -224,7 +230,7 @@ class Interpreter:
         func_name = node.var_name_token.value if node.var_name_token else None
         body_node = node.body_node
         arg_names = [arg_name.value for arg_name in node.arg_name_tokens]
-        func_value = Function(func_name, body_node, arg_names).setContext(context).setPos(node.pos_start,
+        func_value = Function(func_name, body_node, arg_names, node.should_return_null).setContext(context).setPos(node.pos_start,
                                                                                           node.pos_end)
 
         if node.var_name_token:
@@ -608,10 +614,11 @@ class BaseFunction(Value):
 
 
 class Function(BaseFunction):
-    def __init__(self, name, body_node, arg_names):
+    def __init__(self, name, body_node, arg_names, should_return_null):
         super().__init__(name)
         self.body_node = body_node
         self.arg_names = arg_names
+        self.should_return_null = should_return_null
 
     def execute(self, args):
         result = RuntimeResult()
@@ -628,10 +635,10 @@ class Function(BaseFunction):
         if result.error:
             return result
 
-        return result.success(value)
+        return result.success(Number.null if self.should_return_null else value)
 
     def copy(self):
-        copy = Function(self.name, self.body_node, self.arg_names)
+        copy = Function(self.name, self.body_node, self.arg_names, self.should_return_null)
         copy.setPos(self.pos_start, self.pos_end)
         copy.setContext(self.context)
         return copy

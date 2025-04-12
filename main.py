@@ -22,8 +22,8 @@ if file_path:
             if error:
                 print(error.asString())
 
-            else:
-                print(result)
+            elif result:
+                print(f'George Debug: {repr(result)}')
 
     else:
         print(f'Wrong File Type: "{file_path}" is not a ".glang" file.')
@@ -37,6 +37,8 @@ else:
 
         if text == 'exit()':
             break
+        elif text.strip() == '':
+            continue
 
         result, error = run('<stdin>', text)
 
@@ -44,4 +46,4 @@ else:
             print(error.asString())
 
         elif result:
-            print(f'Debug: {repr(result)}')
+            print(f'George Debug: {repr(result)}')
