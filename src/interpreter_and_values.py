@@ -683,51 +683,48 @@ class BuiltInFunction(BaseFunction):
 
         return RuntimeResult().success(Number.null)
 
-    def execute_print_return(self, exec_ctx):
-        return RuntimeResult().success(String(str(exec_ctx.symbol_table.get('value'))))
-
     def execute_input(self, exec_ctx):
         text = input()
 
         return RuntimeResult().success(String(text))
 
-    def execute_is_number(self, exec_ctx):
+    def execute_isnumber(self, exec_ctx):
         is_instance = isinstance(exec_ctx.symbol_table.get('value'), Number)
 
         return RuntimeResult().success(Number.true if is_instance else Number.false)
 
-    def execute_is_string(self, exec_ctx):
+    def execute_isstring(self, exec_ctx):
         is_instance = isinstance(exec_ctx.symbol_table.get('value'), String)
 
         return RuntimeResult().success(Number.true if is_instance else Number.false)
 
-    def execute_is_list(self, exec_ctx):
+    def execute_islist(self, exec_ctx):
         is_instance = isinstance(exec_ctx.symbol_table.get('value'), List)
 
         return RuntimeResult().success(Number.true if is_instance else Number.false)
 
-    def execute_is_base_function(self, exec_ctx):
+    def execute_isbasefunction(self, exec_ctx):
         is_instance = isinstance(exec_ctx.symbol_table.get('value'), BaseFunction)
 
         return RuntimeResult().success(Number.true if is_instance else Number.false)
 
     def execute_append(self, exec_ctx):
-        list_ = exec_ctx.symbol_table.get('list')
+        list_obj = exec_ctx.symbol_table.get('list')
         value = exec_ctx.symbol_table.get('value')
 
-        if not isinstance(list_, List):
+        if not isinstance(list_obj, List):
             return RuntimeResult().failure(RunTimeError(
                 self.pos_start, self.pos_end, 'First argument is not type list', exec_ctx
             ))
 
-        list_.elements.append(value)
+        list_obj.elements.append(value)
         return RuntimeResult().success(Number.null)
 
     def execute_pop(self, exec_ctx):
-        list_ = exec_ctx.symbol_table.get('list')
+        list_obj = exec_ctx.symbol_table.get('list')
         value = exec_ctx.symbol_table.get('value')
 
-        if not isinstance(list_, List):
+        if not isinstance(list_obj, List):
             return RuntimeResult().failure(RunTimeError(
                 self.pos_start, self.pos_end, 'First argument is not type list', exec_ctx
             ))
@@ -738,7 +735,7 @@ class BuiltInFunction(BaseFunction):
             ))
 
         try:
-            element = list_.elements.pop(value.value)
+            element = list_obj.elements.pop(value.value)
 
         except:
             return RuntimeResult().failure(RunTimeError(
@@ -764,36 +761,65 @@ class BuiltInFunction(BaseFunction):
         list_a.elements.append(list_b)
         return RuntimeResult().success(Number.null)
 
-    def execute_clear(self, exec_ctx):
-        list = exec_ctx.symbol_table.get('list')
+    def execute_reverse(self, exec_ctx):
+        list_obj = exec_ctx.symbol_table.get('list')
 
-        if not isinstance(list, List):
+        if not isinstance(list_obj, List):
             return RuntimeResult().failure(RunTimeError(
                 self.pos_start, self.pos_end, 'First argument is not type list', exec_ctx
             ))
 
-        list.elements.clear()
+        list_obj.elements.reverse()
+        return RuntimeResult().success(Number.null)
+
+    def execute_reversed(self, exec_ctx):
+        list_obj = exec_ctx.symbol_table.get('list')
+
+        if not isinstance(list_obj, List):
+            return RuntimeResult().failure(RunTimeError(
+                self.pos_start, self.pos_end, 'First argument is not type list', exec_ctx
+            ))
+
+        elements = list_obj.elements
+        elements.reverse()
+
+        return RuntimeResult().success(List(elements))
+
+    def execute_clear(self, exec_ctx):
+        list_obj = exec_ctx.symbol_table.get('list')
+
+        if not isinstance(list_obj, List):
+            return RuntimeResult().failure(RunTimeError(
+                self.pos_start, self.pos_end, 'First argument is not type list', exec_ctx
+            ))
+
+        list_obj.elements.clear()
         return RuntimeResult().success(Number.null)
 
     def execute_length(self, exec_ctx):
-        list = exec_ctx.symbol_table.get('list')
+        obj = exec_ctx.symbol_table.get('obj')
 
-        if not isinstance(list, List):
+        if isinstance(obj, List):
+            return RuntimeResult().success(Number(len(obj.elements)))
+
+        elif isinstance(obj, String):
+            return RuntimeResult().success(Number(len(obj.value)))
+
+        else:
             return RuntimeResult().failure(RunTimeError(
-                self.pos_start, self.pos_end, 'First argument is not type list', exec_ctx
+                self.pos_start, self.pos_end, 'First argument is not type list or string', exec_ctx
             ))
 
-        return RuntimeResult().success(Number(len(list.elements)))
-
     execute_print.arg_names = ['value']
-    execute_print_return.arg_names = ['value']
     execute_input.arg_names = []
-    execute_is_number.arg_names = ['value']
-    execute_is_string.arg_names = ['value']
-    execute_is_list.arg_names = ['value']
-    execute_is_base_function.arg_names = ['value']
+    execute_isnumber.arg_names = ['value']
+    execute_isstring.arg_names = ['value']
+    execute_islist.arg_names = ['value']
+    execute_isbasefunction.arg_names = ['value']
     execute_append.arg_names = ['list', 'value']
     execute_pop.arg_names = ['list', 'value']
     execute_extend.arg_names = ['list_a', 'list_b']
+    execute_reverse.arg_names = ['list']
+    execute_reversed.arg_names = ['list']
     execute_clear.arg_names = ['list']
-    execute_length.arg_names = ['list']
+    execute_length.arg_names = ['obj']
