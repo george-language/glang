@@ -70,7 +70,7 @@ class Parser:
         if not result.error and self.current_token.type is not TT_EOF:
             return result.failure(InvalidSyntaxError(
                 self.current_token.pos_start, self.current_token.pos_end,
-                'Expected operators "+", "-", "*" or "/"'
+                'Expected operators "+", "-", "*", "/" or "isleepnow"'
             ))
 
         return result
