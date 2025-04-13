@@ -1,7 +1,7 @@
 <img src="resources/icons/george_language_icon.svg" width="125">
 
 # George Language
-George Language is a dynamically-typed, interpreted programming language where program syntax is 
+George Language (GLang for short) is a dynamically-typed, interpreted programming language where program syntax is 
 represented as a dog doing day-to-day activities.
 
 ```
@@ -45,22 +45,22 @@ object x = oppositeof true
 This syntax replaces the "not" keyword used in other languages, only building off of simplicity.
 
 ## Is It fast?
-George Language gets performance matching languages like Python (as it is implemented in Python.) 
+GLang gets performance matching languages like Python (as it is implemented in Python.) 
 It uses a very light type checker, but nothing large that creates a major overhead. It also 
-doesn't require a garbage collector, as that is already managed by Python. This makes George
-Language **FAST** for many applications.
+doesn't require a garbage collector, as that is already managed by Python. This makes GLang
+**FAST** for many applications.
 
 ## In The Terminal?
-George Language works in the terminal by itself as well. Use the `;` character to define multi-line programs
+GLang works in the terminal by itself as well. Use the `;` character to define multi-line programs
 on one line.
 
 ## Install
 Pre-built installers are currently available for Windows only. To install, go to the releases page and find 
 the latest release binary (.exe) and download it. Run the installer and follow the instructions inside it.
 
-After George Language is installed, add the folder location to the 
+After GLang is installed, add the `GeorgeLanguage` folder location to the 
 [system path variable](https://superuser.com/questions/1861276/how-to-set-a-folder-to-the-path-environment-variable-in-windows-11)
-and you can use it anywhere on your PC!
+then you can use it anywhere on your PC!
 
 # Keywords, Values, Built-ins, and More
 A full list of all keywords, values, and built-ins is listed below:
