@@ -553,7 +553,7 @@ class List(Value):
             return new_list, None
 
         else:
-            None, Value.illegalOperation(self, other)
+            return None, Value.illegalOperation(self, other)
 
     def subtractedBy(self, other):
         if isinstance(other, Number):
@@ -572,7 +572,7 @@ class List(Value):
                 )
 
         else:
-            None, Value.illegalOperation(self, other)
+            return None, Value.illegalOperation(self, other)
 
     def multipliedBy(self, other):
         new_list = self.copy()
@@ -613,13 +613,13 @@ class BaseFunction(Value):
         super().__init__()
         self.name = name or '<anonymous>'
 
-    def generateNewContext(self):
+    def generateNewContext(self) -> Context:
         new_context = Context(self.name, self.context, self.pos_start)
         new_context.symbol_table = SymbolTable(new_context.parent.symbol_table)
 
         return new_context
 
-    def checkArgs(self, arg_names, args):
+    def checkArgs(self, arg_names, args) -> RuntimeResult.success:
         result = RuntimeResult()
 
         if len(args) > len(arg_names) or len(args) < len(arg_names):
@@ -638,7 +638,7 @@ class BaseFunction(Value):
             arg_value.setContext(exec_ctx)
             exec_ctx.symbol_table.set(arg_name, arg_value)
 
-    def checkAndPopulateArgs(self, arg_names, args, exec_ctx):
+    def checkAndPopulateArgs(self, arg_names, args, exec_ctx) -> RuntimeResult.success:
         result = RuntimeResult()
         result.register(self.checkArgs(arg_names, args))
 

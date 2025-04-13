@@ -42,12 +42,15 @@ class Lexer:
         self.pos.advance(self.current_char)
         self.current_char = self.text[self.pos.index] if self.pos.index < len(self.text) else None
 
-    def makeTokens(self) -> tuple[list, None]:
+    def makeTokens(self) -> tuple[list, None or Token]:
         tokens = []
 
         while self.current_char is not None:
             if self.current_char in ' \t':
                 self.advance()
+
+            elif self.current_char == '#':
+                self.skipComment()
 
             elif self.current_char in ';\n':
                 tokens.append(Token(TT_NEWLINE, pos_start=self.pos))
@@ -213,7 +216,7 @@ class Lexer:
 
         return Token(token_type, pos_start=pos_start, pos_end=self.pos)
 
-    def makeNotEquals(self):
+    def makeNotEquals(self) -> Token or ExpectedCharacterError:
         pos_start = self.pos.copy()
         self.advance()
 
@@ -245,6 +248,14 @@ class Lexer:
             token_type = TT_GTE
 
         return Token(token_type, pos_start=pos_start, pos_end=self.pos)
+
+    def skipComment(self):
+        self.advance()
+
+        while self.current_char != '\n':
+            self.advance()
+
+        self.advance()
 
 
 Number.null = Number(0)
