@@ -947,7 +947,7 @@ class BuiltInFunction(BaseFunction):
 
                         if value is not None:
                             value = value.copy().setContext(exec_ctx).setPos(self.pos_start, self.pos_end)
-                            exec_ctx.symbol_table.set(obj_name.value, value)
+                            exec_ctx.parent.symbol_table.set(obj_name.value, value.copy())
 
                         else:
                             return RuntimeResult().failure(RunTimeError(
