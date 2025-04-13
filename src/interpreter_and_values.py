@@ -728,9 +728,22 @@ class BuiltInFunction(BaseFunction):
         return RuntimeResult().success(Number.null)
 
     def execute_input(self, exec_ctx):
-        text = input()
+        text = input(str(exec_ctx.symbol_table.get('query')))
 
         return RuntimeResult().success(String(text))
+
+    def execute_inputnum(self, exec_ctx):
+        number = input(str(exec_ctx.symbol_table.get('query')))
+
+        try:
+            number = int(number)
+
+        except:
+            return RuntimeResult().failure(RunTimeError(self.pos_start,
+                                                        self.pos_end,
+                                                        'Type <stdin> was not an integer or float'))
+
+        return RuntimeResult().success(Number(number))
 
     def execute_isnumber(self, exec_ctx):
         is_instance = isinstance(exec_ctx.symbol_table.get('value'), Number)
@@ -855,7 +868,8 @@ class BuiltInFunction(BaseFunction):
             ))
 
     execute_print.arg_names = ['value']
-    execute_input.arg_names = []
+    execute_input.arg_names = ['query']
+    execute_inputnum.arg_names = ['query']
     execute_isnumber.arg_names = ['value']
     execute_isstring.arg_names = ['value']
     execute_islist.arg_names = ['value']
