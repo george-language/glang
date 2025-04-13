@@ -5,14 +5,14 @@ George Language is a dynamically-typed, interpreted programming language where p
 represented as a dog doing day-to-day activities.
 
 ```
-gettoy math_pi from "modules/math.glang"
+gettoy(["math_pi"], "modules/math.glang")
 
 object x = 0
 
 # Lets go for a walk!
 walk i = 0 through 10 then
     object x = x + 1
-    
+
     if x == 5 then
         leave
     endbody
@@ -27,7 +27,7 @@ endbody
 
 greet("George")
 
-bark("Pi is equal to: " + math_pi)
+bark("Pi is equal to: " + tostring(math_pi))
 bark("We have reached the end of our program. I hope you enjoyed!")
 ```
 
@@ -35,19 +35,14 @@ bark("We have reached the end of our program. I hope you enjoyed!")
 Well, it all started as a joke. You see, one of our team members has a cute pug named George. One day we said 
 "Why not make a language named after George with a cute syntax?" And that's when it was born.
 
-George Language makes programming more expressive; think of it like turning "not" into "opposite of", it 
-turns the word "not" into an easier to understand value, meaning "the opposite of something". George Language 
-already does this by replacing the `not` keyword with `oppositeof`:
+George Language makes programming more expressive and easier to read, for example, let's declare
+a variable "the opposite of true", or false.
 
 ```
-object x = oppositeof true # false!
+object x = oppositeof true
 ```
 
-Another great example is instead of using `var` for variables, we use `object` to represent an "object":
-
-```
-object x = 10
-```
+This syntax replaces the "not" keyword used in other languages, only building off of simplicity.
 
 ## Is it fast?
 George Language gets performance matching languages like Python (as it is implemented in Python.) 
@@ -66,6 +61,23 @@ A full list of all keywords, values, and built-ins is listed below:
 |----------------------------------------------------------|---------------------------------------------------------------------------------------|
 | `object [var_name] = [value]`                            | Assign a variable, can either be a number, string (`"string"`), or anonymous function |
 | `bark([value])`                                          | Print an output to the terminal                                                       |
+| `chew([query])`                                          | Get user input from the terminal                                                      |
+| `chewnum([query])`                                       | Get user input as a Number from the terminal                                          |
+| `gettoy([var_names, functions], [glang_file])`           | Import variables, functions, or lists into your program from another program file     |
+| `isnumber([object])`                                     | Check if a value is type Number                                                       |
+| `isstring([object])`                                     | Check if a value is type String                                                       |
+| `islist([object])`                                       | Check if a value is type List                                                         |
+| `isfunc([object])`                                       | Check if a value is type Function                                                     |
+| `tonumber([object])`                                     | Return a String (e.g. "1.0") as a Number                                              |
+| `tostring([object])`                                     | Return a Number (e.g. 1.0) as a String                                                |
+| `append([list], [object])`                               | Append an object to a List                                                            |
+| `pop([list], [index])`                                   | Pop the List at that index                                                            |
+| `extend([list_a], [list_b])`                             | Extend a List to another List (combine the two lists)                                 |
+| `reverse([list])`                                        | Reverse a List                                                                        |
+| `reversed([list])`                                       | Return a reversed version of a List                                                   |
+| `clear([list])`                                          | Clear all the values in a List                                                        |
+| `lengthof([list or string])`                             | Return the length of a List or String                                                 |
+| `throw([details])`                                       | Toss an error to the interpreter with the specified details                           |
 | `func [function_name]([args])`                           | Define a callable function                                                            |
 | `true`                                                   | Value representing `True`                                                             |
 | `false`                                                  | Value representing `False`                                                            |
@@ -78,5 +90,4 @@ A full list of all keywords, values, and built-ins is listed below:
 | `if [expr] then <expr>`                                  | If expression                                                                         |
 | `alsoif [expr] then <expr>`                              | Else-if expression (used with if expression)                                          |
 | `otherwise <expr>`                                       | Else expression (used with if expression)                                             |
-| `gettoy [var_names, functions] from [glang_file]`        | Import variables, functions, or lists into your program from another program file     |
-| `endbody`                                                | Specify the ending of a `funky`, `walk`, or `while`                                   |
+| `endbody`                                                | Specify the ending of a `func`, `walk`, `if` or `while` statement                     |

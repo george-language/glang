@@ -22,6 +22,8 @@ class Interpreter:
         self.global_symbol_table.set('isstring', BuiltInFunction('isstring'))
         self.global_symbol_table.set('islist', BuiltInFunction('islist'))
         self.global_symbol_table.set('isfunction', BuiltInFunction('isfunction'))
+        self.global_symbol_table.set('tostring', BuiltInFunction('tostring'))
+        self.global_symbol_table.set('tonumber', BuiltInFunction('tostring'))
         self.global_symbol_table.set('append', BuiltInFunction('append'))
         self.global_symbol_table.set('pop', BuiltInFunction('pop'))
         self.global_symbol_table.set('extend', BuiltInFunction('extend'))
@@ -801,6 +803,26 @@ class BuiltInFunction(BaseFunction):
 
         return RuntimeResult().success(Number.true if is_instance else Number.false)
 
+    def execute_tostring(self, exec_ctx):
+        obj = exec_ctx.symbol_table.get('value')
+
+        if not isinstance(obj, Number):
+            return RuntimeResult().failure(RunTimeError(
+                self.pos_start, self.pos_end, 'First argument is not type number', exec_ctx
+            ))
+
+        return RuntimeResult().success(String(str(obj.value)))
+
+    def execute_tonumber(self, exec_ctx):
+        obj = exec_ctx.symbol_table.get('value')
+
+        if not isinstance(obj, String):
+            return RuntimeResult().failure(RunTimeError(
+                self.pos_start, self.pos_end, 'First argument is not type string', exec_ctx
+            ))
+
+        return RuntimeResult().success(Number(float(obj.value)))
+
     def execute_append(self, exec_ctx):
         list_obj = exec_ctx.symbol_table.get('list')
         value = exec_ctx.symbol_table.get('value')
@@ -902,6 +924,7 @@ class BuiltInFunction(BaseFunction):
             return RuntimeResult().failure(RunTimeError(
                 self.pos_start, self.pos_end, 'First argument is not type list or string', exec_ctx
             ))
+
     def execute_import(self, exec_ctx):
         objs_to_import = exec_ctx.symbol_table.get('objs')
         from_file = exec_ctx.symbol_table.get('file_name')
@@ -987,6 +1010,8 @@ class BuiltInFunction(BaseFunction):
     execute_isstring.arg_names = ['value']
     execute_islist.arg_names = ['value']
     execute_isfunction.arg_names = ['value']
+    execute_tostring.arg_names = ['value']
+    execute_tonumber.arg_names = ['value']
     execute_append.arg_names = ['list', 'value']
     execute_pop.arg_names = ['list', 'value']
     execute_extend.arg_names = ['list_a', 'list_b']
