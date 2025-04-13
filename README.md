@@ -58,7 +58,9 @@ on one line.
 Pre-built installers are currently available for Windows only. To install, go to the releases page and find 
 the latest release binary (.exe) and download it. Run the installer and follow the instructions inside it.
 
-After George Language is installed, add it to the [system path variable]()
+After George Language is installed, add the folder location to the 
+[system path variable](https://superuser.com/questions/1861276/how-to-set-a-folder-to-the-path-environment-variable-in-windows-11)
+and you can use it anywhere on your PC!
 
 # Keywords, Values, Built-ins, and More
 A full list of all keywords, values, and built-ins is listed below:
