@@ -31,9 +31,9 @@ bark("Pi is equal to: " + tostring(math_pi))
 bark("We have reached the end of our program. I hope you enjoyed!")
 ```
 
-## Why make George Language?
+## Why Make George Language?
 Well, it all started as a joke. You see, one of our team members has a cute pug named George. One day we said 
-"Why not make a language named after George with a cute syntax?" And that's when it was born.
+_"Why not make a language named after George with a cute syntax?"_ And that's when it was born.
 
 George Language makes programming more expressive and easier to read, for example, let's declare
 a variable "the opposite of true", or false.
@@ -44,7 +44,7 @@ object x = oppositeof true
 
 This syntax replaces the "not" keyword used in other languages, only building off of simplicity.
 
-## Is it fast?
+## Is It fast?
 George Language gets performance matching languages like Python (as it is implemented in Python.) 
 It uses a very light type checker, but nothing large that creates a major overhead. It also 
 doesn't require a garbage collector, as that is already managed by Python. This makes George
@@ -54,7 +54,13 @@ Language **FAST** for many applications.
 George Language works in the terminal by itself as well. Use the `;` character to define multi-line programs
 on one line.
 
-# Keywords, values, built-ins, and more
+## Install
+Pre-built installers are currently available for Windows only. To install, go to the releases page and find 
+the latest release binary (.exe) and download it. Run the installer and follow the instructions inside it.
+
+After George Language is installed, add it to the [system path variable]()
+
+# Keywords, Values, Built-ins, and More
 A full list of all keywords, values, and built-ins is listed below:
 
 | Syntax                                                   | Purpose                                                                               |
