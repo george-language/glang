@@ -1,7 +1,7 @@
 object a = 0
 
 while a < 10 then
-    ignore
-isleepnow
+    object a = a + 1
+endbody
 
 bark(a)

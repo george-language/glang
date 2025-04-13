@@ -32,7 +32,7 @@ class Interpreter:
         for element in node.element_nodes:
             elements.append(result.register(self.visit(element, context)))
 
-            if result.error:
+            if result.shouldReturn():
                 return result
 
         return result.success(List(elements).setContext(context).setPos(node.pos_start, node.pos_end))
@@ -57,7 +57,7 @@ class Interpreter:
         var_name = node.var_name_token.value
         value = result.register(self.visit(node.value_node, context))
 
-        if result.error:
+        if result.shouldReturn():
             return result
 
         context.symbol_table.set(var_name, value)
@@ -67,12 +67,12 @@ class Interpreter:
         result = RuntimeResult()
         left = result.register(self.visit(node.left_node, context))
 
-        if result.error:
+        if result.shouldReturn():
             return result
 
         right = result.register(self.visit(node.right_node, context))
 
-        if result.error:
+        if result.shouldReturn():
             return result
 
         if node.op_token.type == TT_PLUS:
@@ -112,7 +112,7 @@ class Interpreter:
         result = RuntimeResult()
         number = result.register(self.visit(node.node, context))
 
-        if result.error:
+        if result.shouldReturn():
             return result
 
         error = None
@@ -135,13 +135,13 @@ class Interpreter:
         for condition, expr, should_return_null in node.cases:
             condition_value = result.register(self.visit(condition, context))
 
-            if result.error:
+            if result.shouldReturn():
                 return result
 
             if condition_value.isTrue():
                 expr_value = result.register(self.visit(expr, context))
 
-                if result.error:
+                if result.shouldReturn():
                     return result
 
                 return result.success(Number.null if should_return_null else expr_value)
@@ -150,7 +150,7 @@ class Interpreter:
             expr, should_return_null = node.else_case
             else_value = result.register(self.visit(expr, context))
 
-            if result.error:
+            if result.shouldReturn():
                 return result
 
             return result.success(Number.null if should_return_null else else_value)
@@ -163,18 +163,18 @@ class Interpreter:
 
         start_value = result.register(self.visit(node.start_value_node, context))
 
-        if result.error:
+        if result.shouldReturn():
             return result
 
         end_value = result.register(self.visit(node.end_value_node, context))
 
-        if result.error:
+        if result.shouldReturn():
             return result
 
         if node.step_value_node:
             step_value = result.register(self.visit(node.step_value_node, context))
 
-            if result.error:
+            if result.shouldReturn():
                 return result
 
         else:
@@ -192,10 +192,18 @@ class Interpreter:
             context.symbol_table.set(node.var_name_token.value, Number(i))
             i += step_value.value
 
-            elements.append(result.register(self.visit(node.body_node, context)))
+            value = result.register(self.visit(node.body_node, context))
 
-            if result.error:
+            if result.shouldReturn() and result.loop_should_continue == False and result.loop_should_break == False:
                 return result
+
+            if result.loop_should_continue:
+                continue
+
+            if result.loop_should_break:
+                break
+
+            elements.append(value)
 
         return result.success(
             Number.null if node.should_return_null else List(elements).setContext(
@@ -209,16 +217,24 @@ class Interpreter:
         while True:
             condition = result.register(self.visit(node.condition_node, context))
 
-            if result.error:
+            if result.shouldReturn():
                 return result
 
             if not condition.isTrue():
                 break
 
-            elements.append(result.register(self.visit(node.body_node, context)))
+            value = result.register(self.visit(node.body_node, context))
 
-            if result.error:
+            if result.shouldReturn() and result.loop_should_continue is False and result.loop_should_break is False:
                 return result
+
+            if result.loop_should_continue:
+                continue
+
+            if result.loop_should_break:
+                break
+
+            elements.append(value)
 
         return result.success(Number.null if node.should_return_null else
                               List(elements).setContext(context).setPos(node.pos_start, node.pos_end)
@@ -230,7 +246,7 @@ class Interpreter:
         func_name = node.var_name_token.value if node.var_name_token else None
         body_node = node.body_node
         arg_names = [arg_name.value for arg_name in node.arg_name_tokens]
-        func_value = Function(func_name, body_node, arg_names, node.should_return_null).setContext(context).setPos(node.pos_start,
+        func_value = Function(func_name, body_node, arg_names, node.should_auto_return).setContext(context).setPos(node.pos_start,
                                                                                           node.pos_end)
 
         if node.var_name_token:
@@ -244,7 +260,7 @@ class Interpreter:
 
         value_to_call = result.register(self.visit(node.node_to_call, context))
 
-        if result.error:
+        if result.shouldReturn():
             return result
 
         value_to_call = value_to_call.copy().setPos(node.pos_start, node.pos_end)
@@ -252,17 +268,37 @@ class Interpreter:
         for arg_node in node.arg_nodes:
             args.append(result.register(self.visit(arg_node, context)))
 
-            if result.error:
+            if result.shouldReturn():
                 return result
 
         return_value = result.register(value_to_call.execute(args))
 
-        if result.error:
+        if result.shouldReturn():
             return result
 
         return_value = return_value.copy().setPos(node.pos_start, node.pos_end).setContext(context)
 
         return result.success(return_value)
+
+    def visit_ReturnNode(self, node, context):
+        result = RuntimeResult()
+
+        if node.node_to_return:
+            value = result.register(self.visit(node.node_to_return, context))
+
+            if result.shouldReturn():
+                return result
+
+        else:
+            value = Number.null
+
+        return result.successReturn(value)
+
+    def visit_ContinueNode(self, node, context):
+        return RuntimeResult().successContinue()
+
+    def visit_BreakNode(self, node, context):
+        return RuntimeResult().successBreak()
 
 
 class Value:
@@ -606,7 +642,7 @@ class BaseFunction(Value):
         result = RuntimeResult()
         result.register(self.checkArgs(arg_names, args))
 
-        if result.error:
+        if result.shouldReturn():
             return result
 
         self.populateArgs(arg_names, args, exec_ctx)
@@ -614,11 +650,11 @@ class BaseFunction(Value):
 
 
 class Function(BaseFunction):
-    def __init__(self, name, body_node, arg_names, should_return_null):
+    def __init__(self, name, body_node, arg_names, should_auto_return):
         super().__init__(name)
         self.body_node = body_node
         self.arg_names = arg_names
-        self.should_return_null = should_return_null
+        self.should_auto_return = should_auto_return
 
     def execute(self, args):
         result = RuntimeResult()
@@ -627,18 +663,19 @@ class Function(BaseFunction):
 
         result.register(self.checkAndPopulateArgs(self.arg_names, args, exec_context))
 
-        if result.error:
+        if result.shouldReturn():
             return result
 
         value = result.register(interpreter.visit(self.body_node, exec_context))
 
-        if result.error:
+        if result.shouldReturn() and result.func_return_value is None:
             return result
 
-        return result.success(Number.null if self.should_return_null else value)
+        return_value = (value if self.should_auto_return else None) or result.func_return_value or Number.null
+        return result.success(return_value)
 
     def copy(self):
-        copy = Function(self.name, self.body_node, self.arg_names, self.should_return_null)
+        copy = Function(self.name, self.body_node, self.arg_names, self.should_auto_return)
         copy.setPos(self.pos_start, self.pos_end)
         copy.setContext(self.context)
         return copy
@@ -660,12 +697,12 @@ class BuiltInFunction(BaseFunction):
 
         result.register(self.checkAndPopulateArgs(method.arg_names, args, exec_ctx))
 
-        if result.error:
+        if result.shouldReturn():
             return result
 
         return_value = result.register(method(exec_ctx))
 
-        if result.error:
+        if result.shouldReturn():
             return result
 
         return result.success(return_value)

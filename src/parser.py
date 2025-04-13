@@ -70,7 +70,7 @@ class Parser:
         if not result.error and self.current_token.type is not TT_EOF:
             return result.failure(InvalidSyntaxError(
                 self.current_token.pos_start, self.current_token.pos_end,
-                'Expected operators "+", "-", "*", "/" or "isleepnow"'
+                'Expected operators "+", "-", "*", "/" or "endbody"'
             ))
 
         return result
@@ -158,17 +158,18 @@ class Parser:
 
                 else_case = (statements, True)
 
-                if self.current_token.matches(TT_KEYWORD, 'isleepnow'):
+                if self.current_token.matches(TT_KEYWORD, 'endbody'):
                     result.registerAdvancement()
                     self.advance()
 
                 else:
                     return result.failure(InvalidSyntaxError(
                         self.current_token.pos_start, self.current_token.pos_end,
-                        'Expected "isleepnow"'
+                        'Expected "endbody"'
                     ))
+
             else:
-                expr = result.register(self.expr())
+                expr = result.register(self.statement())
 
                 if result.error:
                     return result
@@ -211,7 +212,7 @@ class Parser:
         result.registerAdvancement()
         self.advance()
 
-        condition = result.register(self.expr())
+        condition = result.register(self.statement())
 
         if result.error:
             return result
@@ -236,7 +237,7 @@ class Parser:
 
             cases.append((condition, statements, True))
 
-            if self.current_token.matches(TT_KEYWORD, 'isleepnow'):
+            if self.current_token.matches(TT_KEYWORD, 'endbody'):
                 result.registerAdvancement()
                 self.advance()
 
@@ -248,6 +249,7 @@ class Parser:
 
                 new_cases, else_case = all_cases
                 cases.extend(new_cases)
+
         else:
             expr = result.register(self.expr())
 
@@ -346,10 +348,10 @@ class Parser:
             if result.error:
                 return result
 
-            if not self.current_token.matches(TT_KEYWORD, 'isleepnow'):
+            if not self.current_token.matches(TT_KEYWORD, 'endbody'):
                 return result.failure(InvalidSyntaxError(
                     self.current_token.pos_start, self.advance().pos_end,
-                    'Expected "isleepnow"'
+                    'Expected "endbody"'
                 ))
 
             result.registerAdvancement()
@@ -357,7 +359,7 @@ class Parser:
 
             return result.success(ForNode(var_name, start_value, end_value, step_value, body, True))
 
-        body = result.register(self.expr())
+        body = result.register(self.statement())
 
         if result.error:
             return result
@@ -399,10 +401,10 @@ class Parser:
             if result.error:
                 return result
 
-            if not self.current_token.matches(TT_KEYWORD, 'isleepnow'):
+            if not self.current_token.matches(TT_KEYWORD, 'endbody'):
                 return result.failure(InvalidSyntaxError(
                     self.current_token.pos_start, self.current_token.pos_end,
-                    'Expected "isleepnow"'
+                    'Expected "endbody"'
                 ))
 
             result.registerAdvancement()
@@ -410,7 +412,7 @@ class Parser:
 
             return result.success(WhileNode(condition, body, True))
 
-        body = result.register(self.expr())
+        body = result.register(self.statement())
 
         if result.error:
             return result
@@ -488,6 +490,44 @@ class Parser:
 
         return result.success(node)
 
+    def statement(self):
+        result = ParseResult()
+        pos_start = self.current_token.pos_start.copy()
+
+        if self.current_token.matches(TT_KEYWORD, 'give'):
+            result.registerAdvancement()
+            self.advance()
+
+            expr = result.tryRegister(self.expr())
+
+            if not expr:
+                self.reverse(result.to_reverse_count)
+
+            return result.success(ReturnNode(expr, pos_start=pos_start, pos_end=self.current_token.pos_start.copy()))
+
+        if self.current_token.matches(TT_KEYWORD, 'next'):
+            result.registerAdvancement()
+            self.advance()
+
+            return result.success(ContinueNode(pos_start=pos_start, pos_end=self.current_token.pos_start.copy()))
+
+        if self.current_token.matches(TT_KEYWORD, 'leave'):
+            result.registerAdvancement()
+            self.advance()
+
+            return result.success(BreakNode(pos_start=pos_start, pos_end=self.current_token.pos_start.copy()))
+
+        expr = result.register(self.expr())
+
+        if result.error:
+            return result.failure(InvalidSyntaxError(
+                self.current_token.pos_start, self.current_token.pos_end,
+                'Expected "give", "next", "leave", "object", "if", "walk", "while", "func", int, float, identifier, '
+                '"+", "-", "(", "[" or "oppositeof"'
+            ))
+
+        return result.success(expr)
+
     def statements(self):
         result = ParseResult()
         statements = []
@@ -497,7 +537,7 @@ class Parser:
             result.registerAdvancement()
             self.advance()
 
-        statement = result.register(self.expr())
+        statement = result.register(self.statement())
 
         if result.error:
             return result
@@ -521,7 +561,7 @@ class Parser:
             if not more_statements:
                 break
 
-            statement = result.tryRegister(self.expr())
+            statement = result.tryRegister(self.statement())
 
             if not statement:
                 self.reverse(result.to_reverse_count)
@@ -778,7 +818,7 @@ class Parser:
                 var_name_token,
                 arg_name_tokens,
                 node_to_return,
-                False
+                True
             ))
 
         if self.current_token.type != TT_NEWLINE:
@@ -795,10 +835,10 @@ class Parser:
         if result.error:
             return result
 
-        if not self.current_token.matches(TT_KEYWORD, 'isleepnow'):
+        if not self.current_token.matches(TT_KEYWORD, 'endbody'):
             return result.failure(InvalidSyntaxError(
                 self.current_token.pos_start, self.current_token.pos_end,
-                'Expected "isleepnow"'
+                'Expected "endbody"'
             ))
 
         result.registerAdvancement()
@@ -808,7 +848,7 @@ class Parser:
             var_name_token,
             arg_name_tokens,
             body,
-            True
+            False
         ))
 
     def binaryOperator(self, func_a, ops, func_b=None):

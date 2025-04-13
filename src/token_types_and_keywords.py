@@ -43,5 +43,8 @@ KEYWORDS = [
     'step',
     'while',
     'func',
-    'isleepnow'
+    'give',
+    'next',
+    'leave',
+    'endbody',
 ]
