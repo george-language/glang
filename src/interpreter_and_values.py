@@ -30,6 +30,7 @@ class Interpreter:
         self.global_symbol_table.set('clear', BuiltInFunction('clear'))
         self.global_symbol_table.set('lengthof', BuiltInFunction('length'))
         self.global_symbol_table.set('gettoy', BuiltInFunction('import'))
+        self.global_symbol_table.set('throw', BuiltInFunction('error'))
 
     def visit(self, node, context):
         method_name = f'visit_{type(node).__name__}'
@@ -901,7 +902,6 @@ class BuiltInFunction(BaseFunction):
             return RuntimeResult().failure(RunTimeError(
                 self.pos_start, self.pos_end, 'First argument is not type list or string', exec_ctx
             ))
-
     def execute_import(self, exec_ctx):
         objs_to_import = exec_ctx.symbol_table.get('objs')
         from_file = exec_ctx.symbol_table.get('file_name')
@@ -967,6 +967,19 @@ class BuiltInFunction(BaseFunction):
                 self.pos_start, self.pos_end, f'Could not find module "{from_file.value}"', exec_ctx
             ))
 
+    def execute_error(self, exec_ctx):
+        obj = exec_ctx.symbol_table.get('text')
+
+        if not isinstance(obj, String):
+            return RuntimeResult().failure(RunTimeError(
+                self.pos_start, self.pos_end, 'First argument is not type string', exec_ctx
+            ))
+
+        else:
+            return RuntimeResult().failure(RunTimeError(
+                self.pos_start, self.pos_end, obj.value, exec_ctx
+            ))
+
     execute_print.arg_names = ['value']
     execute_input.arg_names = ['query']
     execute_inputnum.arg_names = ['query']
@@ -982,3 +995,4 @@ class BuiltInFunction(BaseFunction):
     execute_clear.arg_names = ['list']
     execute_length.arg_names = ['obj']
     execute_import.arg_names = ['objs', 'file_name']
+    execute_error.arg_names = ['text']

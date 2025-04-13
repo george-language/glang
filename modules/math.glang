@@ -1,6 +1,19 @@
 object math_pi = 3.141592653589793
 object math_e = 2.718281828459045
 
-func radians(degrees)
+func math_radians(degrees)
     give degrees * (math_pi / 180.0)
+endbody
+
+func math_abs(x)
+    give if x >= 0 then x otherwise -x
+endbody
+
+func math_sqrt(x)
+    if x < 0 then
+        throw("Cannot compute square root of negative number")
+    endbody
+
+    give x ^ 0.5
+
 endbody
