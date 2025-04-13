@@ -1,3 +1,5 @@
+from src.lexer import Lexer
+from src.parser import Parser
 from src.token_types_and_keywords import *
 from src.context import Context
 from src.runtime_result import RuntimeResult
@@ -8,6 +10,27 @@ from src.errors import RunTimeError
 
 
 class Interpreter:
+    def __init__(self):
+        self.global_symbol_table = SymbolTable()
+        self.global_symbol_table.set('emptybowl', Number.null)
+        self.global_symbol_table.set('true', Number.true)
+        self.global_symbol_table.set('false', Number.false)
+        self.global_symbol_table.set('bark', BuiltInFunction('print'))
+        self.global_symbol_table.set('chew', BuiltInFunction('input'))
+        self.global_symbol_table.set('chewnum', BuiltInFunction('inputnum'))
+        self.global_symbol_table.set('isnumber', BuiltInFunction('isnumber'))
+        self.global_symbol_table.set('isstring', BuiltInFunction('isstring'))
+        self.global_symbol_table.set('islist', BuiltInFunction('islist'))
+        self.global_symbol_table.set('isfunction', BuiltInFunction('isfunction'))
+        self.global_symbol_table.set('append', BuiltInFunction('append'))
+        self.global_symbol_table.set('pop', BuiltInFunction('pop'))
+        self.global_symbol_table.set('extend', BuiltInFunction('extend'))
+        self.global_symbol_table.set('reverse', BuiltInFunction('reverse'))
+        self.global_symbol_table.set('reversed', BuiltInFunction('reversed'))
+        self.global_symbol_table.set('clear', BuiltInFunction('clear'))
+        self.global_symbol_table.set('lengthof', BuiltInFunction('length'))
+        self.global_symbol_table.set('gettoy', BuiltInFunction('import'))
+
     def visit(self, node, context):
         method_name = f'visit_{type(node).__name__}'
         method = getattr(self, method_name, self.noVisitMethod)
@@ -246,8 +269,9 @@ class Interpreter:
         func_name = node.var_name_token.value if node.var_name_token else None
         body_node = node.body_node
         arg_names = [arg_name.value for arg_name in node.arg_name_tokens]
-        func_value = Function(func_name, body_node, arg_names, node.should_auto_return).setContext(context).setPos(node.pos_start,
-                                                                                          node.pos_end)
+        func_value = Function(func_name, body_node, arg_names, node.should_auto_return).setContext(context).setPos(
+            node.pos_start,
+            node.pos_end)
 
         if node.var_name_token:
             context.symbol_table.set(func_name, func_value)
@@ -498,6 +522,11 @@ class Number(Value):
         return f'<number: {self.value}>'
 
 
+Number.null = Number(0)
+Number.true = Number(1)
+Number.false = Number(0)
+
+
 class String(Value):
     def __init__(self, value):
         super().__init__()
@@ -695,7 +724,13 @@ class BuiltInFunction(BaseFunction):
         method_name = f'execute_{self.name}'
         method = getattr(self, method_name, self.noVisitMethod)
 
-        result.register(self.checkAndPopulateArgs(method.arg_names, args, exec_ctx))
+        if hasattr(method, 'arg_names'):
+            result.register(self.checkAndPopulateArgs(method.arg_names, args, exec_ctx))
+
+        else:
+            return result.failure(RunTimeError(
+                self.pos_start, self.pos_end, 'Built-in missing arguments', exec_ctx
+            ))
 
         if result.shouldReturn():
             return result
@@ -760,7 +795,7 @@ class BuiltInFunction(BaseFunction):
 
         return RuntimeResult().success(Number.true if is_instance else Number.false)
 
-    def execute_isbasefunction(self, exec_ctx):
+    def execute_isfunction(self, exec_ctx):
         is_instance = isinstance(exec_ctx.symbol_table.get('value'), BaseFunction)
 
         return RuntimeResult().success(Number.true if is_instance else Number.false)
@@ -867,13 +902,78 @@ class BuiltInFunction(BaseFunction):
                 self.pos_start, self.pos_end, 'First argument is not type list or string', exec_ctx
             ))
 
+    def execute_import(self, exec_ctx):
+        objs_to_import = exec_ctx.symbol_table.get('objs')
+        from_file = exec_ctx.symbol_table.get('file_name')
+
+        if not isinstance(objs_to_import, List):
+            return RuntimeResult().failure(RunTimeError(
+                self.pos_start, self.pos_end, 'First argument is not type list', exec_ctx
+            ))
+
+        elif not isinstance(from_file, String):
+            return RuntimeResult().failure(RunTimeError(
+                self.pos_start, self.pos_end, 'Second argument is not type string', exec_ctx
+            ))
+
+        try:
+            with open(from_file.value, 'r') as f:
+                text = f.read()
+
+                lexer = Lexer(from_file, text)
+                tokens, error = lexer.makeTokens()
+
+                if error:
+                    return RuntimeResult().failure(error)
+
+                parser = Parser(tokens)
+                ast = parser.parse()
+
+                if ast.error:
+                    return RuntimeResult().failure(ast.error)
+
+                interpreter = Interpreter()
+                module_context = Context('<module>')
+                module_context.symbol_table = interpreter.global_symbol_table
+
+                result = interpreter.visit(ast.node, module_context)
+
+                if result.error:
+                    return result
+
+                for obj_name in objs_to_import.elements:
+                    if isinstance(obj_name, String):
+                        value = module_context.symbol_table.get(obj_name.value)
+
+                        if value is not None:
+                            value = value.copy().setContext(exec_ctx).setPos(self.pos_start, self.pos_end)
+                            exec_ctx.symbol_table.set(obj_name.value, value)
+
+                        else:
+                            return RuntimeResult().failure(RunTimeError(
+                                self.pos_start, self.pos_end,
+                                f'"{obj_name.value}" is not defined in module "{from_file.value}"', exec_ctx
+                            ))
+
+                    else:
+                        return RuntimeResult().failure(RunTimeError(
+                            self.pos_start, self.pos_end, 'Elements in import list must be strings', exec_ctx
+                        ))
+
+                return RuntimeResult().success(Number.null)
+
+        except FileNotFoundError:
+            return RuntimeResult().failure(RunTimeError(
+                self.pos_start, self.pos_end, f'Could not find module "{from_file.value}"', exec_ctx
+            ))
+
     execute_print.arg_names = ['value']
     execute_input.arg_names = ['query']
     execute_inputnum.arg_names = ['query']
     execute_isnumber.arg_names = ['value']
     execute_isstring.arg_names = ['value']
     execute_islist.arg_names = ['value']
-    execute_isbasefunction.arg_names = ['value']
+    execute_isfunction.arg_names = ['value']
     execute_append.arg_names = ['list', 'value']
     execute_pop.arg_names = ['list', 'value']
     execute_extend.arg_names = ['list_a', 'list_b']
@@ -881,3 +981,4 @@ class BuiltInFunction(BaseFunction):
     execute_reversed.arg_names = ['list']
     execute_clear.arg_names = ['list']
     execute_length.arg_names = ['obj']
+    execute_import.arg_names = ['objs', 'file_name']

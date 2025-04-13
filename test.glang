@@ -1,7 +1,3 @@
-object a = 0
+gettoy(["math_pi"], "modules/math.glang")
 
-while a < 10 then
-    object a = a + 1
-endbody
-
-bark(a)
+bark(math_pi)

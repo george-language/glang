@@ -16,3 +16,6 @@ class SymbolTable:
 
     def remove(self, name):
         del self.symbols[name]
+
+    def combined(self, table):
+        return self.symbols | table

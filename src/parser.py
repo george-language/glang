@@ -738,7 +738,7 @@ class Parser:
         if not self.current_token.matches(TT_KEYWORD, 'func'):
             return result.failure(InvalidSyntaxError(
                 self.current_token.pos_start, self.current_token.pos_end,
-                f"Expected 'FUN'"
+                'Expected "func"'
             ))
 
         result.registerAdvancement()
