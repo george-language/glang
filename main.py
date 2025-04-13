@@ -4,6 +4,9 @@ from src.language import run
 
 VERSION = '1.0.0'
 
+if getattr(sys, 'frozen', False):
+    os.chdir(sys._MEIPASS)
+
 file_path = None
 
 try:
