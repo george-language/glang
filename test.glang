@@ -1,4 +1,4 @@
-gettoy(["math_pi", "math_sqrt"], "modules/math.glang")
+gettoy(["math_pi", "math_sqrt"], math)
 
 bark(math_pi)
 bark(math_sqrt(-25))

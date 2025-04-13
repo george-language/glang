@@ -33,6 +33,7 @@ class Interpreter:
         self.global_symbol_table.set('lengthof', BuiltInFunction('length'))
         self.global_symbol_table.set('gettoy', BuiltInFunction('import'))
         self.global_symbol_table.set('throw', BuiltInFunction('error'))
+        self.global_symbol_table.set('math', String('modules/math.glang'))
 
     def visit(self, node, context):
         method_name = f'visit_{type(node).__name__}'
