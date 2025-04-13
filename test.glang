@@ -1,4 +1,4 @@
 gettoy(["math_pi", "math_sqrt"], math)
 
 bark(math_pi)
-bark(math_sqrt(-25))
+bark(math_sqrt(25))

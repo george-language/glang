@@ -1,12 +1,14 @@
+from src.token_types_and_keywords import *
 from src.lexer import Lexer
 from src.parser import Parser
-from src.token_types_and_keywords import *
 from src.context import Context
 from src.runtime_result import RuntimeResult
 from src.symbol_table import SymbolTable
 from src.nodes import NumberNode, VariableAccessNode, VariableAssignNode, BinaryOperatorNode, UnaryOperatorNode, \
     StringNode, ListNode
 from src.errors import RunTimeError
+import os.path
+import sys
 
 
 class Interpreter:
@@ -930,6 +932,9 @@ class BuiltInFunction(BaseFunction):
         objs_to_import = exec_ctx.symbol_table.get('objs')
         from_file = exec_ctx.symbol_table.get('file_name')
 
+        if getattr(sys, 'frozen', False):
+            os.chdir(sys._MEIPASS)
+
         if not isinstance(objs_to_import, List):
             return RuntimeResult().failure(RunTimeError(
                 self.pos_start, self.pos_end, 'First argument is not type list', exec_ctx
@@ -944,7 +949,7 @@ class BuiltInFunction(BaseFunction):
             with open(from_file.value, 'r') as f:
                 text = f.read()
 
-                lexer = Lexer(from_file, text)
+                lexer = Lexer(from_file.value, text)
                 tokens, error = lexer.makeTokens()
 
                 if error:
