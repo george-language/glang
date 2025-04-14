@@ -1,0 +1,20 @@
+# Declare a variable with object
+object x = 10
+
+# We can also use math
+object x = (10 * 10) / 10 + 0
+
+# We can assign objects to other objects
+object y = x
+
+# Objects can be reassigned to other types
+object x = "My String"
+object x = [1, 2, 3, 4, 5]
+object x = func greet(name) -> bark("Hello, " + name)
+object x = 10
+
+# We can output an object in the terminal using the `bark` built-in
+bark(x)
+
+# Objects can even be converted to other types
+bark("X is equal to: " + tostring(x))
