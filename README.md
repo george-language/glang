@@ -33,16 +33,17 @@ bark("We have reached the end of our program. I hope you enjoyed!")
 
 ## Why Make George Language?
 Well, it all started as a joke. You see, one of our team members has a cute pug named George. One day we said 
-_"Why not make a language named after George with a cute syntax?"_ And that's when it was born.
+_"Why not make a language named after George thats funny and cute?"_ And that's when it was born.
 
-George Language makes programming more expressive and easier to read, for example, let's declare
-a variable "the opposite of true", or false.
+GLang makes programming more expressive and easier to read, using a mix of humor and fun to define the syntax.
+
+To a beginner programmer, they have to spend a lot of time learning and remebering keywords, built-ins, and values in the language. GLang instead uses _easy-to-remeber_ language, for example the `print` statement is actually `bark`!
 
 ```
-object x = oppositeof true
+bark("Hello, World!")
 ```
 
-This syntax replaces the "not" keyword used in other languages, only building off of simplicity.
+This is just one of the many examples that makes GLang easier to learn and work with.
 
 ## Is It fast?
 GLang gets performance matching languages like Python (as it is implemented in Python.) 
@@ -62,7 +63,7 @@ After GLang is installed, add the `GeorgeLanguage` folder location to the
 [system path variable](https://superuser.com/questions/1861276/how-to-set-a-folder-to-the-path-environment-variable-in-windows-11)
 then you can use it anywhere on your PC!
 
-# Keywords, Values, Built-ins, and More
+## Keywords, Values, Built-ins, and More
 A full list of all keywords, values, and built-ins is listed below:
 
 | Syntax                                                   | Purpose                                                                               |
