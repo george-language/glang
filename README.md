@@ -57,14 +57,6 @@ doesn't require a garbage collector, as that is already managed by Python. This 
 GLang works in the terminal by itself as well. Use the `;` character to define multi-line programs
 on one line.
 
-## Install
-Pre-built installers are currently available for Windows only. To install, go to the releases page and find 
-the latest release binary (.exe) and download it. Run the installer and follow the instructions inside it.
-
-After GLang is installed, add the `GeorgeLanguage` folder location to the 
-[system path variable](https://superuser.com/questions/1861276/how-to-set-a-folder-to-the-path-environment-variable-in-windows-11)
-then you can use it anywhere on your PC!
-
 ## Keywords, Values, Built-ins, and More
 A full list of all keywords, values, and built-ins is listed below:
 
