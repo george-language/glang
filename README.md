@@ -57,4 +57,5 @@ doesn't require a garbage collector, as that is already managed by Python. This 
 GLang works in the terminal by itself as well. Use the `;` character to define multi-line programs
 on one line.
 
-More info on this project is available on our [website](https://sites.google.com/view/george-lang/home).
+
+_More info on this project is available on our [website](https://sites.google.com/view/george-lang/home)._
