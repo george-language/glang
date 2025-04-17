@@ -57,40 +57,4 @@ doesn't require a garbage collector, as that is already managed by Python. This 
 GLang works in the terminal by itself as well. Use the `;` character to define multi-line programs
 on one line.
 
-## Keywords, Values, Built-ins, and More
-A full list of all keywords, values, and built-ins is listed below:
-
-| Syntax                                                   | Purpose                                                                               |
-|----------------------------------------------------------|---------------------------------------------------------------------------------------|
-| `object [var_name] = [value]`                            | Assign a variable, can either be a number, string (`"string"`), or anonymous function |
-| `bark([value])`                                          | Print an output to the terminal                                                       |
-| `chew([query])`                                          | Get user input from the terminal                                                      |
-| `chewnum([query])`                                       | Get user input as a Number from the terminal                                          |
-| `gettoy([var_names, functions], [glang_file])`           | Import variables, functions, or lists into your program from another program file     |
-| `isnumber([object])`                                     | Check if a value is type Number                                                       |
-| `isstring([object])`                                     | Check if a value is type String                                                       |
-| `islist([object])`                                       | Check if a value is type List                                                         |
-| `isfunc([object])`                                       | Check if a value is type Function                                                     |
-| `tonumber([object])`                                     | Return a String (e.g. "1.0") as a Number                                              |
-| `tostring([object])`                                     | Return a Number (e.g. 1.0) as a String                                                |
-| `append([list], [object])`                               | Append an object to a List                                                            |
-| `pop([list], [index])`                                   | Pop the List at that index                                                            |
-| `extend([list_a], [list_b])`                             | Extend a List to another List (combine the two lists)                                 |
-| `reverse([list])`                                        | Reverse a List                                                                        |
-| `reversed([list])`                                       | Return a reversed version of a List                                                   |
-| `clear([list])`                                          | Clear all the values in a List                                                        |
-| `lengthof([list or string])`                             | Return the length of a List or String                                                 |
-| `throw([details])`                                       | Toss an error to the interpreter with the specified details                           |
-| `func [function_name]([args])`                           | Define a callable function                                                            |
-| `true`                                                   | Value representing `True`                                                             |
-| `false`                                                  | Value representing `False`                                                            |
-| `nothing`                                                | Value representing `Null` or `None`                                                   |
-| `oppositeof [value]`                                     | Return the opposite of a value                                                        |
-| `[value] and [value]`                                    | Return `true` if `[value]` and `[value]` otherwise return `false`                     |
-| `[value] or [value]`                                     | Return `true` if one `[value]` is correct otherwise return `false`                    |
-| `walk [var_name] = [a] through [b] step [i] then <expr>` | For loop (step argument is optional)                                                  |
-| `while [condition] then <expr>`                          | While loop                                                                            |
-| `if [expr] then <expr>`                                  | If expression                                                                         |
-| `alsoif [expr] then <expr>`                              | Else-if expression (used with if expression)                                          |
-| `otherwise <expr>`                                       | Else expression (used with if expression)                                             |
-| `endbody`                                                | Specify the ending of a `func`, `walk`, `if` or `while` statement                     |
+More info on this project is available on our [website](https://sites.google.com/view/george-lang/home).
