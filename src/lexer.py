@@ -155,6 +155,7 @@ class Lexer:
             escape_char = False
 
         self.advance()
+
         return Token(TT_STR, string, pos_start=pos_start, pos_end=self.pos)
 
     def makeIdentifier(self) -> Token:

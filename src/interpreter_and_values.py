@@ -34,6 +34,8 @@ class Interpreter:
         self.global_symbol_table.set('clear', BuiltInFunction('clear'))
         self.global_symbol_table.set('lengthof', BuiltInFunction('length'))
         self.global_symbol_table.set('gettoy', BuiltInFunction('import'))
+        self.global_symbol_table.set('dig', BuiltInFunction('read'))
+        self.global_symbol_table.set('bury', BuiltInFunction('write'))
         self.global_symbol_table.set('throw', BuiltInFunction('error'))
 
     def visit(self, node, context):
@@ -995,6 +997,62 @@ class BuiltInFunction(BaseFunction):
                 self.pos_start, self.pos_end, f'Could not find module "{from_file.value}"', exec_ctx
             ))
 
+    def execute_read(self, exec_ctx):
+        file = exec_ctx.symbol_table.get('file_name')
+
+        if getattr(sys, 'frozen', False):
+            os.chdir(sys._MEIPASS)
+
+        if not isinstance(file, String):
+            return RuntimeResult().failure(
+                RunTimeError(
+                    self.pos_start, self.pos_end, 'First argument is not type string', exec_ctx
+                )
+            )
+
+        try:
+            with open(file.value, 'r') as f:
+                contents = f.read()
+
+                return RuntimeResult().success(
+                    String(contents)
+                )
+
+        except FileNotFoundError:
+            return RuntimeResult().failure(
+                RunTimeError(
+                    self.pos_start, self.pos_end, f'File "{file.value}" not found', exec_ctx
+                )
+            )
+
+    def execute_write(self, exec_ctx):
+        file = exec_ctx.symbol_table.get('file_name')
+        contents = exec_ctx.symbol_table.get('contents')
+
+        if getattr(sys, 'frozen', False):
+            os.chdir(sys._MEIPASS)
+
+        if not isinstance(file, String):
+            return RuntimeResult().failure(
+                RunTimeError(
+                    self.pos_start, self.pos_end, 'First argument is not type string', exec_ctx
+                )
+            )
+
+        if not isinstance(contents, String):
+            return RuntimeResult().failure(
+                RunTimeError(
+                    self.pos_start, self.pos_end, 'Second argument is not type string', exec_ctx
+                )
+            )
+
+        with open(file.value, 'w') as f:
+            f.write(contents.value)
+
+        return RuntimeResult().success(
+            Number.null
+        )
+
     def execute_error(self, exec_ctx):
         obj = exec_ctx.symbol_table.get('text')
 
@@ -1025,4 +1083,6 @@ class BuiltInFunction(BaseFunction):
     execute_clear.arg_names = ['list']
     execute_length.arg_names = ['obj']
     execute_import.arg_names = ['objs', 'file_name']
+    execute_read.arg_names = ['file_name']
+    execute_write.arg_names = ['file_name', 'contents']
     execute_error.arg_names = ['text']
