@@ -971,24 +971,30 @@ class BuiltInFunction(BaseFunction):
                 if result.error:
                     return result
 
-                for obj_name in objs_to_import.elements:
-                    if isinstance(obj_name, String):
-                        value = module_context.symbol_table.get(obj_name.value)
+                if len(objs_to_import.elements) == 1 and objs_to_import.elements[0].value == '*all':
+                    for name, value in module_context.symbol_table.symbols.items():
+                        exec_ctx.parent.symbol_table.set(name, value.copy().setContext(exec_ctx).setPos(self.pos_start,
+                                                                                                        self.pos_end))
 
-                        if value is not None:
-                            value = value.copy().setContext(exec_ctx).setPos(self.pos_start, self.pos_end)
-                            exec_ctx.parent.symbol_table.set(obj_name.value, value.copy())
+                else:
+                    for obj_name in objs_to_import.elements:
+                        if isinstance(obj_name, String):
+                            value = module_context.symbol_table.get(obj_name.value)
+
+                            if value is not None:
+                                value = value.copy().setContext(exec_ctx).setPos(self.pos_start, self.pos_end)
+                                exec_ctx.parent.symbol_table.set(obj_name.value, value.copy())
+
+                            else:
+                                return RuntimeResult().failure(RunTimeError(
+                                    self.pos_start, self.pos_end,
+                                    f'"{obj_name.value}" is not defined in module "{from_file.value}"', exec_ctx
+                                ))
 
                         else:
                             return RuntimeResult().failure(RunTimeError(
-                                self.pos_start, self.pos_end,
-                                f'"{obj_name.value}" is not defined in module "{from_file.value}"', exec_ctx
+                                self.pos_start, self.pos_end, 'Elements in import list must be strings', exec_ctx
                             ))
-
-                    else:
-                        return RuntimeResult().failure(RunTimeError(
-                            self.pos_start, self.pos_end, 'Elements in import list must be strings', exec_ctx
-                        ))
 
                 return RuntimeResult().success(Number.null)
 
