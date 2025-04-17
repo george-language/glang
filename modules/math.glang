@@ -5,6 +5,10 @@ func math_radians(degrees)
     give degrees * (math_pi / 180.0)
 endbody
 
+func math_degrees(radians)
+    give radians * (180.0 / math_pi)
+endbody
+
 func math_abs(x)
     give if x >= 0 then x otherwise -x
 endbody
