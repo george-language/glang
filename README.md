@@ -33,11 +33,13 @@ bark("We have reached the end of our program. I hope you enjoyed!")
 
 ## Why Make George Language?
 Well, it all started as a joke. You see, one of our team members has a cute pug named George. One day we said 
-_"Why not make a language named after George thats funny and cute?"_ And that's when it was born.
+_"Why not make a language named after George that's funny and cute?"_ And that's when it was born.
 
 GLang makes programming more expressive and easier to read, using a mix of humor and fun to define the syntax.
 
-To a beginner programmer, they have to spend a lot of time learning and remebering keywords, built-ins, and values in the language. GLang instead uses _easy-to-remeber_ language, for example the `print` statement is actually `bark`!
+To a beginner programmer, they have to spend a lot of time learning and remembering keywords, built-ins, and 
+values in the language. GLang instead uses _easy-to-remember_ language, for example the `print` statement 
+is actually `bark`!
 
 ```
 bark("Hello, World!")
