@@ -560,6 +560,34 @@ class String(Value):
         else:
             return None, Value.illegalOperation(self, other)
 
+    def getComparisonEq(self, other):
+        if isinstance(other, String):
+            return Number(int(self.value == other.value)).setContext(self.context), None
+
+        else:
+            return None, Value.illegalOperation(self, other)
+
+    def getComparisonNe(self, other):
+        if isinstance(other, String):
+            return Number(int(self.value != other.value)).setContext(self.context), None
+
+        else:
+            return None, Value.illegalOperation(self, other)
+
+    def andedBy(self, other):
+        if isinstance(other, String):
+            return Number(int(self.value and other.value)).setContext(self.context), None
+
+        else:
+            return None, Value.illegalOperation(self, other)
+
+    def oredBy(self, other):
+        if isinstance(other, String):
+            return Number(int(self.value or other.value)).setContext(self.context), None
+
+        else:
+            return None, Value.illegalOperation(self, other)
+
     def isTrue(self):
         return len(self.value) > 0
 
