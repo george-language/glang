@@ -4,21 +4,21 @@ from src.language import run
 
 VERSION = '1.1'
 
-file_path = None
+command = None
 
 try:
-    file_path = sys.argv[1]
+    command = sys.argv[1]
 
 except:
     pass
 
-if file_path:
-    if file_path.endswith('.glang'):
-        if os.path.exists(file_path):
-            with open(file_path, 'r') as f:
+if command:
+    if command.endswith('.glang'):
+        if os.path.exists(command):
+            with open(command, 'r') as f:
                 text = f.read()
 
-                result, error = run(file_path, text)
+                result, error = run(command, text)
 
                 if error:
                     print(error.asString())
@@ -27,10 +27,26 @@ if file_path:
                     print(f'George Debug: {repr(result)}')
 
         else:
-            print(f'File "{file_path}" is not a valid file')
+            print(f'File "{command}" is not a valid file')
+
+    elif command == 'new':
+        project_name = None
+
+        try:
+            project_name = sys.argv[2]
+
+        except:
+            print('Usage: "new" [project_name]')
+
+        if project_name:
+            os.mkdir(project_name)
+            os.mkdir(f'{project_name}/src')
+
+            with open(f'{project_name}/main.glang', 'w') as f:
+                f.write('func main()\n\tbark("Hello, world!")\nendbody')
 
     else:
-        print(f'Wrong File Type: "{file_path}" is not a ".glang" file.')
+        print(f'Argument Undefined: "{command}" is not a recognized as any GLang command.')
 
 else:
     print(f'George Language {VERSION} Platform {sys.platform}')
