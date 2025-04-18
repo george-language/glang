@@ -660,17 +660,39 @@ class List(Value):
 
     def getComparisonEq(self, other):
         if isinstance(other, List):
-            return Number(int(self.elements == other.elements)).setContext(self.context), None
+            if len(self.elements) != len(other.elements):
+                return Number(0).setContext(self.context), None
 
-        else:
-            return None, Value.illegalOperation(self, other)
+            for a, b in zip(self.elements, other.elements):
+                result, error = a.getComparisonEq(b)
+
+                if error:
+                    return None, error
+
+                if not result.value:
+                    return Number(0).setContext(self.context), None
+
+            return Number(1).setContext(self.context), None
+
+        return None, Value.illegalOperation(self, other)
 
     def getComparisonNe(self, other):
         if isinstance(other, List):
-            return Number(int(self.elements != other.elements)).setContext(self.context), None
+            if len(self.elements) != len(other.elements):
+                return Number(1).setContext(self.context), None
 
-        else:
-            return None, Value.illegalOperation(self, other)
+            for a, b in zip(self.elements, other.elements):
+                result, error = a.getComparisonEq(b)
+
+                if error:
+                    return None, error
+
+                if not result.value:
+                    return Number(1).setContext(self.context), None
+
+            return Number(0).setContext(self.context), None
+
+        return None, Value.illegalOperation(self, other)
 
     def andedBy(self, other):
         if isinstance(other, List):
