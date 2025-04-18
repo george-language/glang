@@ -1,12 +1,12 @@
 # -*- mode: python ; coding: utf-8 -*-
 
 a = Analysis(
-    ['main.py'],
+    ['./main.py'],
     pathex=[],
     binaries=[],
     datas=[
-    ('resources', 'resources'),
-    ('modules', 'modules'),
+    ('./resources', './resources'),
+    ('./modules', './modules'),
     ],
     hookspath=[],
     hooksconfig={},
