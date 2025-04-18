@@ -1,0 +1,55 @@
+name: macOS PyInstaller Build
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.12
+
+      - name: Install project requirements
+        run: |
+          pip install --upgrade pip
+          pip install pyinstaller
+
+      - name: Build macOS app using PyInstaller
+        run: |
+          pyinstaller macos_build.spec
+
+      - name: Install create-dmg using Homebrew
+        run: |
+          brew install create-dmg
+
+      - name: Codesign the app
+        run: |
+          codesign --deep --force --sign - dist/glang.app
+
+      - name: Create DMG
+        run: |
+          create-dmg --volname "George Language Installer" \
+          --background "utils/dmg_installer_background.png" \
+          --window-pos 20 20 --window-size 570 450 --icon-size 128 \
+          --icon "glang.app" 70 206 --hide-extension "glang.app" \
+          --app-drop-link 418 196 "GeorgeLanguage_+macOS_setup.dmg" \
+          "dist/"
+
+      - name: Codesign the dmg
+        run: |
+          codesign --deep --force --sign - "GeorgeLanguage_+macOS_setup.dmg"
+
+      - name: Upload DMG as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: GeorgeLanguage_+macOS_setup.dmg
+          path: "GeorgeLanguage_+macOS_setup.dmg"
