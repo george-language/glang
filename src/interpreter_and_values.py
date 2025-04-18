@@ -861,7 +861,8 @@ class BuiltInFunction(BaseFunction):
         except:
             return RuntimeResult().failure(RunTimeError(self.pos_start,
                                                         self.pos_end,
-                                                        'Type <stdin> was not an integer or float'))
+                                                        'Type <stdin> was not an integer or float',
+                                                        exec_ctx))
 
         return RuntimeResult().success(Number(number))
 
