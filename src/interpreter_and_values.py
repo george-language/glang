@@ -658,6 +658,34 @@ class List(Value):
         else:
             return None, Value.illegalOperation(self, other)
 
+    def getComparisonEq(self, other):
+        if isinstance(other, List):
+            return Number(int(self.elements == other.elements)).setContext(self.context), None
+
+        else:
+            return None, Value.illegalOperation(self, other)
+
+    def getComparisonNe(self, other):
+        if isinstance(other, List):
+            return Number(int(self.elements != other.elements)).setContext(self.context), None
+
+        else:
+            return None, Value.illegalOperation(self, other)
+
+    def andedBy(self, other):
+        if isinstance(other, List):
+            return Number(int(self.elements and other.elements)).setContext(self.context), None
+
+        else:
+            return None, Value.illegalOperation(self, other)
+
+    def oredBy(self, other):
+        if isinstance(other, List):
+            return Number(int(self.elements or other.elements)).setContext(self.context), None
+
+        else:
+            return None, Value.illegalOperation(self, other)
+
     def copy(self):
         copy = List(self.elements)
         copy.setPos(self.pos_start, self.pos_end)
