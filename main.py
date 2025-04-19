@@ -42,6 +42,12 @@ if command:
             with open(f'{project_name}/main.glang', 'w') as f:
                 f.write('func main()\n\tbark("Hello, world!")\nendbody\n\nmain()')
 
+    elif command == 'init':
+        os.mkdir(f'src')
+
+        with open(f'main.glang', 'w') as f:
+            f.write('func main()\n\tbark("Hello, world!")\nendbody\n\nmain()')
+
     else:
         print(f'Argument Undefined: "{command}" is not a recognized as any GLang command.')
 
