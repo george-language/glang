@@ -26,6 +26,9 @@ class InvalidSyntaxError(Error):
 
 
 class RunTimeError(Error):
+    ColorError = '\033[91m'
+    ColorEnd = '\033[0m'
+
     def __init__(self, pos_start, pos_end, details: str, context):
         super().__init__(pos_start, pos_end, 'Runtime Error', details)
         self.context = context
@@ -33,7 +36,7 @@ class RunTimeError(Error):
     def asString(self):
         result = self.generateTraceback()
         result += f'{self.error_name}: {self.details}'
-        result += f'\n\n{string_with_arrows(self.pos_start.file_text, self.pos_start, self.pos_end)}'
+        result += f'\n\n{string_with_arrows(self.pos_start.file_text, self.pos_start, self.pos_end)}' + RunTimeError.ColorEnd
         return result
 
     def generateTraceback(self):
@@ -46,7 +49,7 @@ class RunTimeError(Error):
             pos = ctx.parent_entry_pos
             ctx = ctx.parent
 
-        return '\033[91m' + 'Traceback (most recent call last):\n' + result
+        return RunTimeError.ColorError + 'Traceback (most recent call last):\n' + result
 
 
 class ExpectedCharacterError(Error):
