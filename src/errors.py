@@ -46,7 +46,7 @@ class RunTimeError(Error):
             pos = ctx.parent_entry_pos
             ctx = ctx.parent
 
-        return 'Traceback (most recent call last):\n' + result
+        return '\033[91m' + 'Traceback (most recent call last):\n' + result
 
 
 class ExpectedCharacterError(Error):
