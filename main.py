@@ -2,7 +2,7 @@ import sys
 import os.path
 from src.language import run
 
-VERSION = '1.1'
+VERSION = '1.2'
 
 command = None
 
