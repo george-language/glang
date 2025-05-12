@@ -1026,7 +1026,7 @@ class BuiltInFunction(BaseFunction):
             ))
 
         try:
-            with open(from_file.value, 'r') as f:
+            with open(from_file.value, 'r', encoding='utf-8') as f:
                 text = f.read()
 
                 lexer = Lexer(from_file.value, text)
@@ -1096,7 +1096,7 @@ class BuiltInFunction(BaseFunction):
             )
 
         try:
-            with open(file.value, 'r') as f:
+            with open(file.value, 'r', encoding='utf-8') as f:
                 contents = f.read()
 
                 return RuntimeResult().success(
@@ -1131,7 +1131,7 @@ class BuiltInFunction(BaseFunction):
                 )
             )
 
-        with open(file.value, 'w') as f:
+        with open(file.value, 'w', encoding='utf-8') as f:
             f.write(contents.value)
 
         return RuntimeResult().success(

@@ -2,7 +2,7 @@ import sys
 import os.path
 from src.language import run
 
-VERSION = '1.2'
+VERSION = '1.3'
 
 command = None
 
@@ -15,7 +15,7 @@ except:
 if command:
     if command.endswith('.glang'):
         if os.path.exists(command):
-            with open(command, 'r') as f:
+            with open(command, 'r', encoding='utf-8') as f:
                 text = f.read()
 
                 result, error = run(command, text)
