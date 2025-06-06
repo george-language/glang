@@ -1,7 +1,11 @@
+> [!NOTE]
+> This is GLang's rust-based branch, and is under active development. We plan to rewrite everything to Rust and
+merge into the `main` branch by late 2025.
+
 <img src="resources/icons/george_language_icon.svg" width="125">
 
 # George Language
-George Language (GLang for short) is a dynamically-typed, interpreted programming language where program syntax is 
+George Language (GLang for short) is a dynamically-typed, interpreted programming language where program syntax is
 represented as a dog doing day-to-day activities.
 
 ```
@@ -32,13 +36,13 @@ bark("We have reached the end of our program. I hope you enjoyed!")
 ```
 
 ## Why Make George Language?
-Well, it all started as a joke. You see, one of our team members has a cute pug named George. One day we said 
+Well, it all started as a joke. You see, one of our team members has a cute pug named George. One day we said
 _"Why not make a language named after George that's funny and cute?"_ And that's when it was born.
 
 GLang makes programming more expressive and easier to read, using a mix of humor and fun to define the syntax.
 
-To a beginner programmer, they have to spend a lot of time learning and remembering keywords, built-ins, and 
-values in the language. GLang instead uses _easy-to-remember_ language, for example the `print` statement 
+To a beginner programmer, they have to spend a lot of time learning and remembering keywords, built-ins, and
+values in the language. GLang instead uses _easy-to-remember_ language, for example the `print` statement
 is actually `bark`!
 
 ```
@@ -48,8 +52,8 @@ bark("Hello, World!")
 This is just one of the many examples that makes GLang easier to learn and work with.
 
 ## Is It fast?
-GLang gets performance matching languages like Python (as it is implemented in Python.) 
-It uses a very light type checker, but nothing large that creates a major overhead. It also 
+GLang gets performance matching languages like Python (as it is implemented in Python.)
+It uses a very light type checker, but nothing large that creates a major overhead. It also
 doesn't require a garbage collector, as that is already managed by Python. This makes GLang
 **FAST** for many applications.
 
