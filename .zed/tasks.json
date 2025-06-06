@@ -1,0 +1,8 @@
+[
+  {
+    // this will rebuild glang and run the test.glang file included with this repository
+    "label": "Run GLang Test",
+    "command": "cargo run; target/debug/glang.exe",
+    "args": ["test.glang"]
+  }
+]
