@@ -1,6 +1,4 @@
 use std::env;
-use std::fs;
-use std::path::Path;
 
 const VERSION: &str = "2.0";
 
@@ -11,5 +9,11 @@ fn main() {
         for arg in arguments {
             if arg.ends_with(".glang") {}
         }
+    } else {
+        println!("George Language {VERSION} Platform ");
+        println!("Type 'exit()' to exit");
+
+        // GLang terminal
+        // loop {}
     }
 }
