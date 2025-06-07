@@ -57,9 +57,9 @@ impl Lexer {
                         ));
                         self.advance();
                     } else if DIGITS.contains(current_char) {
-                        // tokens.append(self.makeNumber())
+                        tokens.push(self.make_number());
                     } else if LETTERS.contains(current_char) {
-                        // tokens.append(self.makeIdentifier())
+                        tokens.push(self.make_identifier());
                     } else if current_char == '"' {
                         // tokens.append(self.makeString())
                     } else if current_char == '+' {
@@ -168,5 +168,65 @@ impl Lexer {
             None,
         ));
         (tokens, None)
+    }
+
+    pub fn make_number(&mut self) -> Token {
+        let mut num_str = String::new();
+        let mut dot_count = 0;
+        let pos_start = self.position.copy();
+
+        while let Some(character) = self.current_char {
+            if character.is_ascii_digit() {
+                num_str.push(character);
+            } else if character == '.' {
+                if dot_count == 1 {
+                    break;
+                }
+                dot_count += 1;
+                num_str.push('.');
+            } else {
+                break;
+            }
+
+            self.advance();
+        }
+
+        let token_type = if dot_count == 0 {
+            TokenType::TT_INT
+        } else {
+            TokenType::TT_FLOAT
+        };
+
+        Token::new(
+            token_type,
+            Some(num_str),
+            Some(pos_start),
+            Some(self.position.copy()),
+        )
+    }
+
+    pub fn make_identifier(&mut self) -> Token {
+        let mut id_string = String::new();
+        let pos_start = self.position.copy();
+
+        while let Some(character) = self.current_char {
+            if LETTERS_DIGITS.contains(character) {
+                id_string.push(character);
+                self.advance();
+            }
+        }
+
+        let token_type = if KEYWORDS.contains(&id_string.as_str()) {
+            TokenType::TT_KEYWORD
+        } else {
+            TokenType::TT_IDENTIFIER
+        };
+
+        Token::new(
+            token_type,
+            Some(id_string),
+            Some(pos_start),
+            Some(self.position.copy()),
+        )
     }
 }
