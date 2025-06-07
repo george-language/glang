@@ -1,5 +1,5 @@
+mod lexing;
 mod syntax;
-mod token;
 use std::fs;
 
 pub fn run(filename: &str, code: String) -> (String, String) {

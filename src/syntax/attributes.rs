@@ -1,7 +1,7 @@
-const DIGITS: &str = "0123456789";
-const LETTERS: &str = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-const LETTERS_DIGITS: &str = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-const KEYWORDS: &[&str] = &[
+pub const DIGITS: &str = "0123456789";
+pub const LETTERS: &str = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+pub const LETTERS_DIGITS: &str = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+pub const KEYWORDS: &[&str] = &[
     "object",
     "and",
     "or",
