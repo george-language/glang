@@ -1,4 +1,4 @@
-use crate::token::token_type::TokenType;
+use crate::lexing::token_type::TokenType;
 use std::fmt::{Display, Formatter, Result};
 
 pub struct Token {
