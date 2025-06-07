@@ -1,3 +1,5 @@
+#![warn(non_camel_case_types)]
+
 use std::fmt::{Display, Formatter, Result};
 
 #[derive(Debug, Clone, PartialEq, Eq)]

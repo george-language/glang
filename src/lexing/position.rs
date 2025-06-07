@@ -1,3 +1,4 @@
+#[derive(Clone)]
 pub struct Position {
     pub index: isize,
     pub line_num: isize,
@@ -23,13 +24,18 @@ impl Position {
         }
     }
 
-    pub fn advance(&mut self, current_char: char) -> Self {
+    pub fn advance(&mut self, current_char: Option<char>) -> Self {
         self.index += 1;
         self.column_num += 1;
 
-        if current_char == '\n' {
-            self.line_num += 1;
-            self.column_num = 0;
+        match current_char {
+            Some(character) => {
+                if character == '\n' {
+                    self.line_num += 1;
+                    self.column_num = 0;
+                }
+            }
+            None => {}
         }
 
         Position::new(
