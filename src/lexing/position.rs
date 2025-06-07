@@ -1,4 +1,4 @@
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct Position {
     pub index: isize,
     pub line_num: isize,

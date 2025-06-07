@@ -14,8 +14,8 @@ impl Lexer {
     pub fn new(filename: String, text: String) -> Self {
         let mut lexer = Lexer {
             filename: filename.clone(),
-            text: text.clone(),
-            position: Position::new(-1, 0, -1, filename.clone(), text.clone()),
+            text: text.replace("\r\n", "\n"),
+            position: Position::new(-1, 0, -1, filename, text),
             current_char: None,
         };
         lexer.advance();
@@ -34,7 +34,7 @@ impl Lexer {
                     .unwrap_or(' '),
             );
         } else {
-            self.current_char = Some(' ');
+            self.current_char = None;
         }
     }
 
@@ -152,6 +152,7 @@ impl Lexer {
                     } else {
                         let pos_start = self.position.copy();
                         let character = current_char.clone();
+                        println!("Unexpected character: {:?}", character);
                         self.advance();
 
                         return (Vec::new(), None);
@@ -213,6 +214,8 @@ impl Lexer {
             if LETTERS_DIGITS.contains(character) {
                 id_string.push(character);
                 self.advance();
+            } else {
+                break;
             }
         }
 
