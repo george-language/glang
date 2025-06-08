@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use crate::lexing::position::Position;
 use crate::lexing::token::Token;
 use crate::lexing::token_type::TokenType;
@@ -61,7 +63,7 @@ impl Lexer {
                     } else if LETTERS.contains(current_char) {
                         tokens.push(self.make_identifier());
                     } else if current_char == '"' {
-                        // tokens.append(self.makeString())
+                        tokens.push(self.make_string());
                     } else if current_char == '+' {
                         tokens.push(Token::new(
                             TokenType::TT_PLUS,
@@ -228,6 +230,49 @@ impl Lexer {
         Token::new(
             token_type,
             Some(id_string),
+            Some(pos_start),
+            Some(self.position.copy()),
+        )
+    }
+
+    pub fn make_string(&mut self) -> Token {
+        let mut string = String::new();
+        let pos_start = self.position.copy();
+        let mut escape_char = false;
+        self.advance();
+
+        let mut escape_chars = HashMap::new();
+        escape_chars.insert('n', '\n');
+        escape_chars.insert('t', '\t');
+
+        while let Some(character) = self.current_char {
+            if character != '"' || escape_char {
+                if escape_char {
+                    string.push(
+                        escape_chars
+                            .get(&character)
+                            .expect("Not a valid escape sequence")
+                            .clone(),
+                    );
+                } else {
+                    if character == '\\' {
+                        escape_char = true;
+                    } else {
+                        string.push(character);
+                    }
+                }
+                self.advance();
+                escape_char = false;
+            } else {
+                break;
+            }
+        }
+
+        self.advance();
+
+        Token::new(
+            TokenType::TT_STR,
+            Some(string),
             Some(pos_start),
             Some(self.position.copy()),
         )
