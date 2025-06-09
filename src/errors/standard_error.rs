@@ -26,23 +26,31 @@ impl StandardError {
     ) -> String {
         let mut result = String::new();
 
-        let mut idx_start = text[..pos_start.index as usize]
+        let text_len = text.len();
+
+        let mut idx_start = text[..pos_start.index.min(text_len as isize) as usize]
             .rfind('\n')
             .map_or(0, |i| i + 1);
         let mut idx_end = text[idx_start..]
             .find('\n')
-            .map_or(text.len(), |i| idx_start + i);
+            .map_or(text_len, |i| (idx_start + i).min(text_len));
 
-        let line_count = pos_end.line_num - pos_start.line_num + 1;
+        let line_count = pos_end.line_num.saturating_sub(pos_start.line_num) + 1;
 
         for i in 0..line_count {
+            if idx_start >= text_len {
+                break;
+            }
+
+            idx_end = idx_end.min(text_len);
+
             let line = &text[idx_start..idx_end];
 
             let col_start = if i == 0 { pos_start.column_num } else { 0 };
             let col_end = if i == line_count - 1 {
                 pos_end.column_num as usize
             } else {
-                line.len().saturating_sub(1) as usize
+                line.len().saturating_sub(1)
             };
 
             result.push_str(line);
@@ -51,12 +59,12 @@ impl StandardError {
             let arrow_line = " ".repeat(col_start as usize)
                 + &"^".repeat(col_end.saturating_sub(col_start as usize));
             result.push_str(&arrow_line);
-
             result.push('\n');
+
             idx_start = idx_end + 1;
-            idx_end = text[idx_start..]
+            idx_end = text[idx_start.min(text_len)..]
                 .find('\n')
-                .map_or(text.len(), |i| idx_start + i);
+                .map_or(text_len, |i| (idx_start + i).min(text_len));
         }
 
         result.replace('\t', "")
