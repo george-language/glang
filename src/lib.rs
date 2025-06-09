@@ -2,7 +2,7 @@ mod errors;
 mod lexing;
 mod parsing;
 mod syntax;
-use crate::{errors::standard_error::StandardError, lexing::lexer::Lexer};
+use crate::{errors::standard_error::StandardError, lexing::lexer::Lexer, parsing::parser::Parser};
 use std::fs;
 
 pub fn run(filename: &str, code: String) -> (String, Option<StandardError>) {
@@ -14,6 +14,9 @@ pub fn run(filename: &str, code: String) -> (String, Option<StandardError>) {
             // error exists
             return ("".to_string(), error);
         }
+
+        let parser = Parser::new(tokens);
+        parser.parse();
     } else {
         let contents = fs::read_to_string(filename);
     }

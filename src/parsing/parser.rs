@@ -37,4 +37,6 @@ impl Parser {
             self.current_token = Some(self.tokens[self.token_index as usize].clone());
         }
     }
+
+    pub fn parse(&self) {}
 }
