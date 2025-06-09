@@ -3,10 +3,10 @@ use std::fmt::{Display, Formatter, Result};
 
 #[derive(Debug, Clone)]
 pub struct Token {
-    token_type: TokenType,
-    value: Option<String>,
-    pos_start: Option<Position>,
-    pos_end: Option<Position>,
+    pub token_type: TokenType,
+    pub value: Option<String>,
+    pub pos_start: Option<Position>,
+    pub pos_end: Option<Position>,
 }
 
 impl Token {

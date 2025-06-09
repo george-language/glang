@@ -1,5 +1,6 @@
 mod errors;
 mod lexing;
+mod nodes;
 mod parsing;
 mod syntax;
 use crate::{errors::standard_error::StandardError, lexing::lexer::Lexer, parsing::parser::Parser};
