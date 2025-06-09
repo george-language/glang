@@ -11,13 +11,17 @@ pub fn run(filename: &str, code: String) -> (String, Option<StandardError>) {
         let mut lexer = Lexer::new(filename.to_string(), code.clone());
         let (tokens, error) = lexer.make_tokens();
 
-        if let Some(_) = error {
+        if error.is_some() {
             // error exists
             return ("".to_string(), error);
         }
 
         let mut parser = Parser::new(tokens);
-        parser.parse();
+        let ast = parser.parse();
+
+        if ast.error.is_some() {
+            return ("".to_string(), ast.error);
+        }
     } else {
         let contents = fs::read_to_string(filename);
     }

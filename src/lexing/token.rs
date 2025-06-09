@@ -4,7 +4,7 @@ use std::fmt::{Display, Formatter, Result};
 #[derive(Debug, Clone)]
 pub struct Token {
     pub token_type: TokenType,
-    pub value: Option<&'static str>,
+    pub value: Option<String>,
     pub pos_start: Option<Position>,
     pub pos_end: Option<Position>,
 }
@@ -12,7 +12,7 @@ pub struct Token {
 impl Token {
     pub fn new(
         token_type: TokenType,
-        value: Option<&'static str>,
+        value: Option<String>,
         pos_start: Option<Position>,
         pos_end: Option<Position>,
     ) -> Self {
@@ -34,8 +34,8 @@ impl Token {
         }
     }
 
-    pub fn matches(&self, token_type: TokenType, value: Option<&str>) -> bool {
-        self.token_type == token_type && self.value == value
+    pub fn matches(&self, token_type: TokenType, value: Option<&'static str>) -> bool {
+        self.token_type == token_type && self.value.as_deref() == value
     }
 }
 

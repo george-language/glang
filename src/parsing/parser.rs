@@ -2,8 +2,9 @@ use crate::{
     errors::standard_error::StandardError,
     lexing::{position::Position, token::Token, token_type::TokenType},
     nodes::{
-        binary_operator_node::BinaryOperatorNode, common_node::CommonNode,
-        unary_operator_node::UnaryOperatorNode, variable_assign_node::VariableAssignNode,
+        binary_operator_node::BinaryOperatorNode, common_node::CommonNode, number_node::NumberNode,
+        return_node::ReturnNode, string_node::StringNode, unary_operator_node::UnaryOperatorNode,
+        variable_assign_node::VariableAssignNode,
     },
     parsing::parse_result::ParseResult,
 };
@@ -62,8 +63,21 @@ impl Parser {
             .expect("Expected a pos_end")
     }
 
-    pub fn parse(&mut self) {
-        let parse_result = self.statements();
+    pub fn parse(&mut self) -> ParseResult {
+        let mut parse_result = self.statements();
+
+        if parse_result.error.is_some()
+            && self.current_token.as_ref().unwrap().token_type != TokenType::TT_EOF
+        {
+            return parse_result.failure(Some(StandardError::new(
+                "expected operator or bracket".to_string(),
+                self.current_pos_start(),
+                self.current_pos_end(),
+                Some("add one of the following: '+', '-', '*', '/', or '}'".to_string()),
+            )));
+        }
+
+        parse_result
     }
 
     pub fn comparison_expr(&mut self) -> ParseResult {
@@ -202,12 +216,13 @@ impl Parser {
         parse_result.success(node)
     }
 
-    pub fn statement(&self) -> ParseResult {
-        let parse_result = ParseResult::new();
+    pub fn statement(&mut self) -> ParseResult {
+        let mut parse_result = ParseResult::new();
         let pos_start = self.current_pos_start();
 
         if self
             .current_token
+            .as_ref()
             .unwrap()
             .matches(TokenType::TT_KEYWORD, Some("give"))
         {
@@ -220,11 +235,28 @@ impl Parser {
                 self.reverse(parse_result.to_reverse_count);
             }
 
-            // return parse_result.success(Box::new(ReturnNode));
+            return parse_result.success(Some(Box::new(ReturnNode::new(
+                expr.unwrap(),
+                Some(pos_start),
+                Some(self.current_pos_start()),
+            )) as Box<dyn CommonNode>));
         }
+
+        let expr = parse_result.register(self.expr());
+
+        if parse_result.error.is_some() {
+            return parse_result.failure(Some(StandardError::new(
+                "expected keyword, object, or operator".to_string(),
+                self.current_pos_start(),
+                self.current_pos_end(),
+                Some("add any of the following: 'give', 'next', 'leave', 'obj', 'oppositeof', 'if', 'walk', 'while', 'func', int, float, identifier, '+', '-', '(', or '['".to_string()),
+            )));
+        }
+
+        parse_result.success(expr)
     }
 
-    pub fn statements(&mut self) {
+    pub fn statements(&mut self) -> ParseResult {
         let mut parse_result = ParseResult::new();
         let statements: Vec<ParseResult> = Vec::new();
         let pos_start = self.current_pos_start();
@@ -235,10 +267,71 @@ impl Parser {
         }
 
         let statement = parse_result.register(self.statement());
+
+        parse_result
+    }
+
+    pub fn call(&mut self) -> ParseResult {
+        let mut parse_result = ParseResult::new();
+        let atom = parse_result.register(self.atom());
+
+        if parse_result.error.is_some() {
+            return parse_result;
+        }
+
+        parse_result.success(atom)
+    }
+
+    pub fn atom(&mut self) -> ParseResult {
+        let mut parse_result = ParseResult::new();
+        let token = self.current_token.as_ref().unwrap().clone();
+
+        if [TokenType::TT_INT, TokenType::TT_FLOAT].contains(&token.token_type) {
+            parse_result.register_advancement();
+            self.advance();
+
+            return parse_result
+                .success(Some(Box::new(NumberNode::new(token)) as Box<dyn CommonNode>));
+        } else if token.token_type == TokenType::TT_STR {
+            parse_result.register_advancement();
+            self.advance();
+
+            return parse_result
+                .success(Some(Box::new(StringNode::new(token)) as Box<dyn CommonNode>));
+        }
+
+        parse_result.failure(Some(StandardError::new(
+            "expected object, keyword, function, or type".to_string(),
+            token.pos_start.unwrap(),
+            token.pos_end.unwrap(),
+            Some("add any of the following: 'obj', 'if', 'walk', 'while', 'func', integer, float, identifier, '+' , '-' , '(' or '['".to_string()),
+        )))
+    }
+
+    pub fn power(&mut self) -> ParseResult {
+        self.binary_operator("call", vec![(TokenType::TT_POW, "")], Some("factor"))
     }
 
     pub fn factor(&mut self) -> ParseResult {
-        ParseResult::new()
+        let mut parse_result = ParseResult::new();
+        let token = self.current_token.as_ref().unwrap().clone();
+
+        if [TokenType::TT_PLUS, TokenType::TT_MINUS].contains(&token.token_type) {
+            parse_result.register_advancement();
+            self.advance();
+            let factor = parse_result.register(self.factor());
+
+            if parse_result.error.is_some() {
+                return parse_result;
+            }
+
+            return parse_result.success(Some(Box::new(UnaryOperatorNode::new(
+                token,
+                factor.unwrap(),
+            ))));
+        }
+
+        return self.power();
     }
 
     pub fn term(&mut self) -> ParseResult {
@@ -258,16 +351,13 @@ impl Parser {
         let func_b = func_b.unwrap_or_else(|| func_a);
 
         let mut parse_result = ParseResult::new();
-        let left = parse_result.register(if func_a == "comparison_expr" {
-            self.comparison_expr()
-        } else if func_a == "arithmetic_expr" {
-            self.arithmetic_expr()
-        } else if func_a == "term" {
-            self.term()
-        } else if func_a == "factor" {
-            self.factor()
-        } else {
-            panic!("CRITICAL ERROR: GLANG COULD NOT FIND EXPRESSION IN BINARY OPERATOR");
+        let mut left = parse_result.register(match func_a {
+            "comparison_expr" => self.comparison_expr(),
+            "arithmetic_expr" => self.arithmetic_expr(),
+            "term" => self.term(),
+            "factor" => self.factor(),
+            "call" => self.call(),
+            _ => panic!("CRITICAL ERROR: GLANG COULD NOT FIND EXPRESSION IN BINARY OPERATOR"),
         });
 
         if parse_result.error.is_some() {
@@ -276,29 +366,35 @@ impl Parser {
 
         while ops.contains(&(
             self.current_token.clone().unwrap().token_type,
-            self.current_token.clone().unwrap().value.unwrap(),
+            self.current_token
+                .clone()
+                .unwrap()
+                .value
+                .unwrap_or_else(|| "".to_string())
+                .as_str(),
         )) || ops.contains(&(self.current_token.clone().unwrap().token_type, ""))
         {
             let op_token = self.current_token.clone().unwrap().clone();
             parse_result.register_advancement();
             self.advance();
-            let right = parse_result.register(if func_b == "comparison_expr" {
-                self.comparison_expr()
-            } else if func_b == "term" {
-                self.term()
-            } else if func_b == "factor" {
-                self.factor()
-            } else if func_b == "arithmetic_expr" {
-                self.arithmetic_expr()
-            } else {
-                panic!("CRITICAL ERROR: GLANG COULD NOT FIND EXPRESSION IN BINARY OPERATOR");
+            let right = parse_result.register(match func_b {
+                "comparison_expr" => self.comparison_expr(),
+                "arithmetic_expr" => self.arithmetic_expr(),
+                "term" => self.term(),
+                "factor" => self.factor(),
+                "call" => self.call(),
+                _ => panic!("CRITICAL ERROR: GLANG COULD NOT FIND EXPRESSION IN BINARY OPERATOR"),
             });
 
             if parse_result.error.is_some() {
                 return parse_result;
             }
 
-            let left = BinaryOperatorNode::new(left.clone().unwrap(), op_token, right.unwrap());
+            left = Some(Box::new(BinaryOperatorNode::new(
+                left.unwrap().clone(),
+                op_token,
+                right.unwrap(),
+            )) as Box<dyn CommonNode>);
         }
 
         parse_result.success(left)
