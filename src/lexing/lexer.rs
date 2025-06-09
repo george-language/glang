@@ -129,6 +129,22 @@ impl Lexer {
                         None,
                     ));
                     self.advance();
+                } else if current_char == '{' {
+                    tokens.push(Token::new(
+                        TokenType::TT_LBRACKET,
+                        None,
+                        Some(self.position.clone()),
+                        None,
+                    ));
+                    self.advance();
+                } else if current_char == '}' {
+                    tokens.push(Token::new(
+                        TokenType::TT_RBRACKET,
+                        None,
+                        Some(self.position.clone()),
+                        None,
+                    ));
+                    self.advance();
                 } else if current_char == '!' {
                     let result = self.make_not_equals();
 
