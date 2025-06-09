@@ -5,3 +5,12 @@ version = 4
 [[package]]
 name = "glang"
 version = "0.1.0"
+dependencies = [
+ "simply_colored",
+]
+
+[[package]]
+name = "simply_colored"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9d26fcce2f397e5488affdf681b20c030aa9faa877b92b1825e5d66b08d2fc33"

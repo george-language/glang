@@ -1,4 +1,5 @@
 use crate::lexing::position::Position;
+use simply_colored::*;
 use std::fmt::Display;
 
 #[derive(Clone)]
@@ -77,7 +78,7 @@ impl Display for StandardError {
         let mut output = String::new();
         output.push_str(
             format!(
-                "error: {}\nwhere: \n|     line {},\n|     column {},\n|     in {}",
+                "{BG_RED}{BOLD}error: {}{RESET}\nwhere: \n|     line {},\n|     column {},\n|     in {}",
                 self.text,
                 self.pos_start.line_num,
                 self.pos_start.column_num,
@@ -100,9 +101,9 @@ impl Display for StandardError {
         );
 
         if let Some(msg) = self.help.clone() {
-            output.push_str(format!("\nhelp: {}", msg).as_str());
+            output.push_str(format!("\n{BG_GREEN}help: {}", msg).as_str());
         }
 
-        write!(f, "{}", output)
+        write!(f, "{}{RESET}", output)
     }
 }
