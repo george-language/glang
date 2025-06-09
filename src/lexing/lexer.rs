@@ -4,7 +4,6 @@ use crate::lexing::token::Token;
 use crate::lexing::token_type::TokenType;
 use crate::syntax::attributes::*;
 use std::collections::HashMap;
-use std::f64::NAN;
 
 pub struct Lexer {
     pub filename: String,
@@ -48,6 +47,8 @@ impl Lexer {
             if let Some(current_char) = self.current_char.clone() {
                 if current_char == ' ' || current_char == '\t' {
                     self.advance();
+                } else if current_char == '#' {
+                    self.skip_comment();
                 } else if current_char == ';' || current_char == '\n' {
                     tokens.push(Token::new(
                         TokenType::TT_NEWLINE,
@@ -129,31 +130,22 @@ impl Lexer {
                     ));
                     self.advance();
                 } else if current_char == '!' {
-                    let (tok, err) = self.make_not_equals();
+                    let result = self.make_not_equals();
 
-                    match err {
-                        Some(_) => {
-                            return (
-                                Vec::new(),
-                                Some(StandardError::new(
-                                    "expected '=' after '!'".to_string(),
-                                    self.position.copy(),
-                                    Some("add a '=' after the '!' character".to_string()),
-                                )),
-                            );
+                    match result {
+                        Err(error) => {
+                            return (Vec::new(), error);
                         }
-                        None => {
-                            if let Some(token) = tok {
-                                tokens.push(token);
-                            }
+                        Ok(token) => {
+                            tokens.push(token);
                         }
                     }
                 } else if current_char == '=' {
                     tokens.push(self.make_equals());
                 } else if current_char == '<' {
-                    // tokens.append(self.makeLessThan())
+                    tokens.push(self.make_less_than())
                 } else if current_char == '>' {
-                    // tokens.append(self.makeGreaterThan())
+                    tokens.push(self.make_greater_than())
                 } else if current_char == ',' {
                     tokens.push(Token::new(
                         TokenType::TT_COMMA,
@@ -172,6 +164,7 @@ impl Lexer {
                         Some(StandardError::new(
                             format!("unkown character '{}'", character).to_string(),
                             pos_start,
+                            self.position.copy(),
                             Some("replace this character with one known by glang".to_string()),
                         )),
                     );
@@ -298,14 +291,11 @@ impl Lexer {
         let pos_start = self.position.copy();
         self.advance();
 
-        match self.current_char {
-            Some(character) => {
-                if character == '>' {
-                    self.advance();
-                    token_type = TokenType::TT_ARROW;
-                }
+        if let Some(character) = self.current_char {
+            if character == '>' {
+                self.advance();
+                token_type = TokenType::TT_ARROW;
             }
-            None => {}
         }
 
         Token::new(
@@ -321,14 +311,11 @@ impl Lexer {
         let pos_start = self.position.copy();
         self.advance();
 
-        match self.current_char {
-            Some(character) => {
-                if character == '=' {
-                    self.advance();
-                    token_type = TokenType::TT_EE;
-                }
+        if let Some(character) = self.current_char {
+            if character == '=' {
+                self.advance();
+                token_type = TokenType::TT_EE;
             }
-            None => {}
         }
 
         Token::new(
@@ -339,30 +326,81 @@ impl Lexer {
         )
     }
 
-    pub fn make_not_equals(&mut self) -> (Option<Token>, Option<String>) {
+    pub fn make_not_equals(&mut self) -> Result<Token, Option<StandardError>> {
         let pos_start = self.position.copy();
         self.advance();
 
-        match self.current_char {
-            Some(character) => {
-                if character == '=' {
-                    self.advance();
+        if let Some(character) = self.current_char {
+            if character == '=' {
+                self.advance();
 
-                    return (
-                        Some(Token::new(
-                            TokenType::TT_NE,
-                            None,
-                            Some(pos_start),
-                            Some(self.position.copy()),
-                        )),
-                        None,
-                    );
-                }
+                return Ok(Token::new(
+                    TokenType::TT_NE,
+                    None,
+                    Some(pos_start),
+                    Some(self.position.copy()),
+                ));
             }
-            None => {}
         }
 
         self.advance();
-        return (None, Some("Expected '=' after '!'".to_string()));
+        return Err(Some(StandardError::new(
+            "expected '=' after '!'".to_string(),
+            pos_start,
+            self.position.copy(),
+            Some("add a '=' after the '!' character".to_string()),
+        )));
+    }
+
+    pub fn make_less_than(&mut self) -> Token {
+        let mut token_type = TokenType::TT_LT;
+        let pos_start = self.position.copy();
+        self.advance();
+
+        if let Some(character) = self.current_char {
+            if character == '=' {
+                self.advance();
+                token_type = TokenType::TT_LTE;
+            }
+        }
+
+        Token::new(
+            token_type,
+            None,
+            Some(pos_start),
+            Some(self.position.copy()),
+        )
+    }
+
+    pub fn make_greater_than(&mut self) -> Token {
+        let mut token_type = TokenType::TT_GT;
+        let pos_start = self.position.copy();
+        self.advance();
+
+        if let Some(character) = self.current_char {
+            if character == '=' {
+                self.advance();
+                token_type = TokenType::TT_GTE;
+            }
+        }
+
+        Token::new(
+            token_type,
+            None,
+            Some(pos_start),
+            Some(self.position.copy()),
+        )
+    }
+
+    pub fn skip_comment(&mut self) {
+        self.advance();
+
+        while let Some(character) = self.current_char {
+            if character != '\n' {
+                self.advance();
+            } else {
+                break;
+            }
+        }
     }
 }
