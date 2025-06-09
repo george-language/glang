@@ -33,10 +33,15 @@ fn main() {
                 break;
             }
 
-            let (_, error) = run("<stdin>", code);
+            let (result, e) = run("<stdin>", code);
 
-            if !error.is_empty() {
+            if let Some(error) = e {
                 println!("{error}");
+                continue;
+            }
+
+            if !result.is_empty() {
+                println!("{}", result);
             }
         }
     }

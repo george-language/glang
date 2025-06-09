@@ -38,22 +38,6 @@ impl Position {
             None => {}
         }
 
-        Position::new(
-            self.index,
-            self.line_num,
-            self.column_num,
-            self.filename.clone(),
-            self.file_contents.clone(),
-        )
-    }
-
-    pub fn copy(&self) -> Position {
-        Position::new(
-            self.index,
-            self.line_num,
-            self.column_num,
-            self.filename.clone(),
-            self.file_contents.clone(),
-        )
+        self.clone()
     }
 }

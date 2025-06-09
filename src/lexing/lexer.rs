@@ -53,7 +53,7 @@ impl Lexer {
                     tokens.push(Token::new(
                         TokenType::TT_NEWLINE,
                         None,
-                        Some(self.position.copy()),
+                        Some(self.position.clone()),
                         None,
                     ));
                     self.advance();
@@ -67,7 +67,7 @@ impl Lexer {
                     tokens.push(Token::new(
                         TokenType::TT_PLUS,
                         None,
-                        Some(self.position.copy()),
+                        Some(self.position.clone()),
                         None,
                     ));
                     self.advance();
@@ -77,7 +77,7 @@ impl Lexer {
                     tokens.push(Token::new(
                         TokenType::TT_MUL,
                         None,
-                        Some(self.position.copy()),
+                        Some(self.position.clone()),
                         None,
                     ));
                     self.advance();
@@ -85,7 +85,7 @@ impl Lexer {
                     tokens.push(Token::new(
                         TokenType::TT_DIV,
                         None,
-                        Some(self.position.copy()),
+                        Some(self.position.clone()),
                         None,
                     ));
                     self.advance();
@@ -93,7 +93,7 @@ impl Lexer {
                     tokens.push(Token::new(
                         TokenType::TT_POW,
                         None,
-                        Some(self.position.copy()),
+                        Some(self.position.clone()),
                         None,
                     ));
                     self.advance();
@@ -101,7 +101,7 @@ impl Lexer {
                     tokens.push(Token::new(
                         TokenType::TT_LPAREN,
                         None,
-                        Some(self.position.copy()),
+                        Some(self.position.clone()),
                         None,
                     ));
                     self.advance();
@@ -109,7 +109,7 @@ impl Lexer {
                     tokens.push(Token::new(
                         TokenType::TT_RPAREN,
                         None,
-                        Some(self.position.copy()),
+                        Some(self.position.clone()),
                         None,
                     ));
                     self.advance();
@@ -117,7 +117,7 @@ impl Lexer {
                     tokens.push(Token::new(
                         TokenType::TT_LSQUARE,
                         None,
-                        Some(self.position.copy()),
+                        Some(self.position.clone()),
                         None,
                     ));
                     self.advance();
@@ -125,7 +125,7 @@ impl Lexer {
                     tokens.push(Token::new(
                         TokenType::TT_RSQUARE,
                         None,
-                        Some(self.position.copy()),
+                        Some(self.position.clone()),
                         None,
                     ));
                     self.advance();
@@ -150,12 +150,12 @@ impl Lexer {
                     tokens.push(Token::new(
                         TokenType::TT_COMMA,
                         None,
-                        Some(self.position.copy()),
+                        Some(self.position.clone()),
                         None,
                     ));
                     self.advance();
                 } else {
-                    let pos_start = self.position.copy();
+                    let pos_start = self.position.clone();
                     let character = current_char.clone();
                     self.advance();
 
@@ -164,7 +164,7 @@ impl Lexer {
                         Some(StandardError::new(
                             format!("unkown character '{}'", character).to_string(),
                             pos_start,
-                            self.position.copy(),
+                            self.position.clone(),
                             Some("replace this character with one known by glang".to_string()),
                         )),
                     );
@@ -175,7 +175,7 @@ impl Lexer {
         tokens.push(Token::new(
             TokenType::TT_EOF,
             None,
-            Some(self.position.copy()),
+            Some(self.position.clone()),
             None,
         ));
         (tokens, None)
@@ -184,7 +184,7 @@ impl Lexer {
     pub fn make_number(&mut self) -> Token {
         let mut num_str = String::new();
         let mut dot_count = 0;
-        let pos_start = self.position.copy();
+        let pos_start = self.position.clone();
 
         while let Some(character) = self.current_char {
             if character.is_ascii_digit() {
@@ -212,13 +212,13 @@ impl Lexer {
             token_type,
             Some(num_str),
             Some(pos_start),
-            Some(self.position.copy()),
+            Some(self.position.clone()),
         )
     }
 
     pub fn make_identifier(&mut self) -> Token {
         let mut id_string = String::new();
-        let pos_start = self.position.copy();
+        let pos_start = self.position.clone();
 
         while let Some(character) = self.current_char {
             if LETTERS_DIGITS.contains(character) {
@@ -239,13 +239,13 @@ impl Lexer {
             token_type,
             Some(id_string),
             Some(pos_start),
-            Some(self.position.copy()),
+            Some(self.position.clone()),
         )
     }
 
     pub fn make_string(&mut self) -> Token {
         let mut string = String::new();
-        let pos_start = self.position.copy();
+        let pos_start = self.position.clone();
         let mut escape_char = false;
         self.advance();
 
@@ -282,13 +282,13 @@ impl Lexer {
             TokenType::TT_STR,
             Some(string),
             Some(pos_start),
-            Some(self.position.copy()),
+            Some(self.position.clone()),
         )
     }
 
     pub fn make_minus_or_arrow(&mut self) -> Token {
         let mut token_type = TokenType::TT_MINUS;
-        let pos_start = self.position.copy();
+        let pos_start = self.position.clone();
         self.advance();
 
         if let Some(character) = self.current_char {
@@ -302,13 +302,13 @@ impl Lexer {
             token_type,
             None,
             Some(pos_start),
-            Some(self.position.copy()),
+            Some(self.position.clone()),
         )
     }
 
     pub fn make_equals(&mut self) -> Token {
         let mut token_type = TokenType::TT_EQ;
-        let pos_start = self.position.copy();
+        let pos_start = self.position.clone();
         self.advance();
 
         if let Some(character) = self.current_char {
@@ -322,12 +322,12 @@ impl Lexer {
             token_type,
             None,
             Some(pos_start),
-            Some(self.position.copy()),
+            Some(self.position.clone()),
         )
     }
 
     pub fn make_not_equals(&mut self) -> Result<Token, Option<StandardError>> {
-        let pos_start = self.position.copy();
+        let pos_start = self.position.clone();
         self.advance();
 
         if let Some(character) = self.current_char {
@@ -338,7 +338,7 @@ impl Lexer {
                     TokenType::TT_NE,
                     None,
                     Some(pos_start),
-                    Some(self.position.copy()),
+                    Some(self.position.clone()),
                 ));
             }
         }
@@ -347,14 +347,14 @@ impl Lexer {
         return Err(Some(StandardError::new(
             "expected '=' after '!'".to_string(),
             pos_start,
-            self.position.copy(),
+            self.position.clone(),
             Some("add a '=' after the '!' character".to_string()),
         )));
     }
 
     pub fn make_less_than(&mut self) -> Token {
         let mut token_type = TokenType::TT_LT;
-        let pos_start = self.position.copy();
+        let pos_start = self.position.clone();
         self.advance();
 
         if let Some(character) = self.current_char {
@@ -368,13 +368,13 @@ impl Lexer {
             token_type,
             None,
             Some(pos_start),
-            Some(self.position.copy()),
+            Some(self.position.clone()),
         )
     }
 
     pub fn make_greater_than(&mut self) -> Token {
         let mut token_type = TokenType::TT_GT;
-        let pos_start = self.position.copy();
+        let pos_start = self.position.clone();
         self.advance();
 
         if let Some(character) = self.current_char {
@@ -388,7 +388,7 @@ impl Lexer {
             token_type,
             None,
             Some(pos_start),
-            Some(self.position.copy()),
+            Some(self.position.clone()),
         )
     }
 

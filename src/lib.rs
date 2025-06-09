@@ -1,22 +1,22 @@
 mod errors;
 mod lexing;
+mod parsing;
 mod syntax;
-use crate::lexing::lexer::Lexer;
+use crate::{errors::standard_error::StandardError, lexing::lexer::Lexer};
 use std::fs;
 
-pub fn run(filename: &str, code: String) -> (String, String) {
+pub fn run(filename: &str, code: String) -> (String, Option<StandardError>) {
     if filename == "<stdin>" {
         let mut lexer = Lexer::new(filename.to_string(), code.clone());
-        let (tokens, e) = lexer.make_tokens();
+        let (tokens, error) = lexer.make_tokens();
 
-        println!("{:?}", tokens);
-
-        if let Some(error) = e {
-            println!("{error}")
+        if let Some(_) = error {
+            // error exists
+            return ("".to_string(), error);
         }
     } else {
         let contents = fs::read_to_string(filename);
     }
 
-    ("".to_string(), "".to_string())
+    ("".to_string(), None)
 }

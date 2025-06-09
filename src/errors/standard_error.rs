@@ -1,6 +1,7 @@
 use crate::lexing::position::Position;
 use std::fmt::Display;
 
+#[derive(Clone)]
 pub struct StandardError {
     pub text: String,
     pub pos_start: Position,
@@ -91,8 +92,8 @@ impl Display for StandardError {
                 "\ncaused by:\n\n{}",
                 self.format_code_as_messup(
                     self.pos_start.file_contents.as_str(),
-                    self.pos_start.copy(),
-                    self.pos_end.copy(),
+                    self.pos_start.clone(),
+                    self.pos_end.clone(),
                 )
             )
             .as_str(),
