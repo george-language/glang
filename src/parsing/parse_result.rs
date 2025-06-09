@@ -1,9 +1,9 @@
-use crate::errors::standard_error::StandardError;
+use crate::{errors::standard_error::StandardError, nodes::common_node::CommonNode};
 
 #[derive(Clone)]
 pub struct ParseResult {
     pub error: Option<StandardError>,
-    pub node: Option<String>,
+    pub node: Option<Box<dyn CommonNode>>,
     pub last_registered_advance_count: usize,
     pub advance_count: usize,
     pub to_reverse_count: usize,
@@ -25,7 +25,7 @@ impl ParseResult {
         self.advance_count += 1;
     }
 
-    pub fn register(&mut self, parse_result: ParseResult) -> Option<String> {
+    pub fn register(&mut self, parse_result: ParseResult) -> Option<Box<dyn CommonNode>> {
         self.last_registered_advance_count = parse_result.advance_count;
         self.advance_count += parse_result.advance_count;
 
@@ -36,7 +36,7 @@ impl ParseResult {
         parse_result.node
     }
 
-    pub fn try_register(&mut self, parse_result: ParseResult) -> Option<String> {
+    pub fn try_register(&mut self, parse_result: ParseResult) -> Option<Box<dyn CommonNode>> {
         if let Some(_) = parse_result.error {
             self.to_reverse_count = parse_result.advance_count;
 
@@ -46,7 +46,7 @@ impl ParseResult {
         self.register(parse_result)
     }
 
-    pub fn success(&mut self, node: Option<String>) -> ParseResult {
+    pub fn success(&mut self, node: Option<Box<dyn CommonNode>>) -> ParseResult {
         self.node = node;
 
         self.clone()

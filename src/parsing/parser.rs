@@ -1,4 +1,12 @@
-use crate::lexing::token::Token;
+use crate::{
+    errors::standard_error::StandardError,
+    lexing::{position::Position, token::Token, token_type::TokenType},
+    nodes::{
+        binary_operator_node::BinaryOperatorNode, common_node::CommonNode,
+        unary_operator_node::UnaryOperatorNode, variable_assign_node::VariableAssignNode,
+    },
+    parsing::parse_result::ParseResult,
+};
 
 pub struct Parser {
     pub tokens: Vec<Token>,
@@ -38,5 +46,261 @@ impl Parser {
         }
     }
 
-    pub fn parse(&self) {}
+    pub fn current_pos_start(&self) -> Position {
+        self.current_token
+            .as_ref()
+            .and_then(|tok| tok.pos_start.as_ref())
+            .cloned()
+            .expect("Expected a pos_start")
+    }
+
+    pub fn current_pos_end(&self) -> Position {
+        self.current_token
+            .as_ref()
+            .and_then(|tok| tok.pos_end.as_ref())
+            .cloned()
+            .expect("Expected a pos_end")
+    }
+
+    pub fn parse(&mut self) {
+        let parse_result = self.statements();
+    }
+
+    pub fn comparison_expr(&mut self) -> ParseResult {
+        let mut parse_result = ParseResult::new();
+
+        if self
+            .current_token
+            .as_ref()
+            .unwrap()
+            .matches(TokenType::TT_KEYWORD, Some("oppositeof"))
+        {
+            let op_token = self.current_token.as_ref().unwrap().clone();
+            parse_result.register_advancement();
+            self.advance();
+
+            let node = parse_result
+                .register(self.comparison_expr())
+                .unwrap()
+                .clone();
+
+            if parse_result.error.is_some() {
+                return parse_result;
+            }
+
+            return parse_result.success(Some(Box::new(UnaryOperatorNode::new(
+                op_token.clone(),
+                node.clone(),
+            )) as Box<dyn CommonNode>));
+        }
+
+        let node = parse_result.register(self.binary_operator(
+            "arithmetic_expr",
+            vec![
+                (TokenType::TT_EE, ""),
+                (TokenType::TT_NE, ""),
+                (TokenType::TT_LT, ""),
+                (TokenType::TT_GT, ""),
+                (TokenType::TT_LTE, ""),
+                (TokenType::TT_GTE, ""),
+            ],
+            None,
+        ));
+
+        if parse_result.error.is_some() {
+            return parse_result.failure(Some(StandardError::new(
+                "expected an object or operator".to_string(),
+                self.current_pos_start(),
+                self.current_pos_end(),
+                Some("add one of the following: integer, float, identifier, 'oppositeof', '+', '-', '(', or '['".to_string()),
+            )));
+        }
+
+        parse_result.success(node)
+    }
+
+    pub fn arithmetic_expr(&mut self) -> ParseResult {
+        self.binary_operator(
+            "term",
+            vec![(TokenType::TT_PLUS, ""), (TokenType::TT_MINUS, "")],
+            None,
+        )
+    }
+
+    pub fn expr(&mut self) -> ParseResult {
+        let mut parse_result = ParseResult::new();
+
+        if self
+            .current_token
+            .as_ref()
+            .unwrap()
+            .matches(TokenType::TT_KEYWORD, Some("obj"))
+        {
+            parse_result.register_advancement();
+            self.advance();
+
+            if self.current_token.as_ref().unwrap().token_type != TokenType::TT_IDENTIFIER {
+                return parse_result.failure(Some(StandardError::new(
+                    "expected identifier".to_string(),
+                    self.current_pos_start(),
+                    self.current_pos_end(),
+                    Some("add a name for this object like 'hotdog'".to_string()),
+                )));
+            }
+
+            let var_name = self.current_token.clone().unwrap();
+            parse_result.register_advancement();
+            self.advance();
+
+            if self.current_token.as_ref().unwrap().token_type != TokenType::TT_EQ {
+                return parse_result.failure(Some(StandardError::new(
+                    "expected '='".to_string(),
+                    self.current_pos_start(),
+                    self.current_pos_end(),
+                    Some(
+                        format!(
+                            "add a '=' to set the value of the variable '{}'",
+                            var_name.value.unwrap().clone()
+                        )
+                        .to_string(),
+                    ),
+                )));
+            }
+
+            parse_result.register_advancement();
+            self.advance();
+            let expr = parse_result.register(self.expr());
+
+            if parse_result.error.is_some() {
+                return parse_result;
+            }
+
+            return parse_result.success(Some(Box::new(VariableAssignNode::new(
+                var_name.clone(),
+                expr.unwrap(),
+            )) as Box<dyn CommonNode>));
+        }
+
+        let node = parse_result.register(self.binary_operator(
+            "comparison_expr",
+            vec![
+                (TokenType::TT_KEYWORD, "and"),
+                (TokenType::TT_KEYWORD, "or"),
+            ],
+            None,
+        ));
+
+        if parse_result.error.is_some() {
+            return parse_result.failure(Some(StandardError::new(
+                "expected a keyword, type, or function".to_string(),
+                self.current_pos_start(),
+                self.current_pos_end(),
+                Some("add one of the following: 'obj', 'if', 'walk', 'while', 'func', 'oppositeof', integer, float, identifier, '+', '-', '(', or '['".to_string()),
+            )));
+        }
+
+        parse_result.success(node)
+    }
+
+    pub fn statement(&self) -> ParseResult {
+        let parse_result = ParseResult::new();
+        let pos_start = self.current_pos_start();
+
+        if self
+            .current_token
+            .unwrap()
+            .matches(TokenType::TT_KEYWORD, Some("give"))
+        {
+            parse_result.register_advancement();
+            self.advance();
+
+            let expr = parse_result.try_register(self.expr());
+
+            if expr.is_none() {
+                self.reverse(parse_result.to_reverse_count);
+            }
+
+            // return parse_result.success(Box::new(ReturnNode));
+        }
+    }
+
+    pub fn statements(&mut self) {
+        let mut parse_result = ParseResult::new();
+        let statements: Vec<ParseResult> = Vec::new();
+        let pos_start = self.current_pos_start();
+
+        while self.current_token.as_mut().unwrap().token_type == TokenType::TT_NEWLINE {
+            parse_result.register_advancement();
+            self.advance();
+        }
+
+        let statement = parse_result.register(self.statement());
+    }
+
+    pub fn factor(&mut self) -> ParseResult {
+        ParseResult::new()
+    }
+
+    pub fn term(&mut self) -> ParseResult {
+        self.binary_operator(
+            "factor",
+            vec![(TokenType::TT_MUL, ""), (TokenType::TT_DIV, "")],
+            None,
+        )
+    }
+
+    pub fn binary_operator(
+        &mut self,
+        func_a: &'static str,
+        ops: Vec<(TokenType, &'static str)>,
+        func_b: Option<&'static str>,
+    ) -> ParseResult {
+        let func_b = func_b.unwrap_or_else(|| func_a);
+
+        let mut parse_result = ParseResult::new();
+        let left = parse_result.register(if func_a == "comparison_expr" {
+            self.comparison_expr()
+        } else if func_a == "arithmetic_expr" {
+            self.arithmetic_expr()
+        } else if func_a == "term" {
+            self.term()
+        } else if func_a == "factor" {
+            self.factor()
+        } else {
+            panic!("CRITICAL ERROR: GLANG COULD NOT FIND EXPRESSION IN BINARY OPERATOR");
+        });
+
+        if parse_result.error.is_some() {
+            return parse_result;
+        }
+
+        while ops.contains(&(
+            self.current_token.clone().unwrap().token_type,
+            self.current_token.clone().unwrap().value.unwrap(),
+        )) || ops.contains(&(self.current_token.clone().unwrap().token_type, ""))
+        {
+            let op_token = self.current_token.clone().unwrap().clone();
+            parse_result.register_advancement();
+            self.advance();
+            let right = parse_result.register(if func_b == "comparison_expr" {
+                self.comparison_expr()
+            } else if func_b == "term" {
+                self.term()
+            } else if func_b == "factor" {
+                self.factor()
+            } else if func_b == "arithmetic_expr" {
+                self.arithmetic_expr()
+            } else {
+                panic!("CRITICAL ERROR: GLANG COULD NOT FIND EXPRESSION IN BINARY OPERATOR");
+            });
+
+            if parse_result.error.is_some() {
+                return parse_result;
+            }
+
+            let left = BinaryOperatorNode::new(left.clone().unwrap(), op_token, right.unwrap());
+        }
+
+        parse_result.success(left)
+    }
 }

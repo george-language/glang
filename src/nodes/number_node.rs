@@ -4,6 +4,7 @@ use crate::{
 };
 use std::fmt::Display;
 
+#[derive(Clone)]
 pub struct NumberNode {
     pub token: Token,
     pub pos_start: Option<Position>,
@@ -20,7 +21,19 @@ impl NumberNode {
     }
 }
 
-impl CommonNode for NumberNode {}
+impl CommonNode for NumberNode {
+    fn position_start(&self) -> Option<Position> {
+        self.pos_start.clone()
+    }
+
+    fn position_end(&self) -> Option<Position> {
+        self.pos_end.clone()
+    }
+
+    fn clone_box(&self) -> Box<dyn CommonNode> {
+        Box::new(self.clone())
+    }
+}
 
 impl Display for NumberNode {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {

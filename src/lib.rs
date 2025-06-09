@@ -16,7 +16,7 @@ pub fn run(filename: &str, code: String) -> (String, Option<StandardError>) {
             return ("".to_string(), error);
         }
 
-        let parser = Parser::new(tokens);
+        let mut parser = Parser::new(tokens);
         parser.parse();
     } else {
         let contents = fs::read_to_string(filename);
