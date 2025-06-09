@@ -1,7 +1,7 @@
 use crate::lexing::{position::Position, token_type::TokenType};
 use std::fmt::{Display, Formatter, Result};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Token {
     token_type: TokenType,
     value: Option<String>,

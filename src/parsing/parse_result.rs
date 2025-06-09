@@ -36,9 +36,27 @@ impl ParseResult {
         parse_result.node
     }
 
-    pub fn try_register(&mut self, parse_result: ParseResult) {
+    pub fn try_register(&mut self, parse_result: ParseResult) -> Option<String> {
         if let Some(_) = parse_result.error {
-            self.to_reverse_count = parse_result.advance_count
+            self.to_reverse_count = parse_result.advance_count;
+
+            return None;
         }
+
+        self.register(parse_result)
+    }
+
+    pub fn success(&mut self, node: Option<String>) -> ParseResult {
+        self.node = node;
+
+        self.clone()
+    }
+
+    pub fn failure(&mut self, error: Option<StandardError>) -> ParseResult {
+        if self.error.is_none() || self.last_registered_advance_count == 0 {
+            self.error = error
+        }
+
+        self.clone()
     }
 }
