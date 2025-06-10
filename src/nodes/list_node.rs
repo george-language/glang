@@ -3,14 +3,14 @@ use std::fmt::Display;
 
 #[derive(Clone)]
 pub struct ListNode {
-    pub element_nodes: Vec<Box<dyn CommonNode>>,
+    pub element_nodes: Vec<Option<Box<dyn CommonNode>>>,
     pub pos_start: Option<Position>,
     pub pos_end: Option<Position>,
 }
 
 impl ListNode {
     pub fn new(
-        element_nodes: Vec<Box<dyn CommonNode>>,
+        element_nodes: Vec<Option<Box<dyn CommonNode>>>,
         pos_start: Option<Position>,
         pos_end: Option<Position>,
     ) -> Self {
