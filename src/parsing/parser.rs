@@ -1,10 +1,12 @@
+use std::any::Any;
+
 use crate::{
     errors::standard_error::StandardError,
     lexing::{position::Position, token::Token, token_type::TokenType},
     nodes::{
         binary_operator_node::BinaryOperatorNode, common_node::CommonNode, number_node::NumberNode,
         return_node::ReturnNode, string_node::StringNode, unary_operator_node::UnaryOperatorNode,
-        variable_assign_node::VariableAssignNode,
+        variable_access_node::VariableAccessNode, variable_assign_node::VariableAssignNode,
     },
     parsing::parse_result::ParseResult,
 };
@@ -47,6 +49,10 @@ impl Parser {
         }
     }
 
+    pub fn current_token_copy(&mut self) -> Token {
+        self.current_token.as_ref().unwrap().clone()
+    }
+
     pub fn current_pos_start(&self) -> Position {
         self.current_token
             .as_ref()
@@ -66,8 +72,7 @@ impl Parser {
     pub fn parse(&mut self) -> ParseResult {
         let mut parse_result = self.statements();
 
-        if parse_result.error.is_some()
-            && self.current_token.as_ref().unwrap().token_type != TokenType::TT_EOF
+        if parse_result.error.is_some() && self.current_token_copy().token_type != TokenType::TT_EOF
         {
             return parse_result.failure(Some(StandardError::new(
                 "expected operator or bracket".to_string(),
@@ -84,12 +89,10 @@ impl Parser {
         let mut parse_result = ParseResult::new();
 
         if self
-            .current_token
-            .as_ref()
-            .unwrap()
+            .current_token_copy()
             .matches(TokenType::TT_KEYWORD, Some("oppositeof"))
         {
-            let op_token = self.current_token.as_ref().unwrap().clone();
+            let op_token = self.current_token_copy();
             parse_result.register_advancement();
             self.advance();
 
@@ -141,6 +144,94 @@ impl Parser {
         )
     }
 
+    pub fn list_expr(&mut self) -> ParseResult {
+        let mut parse_result = ParseResult::new();
+        let mut element_nodes: Vec<Option<Box<dyn CommonNode>>> = Vec::new();
+        let pos_start = self.current_token_copy().pos_start;
+
+        if &self.current_token_copy().token_type != &TokenType::TT_LSQUARE {
+            return parse_result.failure(Some(StandardError::new(
+                "expected list initializing bracket".to_string(),
+                self.current_token_copy().pos_start.unwrap(),
+                self.current_token_copy().pos_end.unwrap(),
+                Some("add a '[' to start the list".to_string()),
+            )));
+        }
+
+        parse_result.register_advancement();
+        self.advance();
+
+        if &self.current_token_copy().token_type == &TokenType::TT_RSQUARE {
+            parse_result.register_advancement();
+            self.advance();
+        } else {
+            element_nodes.push(parse_result.register(self.expr()));
+
+            if parse_result.error.is_some() {
+                return parse_result.failure(Some(StandardError::new(
+                    "expected closing bracket or list element".to_string(),
+                    self.current_token_copy().pos_start.unwrap(),
+                    self.current_token_copy().pos_end.unwrap(),
+                    Some("add a ']' to close the list or add a list element".to_string()),
+                )));
+            }
+
+            while self.current_token_copy().token_type == TokenType::TT_COMMA {
+                parse_result.register_advancement();
+                self.advance();
+
+                element_nodes.push(parse_result.register(self.expr()));
+
+                if parse_result.error.is_some() {
+                    return parse_result;
+                }
+            }
+
+            if self.current_token_copy().token_type != TokenType::TT_RSQUARE {
+                return parse_result.failure(Some(StandardError::new(
+                    "expected closing bracket or next list element".to_string(),
+                    self.current_token_copy().pos_start.unwrap(),
+                    self.current_token_copy().pos_end.unwrap(),
+                    Some("add a ']' to close the list or add a list element".to_string()),
+                )));
+            }
+
+            parse_result.register_advancement();
+            self.advance();
+        }
+
+        parse_result
+        //parse_result.success(Some(Box::new(ListNode::new(element_nodes.clone(), pos_start, self.current_token_copy().pos_end.unwrap()))))
+    }
+
+    pub fn if_expr(&mut self) -> ParseResult {
+        ParseResult::new()
+    }
+
+    pub fn if_expr_b(&mut self) -> ParseResult {
+        ParseResult::new()
+    }
+
+    pub fn if_expr_c(&mut self) -> ParseResult {
+        ParseResult::new()
+    }
+
+    pub fn if_expr_b_or_c(&mut self) -> ParseResult {
+        ParseResult::new()
+    }
+
+    pub fn if_expr_cases(&mut self) -> ParseResult {
+        ParseResult::new()
+    }
+
+    pub fn for_expr(&mut self) -> ParseResult {
+        ParseResult::new()
+    }
+
+    pub fn while_expr(&mut self) -> ParseResult {
+        ParseResult::new()
+    }
+
     pub fn expr(&mut self) -> ParseResult {
         let mut parse_result = ParseResult::new();
 
@@ -153,7 +244,7 @@ impl Parser {
             parse_result.register_advancement();
             self.advance();
 
-            if self.current_token.as_ref().unwrap().token_type != TokenType::TT_IDENTIFIER {
+            if self.current_token_copy().token_type != TokenType::TT_IDENTIFIER {
                 return parse_result.failure(Some(StandardError::new(
                     "expected identifier".to_string(),
                     self.current_pos_start(),
@@ -166,7 +257,7 @@ impl Parser {
             parse_result.register_advancement();
             self.advance();
 
-            if self.current_token.as_ref().unwrap().token_type != TokenType::TT_EQ {
+            if self.current_token_copy().token_type != TokenType::TT_EQ {
                 return parse_result.failure(Some(StandardError::new(
                     "expected '='".to_string(),
                     self.current_pos_start(),
@@ -284,7 +375,7 @@ impl Parser {
 
     pub fn atom(&mut self) -> ParseResult {
         let mut parse_result = ParseResult::new();
-        let token = self.current_token.as_ref().unwrap().clone();
+        let token = self.current_token_copy();
 
         if [TokenType::TT_INT, TokenType::TT_FLOAT].contains(&token.token_type) {
             parse_result.register_advancement();
@@ -298,6 +389,75 @@ impl Parser {
 
             return parse_result
                 .success(Some(Box::new(StringNode::new(token)) as Box<dyn CommonNode>));
+        } else if token.token_type == TokenType::TT_IDENTIFIER {
+            parse_result.register_advancement();
+            self.advance();
+
+            return parse_result.success(Some(
+                Box::new(VariableAccessNode::new(token)) as Box<dyn CommonNode>
+            ));
+        } else if token.token_type == TokenType::TT_LPAREN {
+            parse_result.register_advancement();
+            self.advance();
+            let expr = parse_result.register(self.expr());
+
+            if parse_result.error.is_some() {
+                return parse_result;
+            }
+
+            if self.current_token_copy().token_type == TokenType::TT_RPAREN {
+                parse_result.register_advancement();
+                self.advance();
+
+                return parse_result.success(expr);
+            } else {
+                return parse_result.failure(Some(StandardError::new(
+                    "expected closing parenthesis".to_string(),
+                    self.current_pos_start(),
+                    self.current_pos_end(),
+                    Some("add a ')' to close the original '('".to_string()),
+                )));
+            }
+        } else if token.token_type == TokenType::TT_LSQUARE {
+            let expr = parse_result.register(self.list_expr());
+
+            if parse_result.error.is_some() {
+                return parse_result;
+            }
+
+            return parse_result.success(expr);
+        } else if token.matches(TokenType::TT_KEYWORD, Some("if")) {
+            let expr = parse_result.register(self.if_expr());
+
+            if parse_result.error.is_some() {
+                return parse_result;
+            }
+
+            return parse_result.success(expr);
+        } else if token.matches(TokenType::TT_KEYWORD, Some("walk")) {
+            let expr = parse_result.register(self.for_expr());
+
+            if parse_result.error.is_some() {
+                return parse_result;
+            }
+
+            return parse_result.success(expr);
+        } else if token.matches(TokenType::TT_KEYWORD, Some("while")) {
+            let expr = parse_result.register(self.while_expr());
+
+            if parse_result.error.is_some() {
+                return parse_result;
+            }
+
+            return parse_result.success(expr);
+        } else if token.matches(TokenType::TT_KEYWORD, Some("func")) {
+            let func_def = parse_result.register(self.func_definition());
+
+            if parse_result.error.is_some() {
+                return parse_result;
+            }
+
+            return parse_result.success(func_def);
         }
 
         parse_result.failure(Some(StandardError::new(
@@ -314,7 +474,7 @@ impl Parser {
 
     pub fn factor(&mut self) -> ParseResult {
         let mut parse_result = ParseResult::new();
-        let token = self.current_token.as_ref().unwrap().clone();
+        let token = self.current_token_copy();
 
         if [TokenType::TT_PLUS, TokenType::TT_MINUS].contains(&token.token_type) {
             parse_result.register_advancement();
@@ -340,6 +500,10 @@ impl Parser {
             vec![(TokenType::TT_MUL, ""), (TokenType::TT_DIV, "")],
             None,
         )
+    }
+
+    pub fn func_definition(&mut self) -> ParseResult {
+        ParseResult::new()
     }
 
     pub fn binary_operator(

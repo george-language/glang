@@ -8,23 +8,40 @@ use std::fmt::Display;
 #[derive(Clone)]
 pub struct IfNode {
     pub cases: Vec<ParseResult>,
-    pub else_case: ParseResult,
+    pub else_case: Option<ParseResult>,
     pub pos_start: Option<Position>,
     pub pos_end: Option<Position>,
 }
 
 impl IfNode {
-    // pub fn new(cases: Vec<ParseResult>, else_case: ParseResult) -> Self {
-    //     self.pos_start = self.cases[0][0].pos_start
-    //     self.pos_end = (self.else_case or self.cases[len(self.cases) - 1])[0].pos_end
-
-    //     IfNode {
-    //         cases: cases,
-    //         else_case: else_case,
-    //         pos_start: pos_start,
-    //         pos_end: pos_end,
-    //     }
-    // }
+    pub fn new(cases: Vec<ParseResult>, else_case: Option<ParseResult>) -> Self {
+        IfNode {
+            cases: cases.clone(),
+            else_case: else_case.clone(),
+            pos_start: Some(
+                cases[0]
+                    .node
+                    .as_ref()
+                    .unwrap()
+                    .position_start()
+                    .unwrap()
+                    .clone(),
+            ),
+            pos_end: if else_case.is_none() {
+                Some(
+                    cases[cases.len() - 1]
+                        .node
+                        .as_ref()
+                        .unwrap()
+                        .position_start()
+                        .unwrap()
+                        .clone(),
+                )
+            } else {
+                Some(else_case.unwrap().node.unwrap().position_end().unwrap())
+            },
+        }
+    }
 }
 
 impl CommonNode for IfNode {
