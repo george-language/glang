@@ -2,8 +2,8 @@ use crate::{
     errors::standard_error::StandardError,
     lexing::{position::Position, token::Token, token_type::TokenType},
     nodes::{
-        binary_operator_node::BinaryOperatorNode, common_node::CommonNode, for_node::ForNode,
-        function_definition_node::FunctionDefinitionNode, list_node::ListNode,
+        binary_operator_node::BinaryOperatorNode, call_node::CallNode, common_node::CommonNode,
+        for_node::ForNode, function_definition_node::FunctionDefinitionNode, list_node::ListNode,
         number_node::NumberNode, return_node::ReturnNode, string_node::StringNode,
         unary_operator_node::UnaryOperatorNode, variable_access_node::VariableAccessNode,
         variable_assign_node::VariableAssignNode, while_node::WhileNode,
@@ -654,6 +654,57 @@ impl Parser {
 
         if parse_result.error.is_some() {
             return parse_result;
+        }
+
+        if self.current_token_ref().token_type == TokenType::TT_LPAREN {
+            parse_result.register_advancement();
+            self.advance();
+
+            let mut arg_nodes: Vec<Box<dyn CommonNode>> = Vec::new();
+
+            if self.current_token_ref().token_type == TokenType::TT_RPAREN {
+                parse_result.register_advancement();
+                self.advance();
+            } else {
+                arg_nodes.push(parse_result.register(self.expr()).unwrap());
+
+                if parse_result.error.is_some() {
+                    return parse_result.failure(Some(StandardError::new(
+                        "expected keyword, object, function, expression".to_string(),
+                        self.current_pos_start(),
+                        self.current_pos_end(),
+                        None,
+                    )));
+                }
+
+                while self.current_token_ref().token_type == TokenType::TT_COMMA {
+                    parse_result.register_advancement();
+                    self.advance();
+
+                    arg_nodes.push(parse_result.register(self.expr()).unwrap());
+
+                    if parse_result.error.is_some() {
+                        return parse_result;
+                    }
+                }
+
+                if self.current_token_ref().token_type != TokenType::TT_RPAREN {
+                    return parse_result.failure(Some(StandardError::new(
+                        "expected ',' or ')'".to_string(),
+                        self.current_pos_start(),
+                        self.current_pos_end(),
+                        Some("add a ',' to input all the function arguments or close with a ')' to call the function".to_string()),
+                    )));
+                }
+
+                parse_result.register_advancement();
+                self.advance();
+            }
+
+            return parse_result.success(Some(Box::new(CallNode::new(
+                atom.unwrap().clone(),
+                arg_nodes,
+            )) as Box<dyn CommonNode>));
         }
 
         parse_result.success(atom)
