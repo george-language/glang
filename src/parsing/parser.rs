@@ -3,10 +3,10 @@ use crate::{
     lexing::{position::Position, token::Token, token_type::TokenType},
     nodes::{
         binary_operator_node::BinaryOperatorNode, common_node::CommonNode, for_node::ForNode,
-        list_node::ListNode, number_node::NumberNode, return_node::ReturnNode,
-        string_node::StringNode, unary_operator_node::UnaryOperatorNode,
-        variable_access_node::VariableAccessNode, variable_assign_node::VariableAssignNode,
-        while_node::WhileNode,
+        function_definition_node::FunctionDefinitionNode, list_node::ListNode,
+        number_node::NumberNode, return_node::ReturnNode, string_node::StringNode,
+        unary_operator_node::UnaryOperatorNode, variable_access_node::VariableAccessNode,
+        variable_assign_node::VariableAssignNode, while_node::WhileNode,
     },
     parsing::parse_result::ParseResult,
 };
@@ -789,7 +789,159 @@ impl Parser {
     }
 
     pub fn func_definition(&mut self) -> ParseResult {
-        ParseResult::new()
+        let mut parse_result = ParseResult::new();
+
+        if !self
+            .current_token_ref()
+            .matches(TokenType::TT_KEYWORD, Some("func"))
+        {
+            return parse_result.failure(Some(StandardError::new(
+                "expected keyword".to_string(),
+                self.current_pos_start(),
+                self.current_pos_end(),
+                Some("add the 'func' keyword to define a function".to_string()),
+            )));
+        }
+
+        parse_result.register_advancement();
+        self.advance();
+
+        let var_name_token: Option<Token>;
+
+        if self.current_token_ref().token_type == TokenType::TT_IDENTIFIER {
+            var_name_token = Some(self.current_token_copy());
+            parse_result.register_advancement();
+            self.advance();
+
+            if self.current_token_ref().token_type != TokenType::TT_LPAREN {
+                return parse_result.failure(Some(StandardError::new(
+                    "expected '('".to_string(),
+                    self.current_pos_start(),
+                    self.current_pos_end(),
+                    Some("add a '(' to define the function arguments".to_string()),
+                )));
+            }
+        } else {
+            var_name_token = None;
+
+            if self.current_token_ref().token_type != TokenType::TT_LPAREN {
+                return parse_result.failure(Some(StandardError::new(
+                    "expected identifier or '('".to_string(),
+                    self.current_pos_start(),
+                    self.current_pos_end(),
+                    Some("add a name for this function like 'greet' or use '(' to define an anonymous function".to_string()),
+                )));
+            }
+        }
+
+        parse_result.register_advancement();
+        self.advance();
+
+        let mut arg_name_tokens: Vec<Token> = Vec::new();
+
+        if self.current_token_ref().token_type == TokenType::TT_IDENTIFIER {
+            arg_name_tokens.push(self.current_token_copy());
+
+            parse_result.register_advancement();
+            self.advance();
+
+            while self.current_token_ref().token_type == TokenType::TT_COMMA {
+                parse_result.register_advancement();
+                self.advance();
+
+                if self.current_token_ref().token_type != TokenType::TT_LPAREN {
+                    return parse_result.failure(Some(StandardError::new(
+                        "expected identifier".to_string(),
+                        self.current_pos_start(),
+                        self.current_pos_end(),
+                        Some("add a name for the function arguments like 'name'".to_string()),
+                    )));
+                }
+
+                arg_name_tokens.push(self.current_token_copy());
+
+                parse_result.register_advancement();
+                self.advance();
+            }
+
+            if self.current_token_ref().token_type != TokenType::TT_RPAREN {
+                return parse_result.failure(Some(StandardError::new(
+                    "expected comma or ')'".to_string(),
+                    self.current_pos_start(),
+                    self.current_pos_end(),
+                    Some("add a ',' followed by the function argument or complete the function with ')'".to_string()),
+                )));
+            }
+        } else {
+            if self.current_token_ref().token_type != TokenType::TT_RPAREN {
+                return parse_result.failure(Some(StandardError::new(
+                    "expected indentifier or ')'".to_string(),
+                    self.current_pos_start(),
+                    self.current_pos_end(),
+                    Some("add a name for the function arguments like 'name' or complete the function with ')'".to_string()),
+                )));
+            }
+        }
+
+        parse_result.register_advancement();
+        self.advance();
+
+        if self.current_token_ref().token_type == TokenType::TT_ARROW {
+            parse_result.register_advancement();
+            self.advance();
+
+            let node_to_return = parse_result.register(self.expr());
+
+            if parse_result.error.is_some() {
+                return parse_result;
+            }
+
+            return parse_result.success(Some(Box::new(FunctionDefinitionNode::new(
+                var_name_token.clone(),
+                arg_name_tokens,
+                node_to_return.unwrap(),
+                true,
+            )) as Box<dyn CommonNode>));
+        }
+
+        if self.current_token_ref().token_type != TokenType::TT_NEWLINE
+            && self.current_token_ref().token_type != TokenType::TT_LBRACKET
+        {
+            return parse_result.failure(Some(StandardError::new(
+                "expected '->' or '{'".to_string(),
+                self.current_pos_start(),
+                self.current_pos_end(),
+                Some("add an arrow '->' to define a single expression function or use a '{' to define the body of the function".to_string()),
+            )));
+        }
+
+        parse_result.register_advancement();
+        self.advance();
+
+        let body = parse_result.register(self.statements());
+
+        if parse_result.error.is_some() {
+            return parse_result;
+        }
+
+        if self.current_token_ref().token_type != TokenType::TT_RBRACKET {
+            return parse_result.failure(Some(StandardError::new(
+                "expected '}'".to_string(),
+                self.current_pos_start(),
+                self.current_pos_end(),
+                Some("close the function body with a '}'".to_string()),
+            )));
+        }
+
+        parse_result.register_advancement();
+        self.advance();
+
+        parse_result.success(Some(Box::new(FunctionDefinitionNode::new(
+            var_name_token,
+            arg_name_tokens,
+            body.unwrap(),
+            false,
+        )) as Box<dyn CommonNode>))
     }
 
     pub fn binary_operator(
