@@ -6,6 +6,7 @@ use crate::{
         list_node::ListNode, number_node::NumberNode, return_node::ReturnNode,
         string_node::StringNode, unary_operator_node::UnaryOperatorNode,
         variable_access_node::VariableAccessNode, variable_assign_node::VariableAssignNode,
+        while_node::WhileNode,
     },
     parsing::parse_result::ParseResult,
 };
@@ -391,7 +392,80 @@ impl Parser {
     }
 
     pub fn while_expr(&mut self) -> ParseResult {
-        ParseResult::new()
+        let mut parse_result = ParseResult::new();
+
+        if !self
+            .current_token_ref()
+            .matches(TokenType::TT_KEYWORD, Some("while"))
+        {
+            return parse_result.failure(Some(StandardError::new(
+                "expected keyword".to_string(),
+                self.current_pos_start(),
+                self.current_pos_end(),
+                Some("add the 'while' keyword to represent a while loop".to_string()),
+            )));
+        }
+
+        parse_result.register_advancement();
+        self.advance();
+
+        let condition = parse_result.register(self.expr());
+
+        if parse_result.error.is_some() {
+            return parse_result;
+        }
+
+        if self.current_token_ref().token_type != TokenType::TT_LBRACKET {
+            return parse_result.failure(Some(StandardError::new(
+                "expected '{'".to_string(),
+                self.current_pos_start(),
+                self.current_pos_end(),
+                Some("add a '{' to define the body".to_string()),
+            )));
+        }
+
+        parse_result.register_advancement();
+        self.advance();
+
+        if self.current_token_ref().token_type == TokenType::TT_NEWLINE {
+            parse_result.register_advancement();
+            self.advance();
+
+            let body = parse_result.register(self.statements());
+
+            if parse_result.error.is_some() {
+                return parse_result;
+            }
+
+            if self.current_token_ref().token_type != TokenType::TT_RBRACKET {
+                return parse_result.failure(Some(StandardError::new(
+                    "expected '}'".to_string(),
+                    self.current_pos_start(),
+                    self.current_pos_end(),
+                    Some("add a '}' to close the body".to_string()),
+                )));
+            }
+
+            parse_result.register_advancement();
+            self.advance();
+
+            return parse_result.success(Some(Box::new(WhileNode::new(
+                condition.unwrap(),
+                body.unwrap(),
+                true,
+            )) as Box<dyn CommonNode>));
+        }
+
+        let body = parse_result.register(self.statement());
+
+        if parse_result.error.is_some() {
+            return parse_result;
+        }
+
+        parse_result.success(Some(
+            Box::new(WhileNode::new(condition.unwrap(), body.unwrap(), true))
+                as Box<dyn CommonNode>,
+        ))
     }
 
     pub fn expr(&mut self) -> ParseResult {
