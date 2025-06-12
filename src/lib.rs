@@ -10,27 +10,39 @@ use crate::{
 };
 use std::fs;
 
-pub fn run(filename: &str, code: String) -> (String, Option<StandardError>) {
+pub fn run(filename: &str, code: Option<String>) -> (&'static str, Option<StandardError>) {
+    let mut contents = String::new();
+
     if filename == "<stdin>" {
-        let mut lexer = Lexer::new(filename.to_string(), code.clone());
-        let (tokens, error) = lexer.make_tokens();
-
-        if error.is_some() {
-            // error exists
-            return ("".to_string(), error);
-        }
-
-        let mut parser = Parser::new(tokens);
-        let ast = parser.parse();
-
-        if ast.error.is_some() {
-            return ("".to_string(), ast.error);
-        }
-
-        let mut interpreter = Interpreter::new();
+        contents = code.unwrap_or_else(|| "".to_string());
     } else {
-        let contents = fs::read_to_string(filename);
+        let result = fs::read_to_string(filename);
+
+        if !result.is_ok() {
+            println!("Failed to read .glang file");
+
+            return ("", None);
+        } else {
+            contents = result.unwrap();
+        }
     }
 
-    ("".to_string(), None)
+    let mut lexer = Lexer::new(filename.to_string(), contents.clone());
+    let (tokens, error) = lexer.make_tokens();
+
+    if error.is_some() {
+        // error exists
+        return ("", error);
+    }
+
+    let mut parser = Parser::new(tokens);
+    let ast = parser.parse();
+
+    if ast.error.is_some() {
+        return ("", ast.error);
+    }
+
+    let mut interpreter = Interpreter::new();
+
+    ("", None)
 }

@@ -5,11 +5,23 @@ use std::io::{Write, stdin, stdout};
 const VERSION: &str = "2.0";
 
 fn main() {
-    let arguments = env::args();
+    let mut args = env::args();
 
-    if arguments.len() > 1 {
-        for arg in arguments {
-            if arg.ends_with(".glang") {}
+    if args.len() > 1 {
+        args.next(); // skip .exe
+
+        if let Some(first_arg) = args.next() {
+            if first_arg.ends_with(".glang") {
+                let (result, e) = run(first_arg.as_str(), None);
+
+                if let Some(error) = e {
+                    println!("{error}");
+                }
+
+                if !result.is_empty() {
+                    println!("{}", result);
+                }
+            }
         }
     } else {
         println!(
@@ -33,7 +45,7 @@ fn main() {
                 break;
             }
 
-            let (result, e) = run("<stdin>", code);
+            let (result, e) = run("<stdin>", Some(code));
 
             if let Some(error) = e {
                 println!("{error}");
