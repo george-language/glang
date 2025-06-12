@@ -29,7 +29,7 @@ impl ParseResult {
         self.last_registered_advance_count = parse_result.advance_count;
         self.advance_count += parse_result.advance_count;
 
-        if let Some(_) = parse_result.error {
+        if parse_result.error.is_some() {
             self.error = parse_result.error
         }
 

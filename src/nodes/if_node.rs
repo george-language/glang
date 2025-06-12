@@ -1,44 +1,27 @@
-use crate::{
-    lexing::{position::Position, token::Token},
-    nodes::common_node::CommonNode,
-    parsing::parse_result::ParseResult,
-};
-use std::fmt::Display;
+use crate::{lexing::position::Position, nodes::common_node::CommonNode};
+use std::{any::Any, fmt::Display};
 
 #[derive(Clone)]
 pub struct IfNode {
-    pub cases: Vec<ParseResult>,
-    pub else_case: Option<ParseResult>,
+    pub cases: Vec<(Box<dyn CommonNode>, Box<dyn CommonNode>, bool)>,
+    pub else_case: Option<(Box<dyn CommonNode>, bool)>,
     pub pos_start: Option<Position>,
     pub pos_end: Option<Position>,
 }
 
 impl IfNode {
-    pub fn new(cases: Vec<ParseResult>, else_case: Option<ParseResult>) -> Self {
+    pub fn new(
+        cases: Vec<(Box<dyn CommonNode>, Box<dyn CommonNode>, bool)>,
+        else_case: Option<(Box<dyn CommonNode>, bool)>,
+    ) -> Self {
         IfNode {
             cases: cases.clone(),
             else_case: else_case.clone(),
-            pos_start: Some(
-                cases[0]
-                    .node
-                    .as_ref()
-                    .unwrap()
-                    .position_start()
-                    .unwrap()
-                    .clone(),
-            ),
+            pos_start: Some(cases[0].0.position_start().unwrap()),
             pos_end: if else_case.is_none() {
-                Some(
-                    cases[cases.len() - 1]
-                        .node
-                        .as_ref()
-                        .unwrap()
-                        .position_start()
-                        .unwrap()
-                        .clone(),
-                )
+                Some(cases[cases.len() - 1].0.position_start().unwrap().clone())
             } else {
-                Some(else_case.unwrap().node.unwrap().position_end().unwrap())
+                Some(else_case.unwrap().0.position_end().unwrap())
             },
         }
     }
@@ -55,6 +38,10 @@ impl CommonNode for IfNode {
 
     fn clone_box(&self) -> Box<dyn CommonNode> {
         Box::new(self.clone())
+    }
+
+    fn as_any(&self) -> &dyn Any {
+        return self;
     }
 }
 

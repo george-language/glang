@@ -3,10 +3,11 @@ use crate::{
     lexing::{position::Position, token::Token, token_type::TokenType},
     nodes::{
         binary_operator_node::BinaryOperatorNode, call_node::CallNode, common_node::CommonNode,
-        for_node::ForNode, function_definition_node::FunctionDefinitionNode, list_node::ListNode,
-        number_node::NumberNode, return_node::ReturnNode, string_node::StringNode,
-        unary_operator_node::UnaryOperatorNode, variable_access_node::VariableAccessNode,
-        variable_assign_node::VariableAssignNode, while_node::WhileNode,
+        for_node::ForNode, function_definition_node::FunctionDefinitionNode, if_node::IfNode,
+        list_node::ListNode, number_node::NumberNode, return_node::ReturnNode,
+        string_node::StringNode, unary_operator_node::UnaryOperatorNode,
+        variable_access_node::VariableAccessNode, variable_assign_node::VariableAssignNode,
+        while_node::WhileNode,
     },
     parsing::parse_result::ParseResult,
 };
@@ -41,6 +42,13 @@ impl Parser {
         self.update_current_token();
 
         self.current_token.clone()
+    }
+
+    pub fn skip_newlines(&mut self, parse_result: &mut ParseResult) {
+        while self.current_token_ref().token_type == TokenType::TT_NEWLINE {
+            parse_result.register_advancement();
+            self.advance();
+        }
     }
 
     pub fn update_current_token(&mut self) {
@@ -218,23 +226,234 @@ impl Parser {
     }
 
     pub fn if_expr(&mut self) -> ParseResult {
-        ParseResult::new()
+        let mut parse_result = ParseResult::new();
+        let (if_parse_result, cases, else_case) = self.if_expr_cases("if");
+
+        if if_parse_result.error.is_some() {
+            return if_parse_result;
+        }
+
+        parse_result.success(Some(
+            Box::new(IfNode::new(cases, else_case)) as Box<dyn CommonNode>
+        ))
     }
 
-    pub fn if_expr_b(&mut self) -> ParseResult {
-        ParseResult::new()
+    pub fn if_expr_b(
+        &mut self,
+    ) -> (
+        ParseResult,
+        Vec<(Box<dyn CommonNode>, Box<dyn CommonNode>, bool)>,
+        Option<(Box<dyn CommonNode>, bool)>,
+    ) {
+        self.if_expr_cases("alsoif")
     }
 
-    pub fn if_expr_c(&mut self) -> ParseResult {
-        ParseResult::new()
+    pub fn if_expr_c(&mut self) -> (ParseResult, Option<(Box<dyn CommonNode>, bool)>) {
+        let mut parse_result = ParseResult::new();
+        let mut else_case: Option<(Box<dyn CommonNode>, bool)> = None;
+
+        if self
+            .current_token_ref()
+            .matches(TokenType::TT_KEYWORD, Some("otherwise"))
+        {
+            parse_result.register_advancement();
+            self.advance();
+
+            self.skip_newlines(&mut parse_result);
+
+            if self.current_token_ref().token_type == TokenType::TT_LBRACKET {
+                parse_result.register_advancement();
+                self.advance();
+
+                let statements = parse_result.register(self.statements());
+
+                if parse_result.error.is_some() {
+                    return (parse_result, None);
+                }
+
+                else_case = Some((statements.unwrap(), true));
+
+                if self.current_token_ref().token_type == TokenType::TT_RBRACKET {
+                    parse_result.register_advancement();
+                    self.advance();
+                } else {
+                    return (
+                        parse_result.failure(Some(StandardError::new(
+                            "expected '}'".to_string(),
+                            self.current_pos_start(),
+                            self.current_pos_end(),
+                            Some("add a '}' to close the if statement body".to_string()),
+                        ))),
+                        None,
+                    );
+                }
+            } else {
+                return (
+                    parse_result.failure(Some(StandardError::new(
+                        "expected '{'".to_string(),
+                        self.current_pos_start(),
+                        self.current_pos_end(),
+                        Some("add a '{' to define the if statement body".to_string()),
+                    ))),
+                    None,
+                );
+            }
+        }
+
+        (parse_result, None)
     }
 
-    pub fn if_expr_b_or_c(&mut self) -> ParseResult {
-        ParseResult::new()
+    pub fn if_expr_b_or_c(
+        &mut self,
+    ) -> (
+        ParseResult,
+        Vec<(Box<dyn CommonNode>, Box<dyn CommonNode>, bool)>,
+        Option<(Box<dyn CommonNode>, bool)>,
+    ) {
+        let mut parse_result = ParseResult::new();
+        let mut cases: Vec<(Box<dyn CommonNode>, Box<dyn CommonNode>, bool)> = Vec::new();
+        let mut else_case: Option<(Box<dyn CommonNode>, bool)> = None;
+
+        if self
+            .current_token_ref()
+            .matches(TokenType::TT_KEYWORD, Some("alsoif"))
+        {
+            let (if_parse_result, all_cases, else_clause) = self.if_expr_b();
+
+            if if_parse_result.error.is_some() {
+                return (if_parse_result, Vec::new(), None);
+            }
+
+            else_case = else_clause;
+            cases = all_cases.clone();
+        } else {
+            let (if_parse_result, else_clause) = self.if_expr_c();
+
+            if if_parse_result.error.is_some() {
+                return (if_parse_result, Vec::new(), None);
+            }
+
+            else_case = else_clause;
+        }
+
+        (parse_result, cases, else_case)
     }
 
-    pub fn if_expr_cases(&mut self) -> ParseResult {
-        ParseResult::new()
+    pub fn if_expr_cases(
+        &mut self,
+        keyword: &'static str,
+    ) -> (
+        ParseResult,
+        Vec<(Box<dyn CommonNode>, Box<dyn CommonNode>, bool)>,
+        Option<(Box<dyn CommonNode>, bool)>,
+    ) {
+        let mut parse_result = ParseResult::new();
+        let mut cases: Vec<(Box<dyn CommonNode>, Box<dyn CommonNode>, bool)> = Vec::new();
+        let mut else_case: Option<(Box<dyn CommonNode>, bool)> = None;
+
+        if !self
+            .current_token_ref()
+            .matches(TokenType::TT_KEYWORD, Some(keyword))
+        {
+            return (
+                parse_result.failure(Some(StandardError::new(
+                    "expected keyword".to_string(),
+                    self.current_pos_start(),
+                    self.current_pos_end(),
+                    Some(format!("add the '{}' keyword", keyword).to_string()),
+                ))),
+                Vec::new(),
+                None,
+            );
+        }
+
+        parse_result.register_advancement();
+        self.advance();
+
+        let condition = parse_result.register(self.statement());
+
+        if parse_result.error.is_some() {
+            return (parse_result, Vec::new(), None);
+        }
+
+        self.skip_newlines(&mut parse_result);
+
+        if self.current_token_ref().token_type != TokenType::TT_LBRACKET {
+            return (
+                parse_result.failure(Some(StandardError::new(
+                    "expected '{'".to_string(),
+                    self.current_pos_start(),
+                    self.current_pos_end(),
+                    Some("add a '{' to define the if statement body".to_string()),
+                ))),
+                Vec::new(),
+                None,
+            );
+        }
+
+        parse_result.register_advancement();
+        self.advance();
+
+        if self.current_token_ref().token_type == TokenType::TT_NEWLINE {
+            parse_result.register_advancement();
+            self.advance();
+
+            let statements = parse_result.register(self.statements());
+
+            if parse_result.error.is_some() {
+                return (parse_result, Vec::new(), None);
+            }
+
+            cases.push((
+                condition.unwrap().clone(),
+                statements.unwrap().clone(),
+                true,
+            ));
+
+            if self.current_token_ref().token_type == TokenType::TT_RBRACKET {
+                parse_result.register_advancement();
+                self.advance();
+            } else {
+                let (if_parse_result, all_cases, else_clause) = self.if_expr_b_or_c();
+
+                if if_parse_result.error.is_some() {
+                    return (if_parse_result, Vec::new(), None);
+                }
+
+                else_case = else_clause;
+                cases.append(all_cases.clone().as_mut());
+
+                return (
+                    parse_result.failure(Some(StandardError::new(
+                        "expected '}'".to_string(),
+                        self.current_pos_start(),
+                        self.current_pos_end(),
+                        Some("add a '}' to close the if statement body".to_string()),
+                    ))),
+                    Vec::new(),
+                    None,
+                );
+            }
+        } else {
+            let expr = parse_result.register(self.expr());
+
+            if parse_result.error.is_some() {
+                return (parse_result, Vec::new(), None);
+            }
+
+            cases.push((condition.unwrap().clone(), expr.unwrap().clone(), false));
+
+            let (if_parse_result, all_cases, else_clause) = self.if_expr_b_or_c();
+
+            if if_parse_result.error.is_some() {
+                return (if_parse_result, Vec::new(), None);
+            }
+
+            else_case = else_clause;
+            cases.append(all_cases.clone().as_mut());
+        }
+
+        return (parse_result, cases, else_case);
     }
 
     pub fn for_expr(&mut self) -> ParseResult {
@@ -331,6 +550,8 @@ impl Parser {
             step_value = None;
         }
 
+        self.skip_newlines(&mut parse_result);
+
         if self.current_token_ref().token_type != TokenType::TT_LBRACKET {
             return parse_result.failure(Some(StandardError::new(
                 "expected '{'".to_string(),
@@ -414,6 +635,8 @@ impl Parser {
         if parse_result.error.is_some() {
             return parse_result;
         }
+
+        self.skip_newlines(&mut parse_result);
 
         if self.current_token_ref().token_type != TokenType::TT_LBRACKET {
             return parse_result.failure(Some(StandardError::new(

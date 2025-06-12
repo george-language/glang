@@ -1,5 +1,5 @@
 use crate::{lexing::position::Position, nodes::common_node::CommonNode};
-use std::fmt::Display;
+use std::{any::Any, fmt::Display};
 
 #[derive(Clone)]
 pub struct ListNode {
@@ -33,6 +33,10 @@ impl CommonNode for ListNode {
 
     fn clone_box(&self) -> Box<dyn CommonNode> {
         Box::new(self.clone())
+    }
+
+    fn as_any(&self) -> &dyn Any {
+        return self;
     }
 }
 
