@@ -1,9 +1,13 @@
 mod errors;
+mod interpreting;
 mod lexing;
 mod nodes;
 mod parsing;
 mod syntax;
-use crate::{errors::standard_error::StandardError, lexing::lexer::Lexer, parsing::parser::Parser};
+use crate::{
+    errors::standard_error::StandardError, interpreting::interpreter::Interpreter,
+    lexing::lexer::Lexer, parsing::parser::Parser,
+};
 use std::fs;
 
 pub fn run(filename: &str, code: String) -> (String, Option<StandardError>) {
@@ -22,6 +26,8 @@ pub fn run(filename: &str, code: String) -> (String, Option<StandardError>) {
         if ast.error.is_some() {
             return ("".to_string(), ast.error);
         }
+
+        let mut interpreter = Interpreter::new();
     } else {
         let contents = fs::read_to_string(filename);
     }

@@ -13,11 +13,11 @@ fn main() {
         }
     } else {
         println!(
-            "George Language {VERSION} Platform {}-{}",
+            "George Language {VERSION}: Platform {}-{}",
             env::consts::OS,
             env::consts::ARCH
         );
-        println!("Type 'exit()' to exit");
+        println!("Type '/exit' to exit");
 
         loop {
             let mut code = String::new();
@@ -29,7 +29,7 @@ fn main() {
                 .read_line(&mut code)
                 .expect("Did not enter a valid string");
 
-            if code.trim().starts_with("exit()") {
+            if code.trim().starts_with("/exit") {
                 break;
             }
 
