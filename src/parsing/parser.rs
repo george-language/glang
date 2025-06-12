@@ -300,7 +300,7 @@ impl Parser {
             self.advance();
         }
 
-        (parse_result, None)
+        (parse_result, else_case)
     }
 
     pub fn if_expr_b_or_c(
@@ -397,7 +397,6 @@ impl Parser {
         parse_result.register_advancement();
         self.advance();
 
-        // ... (unchanged)
         if self.current_token_ref().token_type == TokenType::TT_NEWLINE {
             parse_result.register_advancement();
             self.advance();
