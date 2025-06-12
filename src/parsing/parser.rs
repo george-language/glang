@@ -261,43 +261,43 @@ impl Parser {
 
             self.skip_newlines(&mut parse_result);
 
-            if self.current_token_ref().token_type == TokenType::TT_LBRACKET {
-                parse_result.register_advancement();
-                self.advance();
-
-                let statements = parse_result.register(self.statements());
-
-                if parse_result.error.is_some() {
-                    return (parse_result, None);
-                }
-
-                else_case = Some((statements.unwrap(), true));
-
-                if self.current_token_ref().token_type == TokenType::TT_RBRACKET {
-                    parse_result.register_advancement();
-                    self.advance();
-                } else {
-                    return (
-                        parse_result.failure(Some(StandardError::new(
-                            "expected '}'".to_string(),
-                            self.current_pos_start(),
-                            self.current_pos_end(),
-                            Some("add a '}' to close the if statement body".to_string()),
-                        ))),
-                        None,
-                    );
-                }
-            } else {
+            if self.current_token_ref().token_type != TokenType::TT_LBRACKET {
                 return (
                     parse_result.failure(Some(StandardError::new(
                         "expected '{'".to_string(),
                         self.current_pos_start(),
                         self.current_pos_end(),
-                        Some("add a '{' to define the if statement body".to_string()),
+                        Some("add a '{' to define the body".to_string()),
                     ))),
                     None,
                 );
             }
+
+            parse_result.register_advancement();
+            self.advance();
+
+            let statements = parse_result.register(self.statements());
+
+            if parse_result.error.is_some() {
+                return (parse_result, None);
+            }
+
+            else_case = Some((statements.unwrap(), true));
+
+            if self.current_token_ref().token_type != TokenType::TT_RBRACKET {
+                return (
+                    parse_result.failure(Some(StandardError::new(
+                        "expected '}'".to_string(),
+                        self.current_pos_start(),
+                        self.current_pos_end(),
+                        Some("add a '}' to close the body".to_string()),
+                    ))),
+                    None,
+                );
+            }
+
+            parse_result.register_advancement();
+            self.advance();
         }
 
         (parse_result, None)
@@ -318,6 +318,9 @@ impl Parser {
             .current_token_ref()
             .matches(TokenType::TT_KEYWORD, Some("alsoif"))
         {
+            parse_result.register_advancement();
+            self.advance();
+
             let (if_parse_result, all_cases, else_clause) = self.if_expr_b();
 
             if if_parse_result.error.is_some() {
@@ -384,7 +387,7 @@ impl Parser {
                     "expected '{'".to_string(),
                     self.current_pos_start(),
                     self.current_pos_end(),
-                    Some("add a '{' to define the if statement body".to_string()),
+                    Some("add a '{' to define the body".to_string()),
                 ))),
                 Vec::new(),
                 None,
@@ -394,6 +397,7 @@ impl Parser {
         parse_result.register_advancement();
         self.advance();
 
+        // ... (unchanged)
         if self.current_token_ref().token_type == TokenType::TT_NEWLINE {
             parse_result.register_advancement();
             self.advance();
@@ -410,25 +414,13 @@ impl Parser {
                 true,
             ));
 
-            if self.current_token_ref().token_type == TokenType::TT_RBRACKET {
-                parse_result.register_advancement();
-                self.advance();
-            } else {
-                let (if_parse_result, all_cases, else_clause) = self.if_expr_b_or_c();
-
-                if if_parse_result.error.is_some() {
-                    return (if_parse_result, Vec::new(), None);
-                }
-
-                else_case = else_clause;
-                cases.append(all_cases.clone().as_mut());
-
+            if self.current_token_ref().token_type != TokenType::TT_RBRACKET {
                 return (
                     parse_result.failure(Some(StandardError::new(
                         "expected '}'".to_string(),
                         self.current_pos_start(),
                         self.current_pos_end(),
-                        Some("add a '}' to close the if statement body".to_string()),
+                        Some("add a '}' to close the body".to_string()),
                     ))),
                     Vec::new(),
                     None,
@@ -442,16 +434,19 @@ impl Parser {
             }
 
             cases.push((condition.unwrap().clone(), expr.unwrap().clone(), false));
-
-            let (if_parse_result, all_cases, else_clause) = self.if_expr_b_or_c();
-
-            if if_parse_result.error.is_some() {
-                return (if_parse_result, Vec::new(), None);
-            }
-
-            else_case = else_clause;
-            cases.append(all_cases.clone().as_mut());
         }
+
+        parse_result.register_advancement();
+        self.advance();
+
+        let (if_parse_result, all_cases, else_clause) = self.if_expr_b_or_c();
+
+        if if_parse_result.error.is_some() {
+            return (if_parse_result, Vec::new(), None);
+        }
+
+        else_case = else_clause;
+        cases.append(all_cases.clone().as_mut());
 
         return (parse_result, cases, else_case);
     }
@@ -1203,7 +1198,7 @@ impl Parser {
                 "expected '}'".to_string(),
                 self.current_pos_start(),
                 self.current_pos_end(),
-                Some("close the function body with a '}'".to_string()),
+                Some("add a '}' to close the body".to_string()),
             )));
         }
 
