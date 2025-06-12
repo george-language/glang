@@ -1173,9 +1173,9 @@ impl Parser {
             )) as Box<dyn CommonNode>));
         }
 
-        if self.current_token_ref().token_type != TokenType::TT_NEWLINE
-            && self.current_token_ref().token_type != TokenType::TT_LBRACKET
-        {
+        self.skip_newlines(&mut parse_result);
+
+        if self.current_token_ref().token_type != TokenType::TT_LBRACKET {
             return parse_result.failure(Some(StandardError::new(
                 "expected '->' or '{'".to_string(),
                 self.current_pos_start(),
