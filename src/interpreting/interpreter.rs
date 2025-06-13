@@ -1,4 +1,7 @@
-use crate::interpreting::symbol_table::SymbolTable;
+use crate::{
+    interpreting::{context::Context, runtime_result::RuntimeResult, symbol_table::SymbolTable},
+    nodes::{common_node::CommonNode, number_node::NumberNode},
+};
 
 pub struct Interpreter {
     pub global_symbol_table: SymbolTable,
@@ -10,16 +13,19 @@ impl Interpreter {
             global_symbol_table: SymbolTable::new(None),
         }
     }
+
+    pub fn visit(&mut self, node: Box<dyn CommonNode>, context: Context) -> RuntimeResult {
+        if let Some(node_type) = node.as_any().downcast_ref::<NumberNode>() {
+            return self.visit_number_node(node_type.to_owned(), context);
+        } else {
+            panic!("CRITICAL ERROR: NO METHOD DEFINED FOR NODE TYPE");
+        }
+    }
+
+    pub fn visit_number_node(&self, node: NumberNode, context: Context) -> RuntimeResult {
+        RuntimeResult::new()
+    }
 }
-
-//     def visit(self, node, context):
-//         method_name = f'visit_{type(node).__name__}'
-//         method = getattr(self, method_name, self.noVisitMethod)
-
-//         return method(node, context)
-
-//     def noVisitMethod(self, node, context):
-//         raise Exception(f'No visit_{type(node).__name__} method defined')
 
 //     def visit_NumberNode(self, node: NumberNode, context):
 //         return RuntimeResult().success(

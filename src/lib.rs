@@ -4,13 +4,20 @@ mod lexing;
 mod nodes;
 mod parsing;
 mod syntax;
+mod values;
 use crate::{
-    errors::standard_error::StandardError, interpreting::interpreter::Interpreter,
-    lexing::lexer::Lexer, parsing::parser::Parser,
+    errors::standard_error::StandardError,
+    interpreting::{context::Context, interpreter::Interpreter},
+    lexing::lexer::Lexer,
+    parsing::parser::Parser,
+    values::value::Value,
 };
 use std::fs;
 
-pub fn run(filename: &str, code: Option<String>) -> (&'static str, Option<StandardError>) {
+pub fn run(
+    filename: &str,
+    code: Option<String>,
+) -> (Option<Box<dyn Value>>, Option<StandardError>) {
     let mut contents = String::new();
 
     if filename == "<stdin>" {
@@ -21,7 +28,7 @@ pub fn run(filename: &str, code: Option<String>) -> (&'static str, Option<Standa
         if !result.is_ok() {
             println!("Failed to read .glang file");
 
-            return ("", None);
+            return (None, None);
         } else {
             contents = result.unwrap();
         }
@@ -32,17 +39,20 @@ pub fn run(filename: &str, code: Option<String>) -> (&'static str, Option<Standa
 
     if error.is_some() {
         // error exists
-        return ("", error);
+        return (None, error);
     }
 
     let mut parser = Parser::new(tokens);
     let ast = parser.parse();
 
     if ast.error.is_some() {
-        return ("", ast.error);
+        return (None, ast.error);
     }
 
     let mut interpreter = Interpreter::new();
+    let mut context = Context::new("<program>", None, None);
+    context.symbol_table = Some(interpreter.global_symbol_table.clone());
+    let result = interpreter.visit(ast.node.unwrap(), context);
 
-    ("", None)
+    (result.value, result.error)
 }

@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+#[derive(Clone)]
 pub struct SymbolTable {
     pub symbols: HashMap<&'static str, Option<String>>,
     pub parent: Option<Box<SymbolTable>>,

@@ -12,14 +12,14 @@ fn main() {
 
         if let Some(first_arg) = args.next() {
             if first_arg.ends_with(".glang") {
-                let (result, e) = run(first_arg.as_str(), None);
+                let (result, error) = run(first_arg.as_str(), None);
 
-                if let Some(error) = e {
-                    println!("{error}");
+                if error.is_some() {
+                    println!("{}", error.unwrap());
                 }
 
-                if !result.is_empty() {
-                    println!("{}", result);
+                if result.is_some() {
+                    println!("{}", result.unwrap());
                 }
             }
         }
@@ -45,15 +45,15 @@ fn main() {
                 break;
             }
 
-            let (result, e) = run("<stdin>", Some(code));
+            let (result, error) = run("<stdin>", Some(code));
 
-            if let Some(error) = e {
-                println!("{error}");
+            if error.is_some() {
+                println!("{}", error.unwrap());
                 continue;
             }
 
-            if !result.is_empty() {
-                println!("{}", result);
+            if result.is_some() {
+                println!("{}", result.unwrap());
             }
         }
     }
