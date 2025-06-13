@@ -1,63 +1,66 @@
+use std::fmt::Display;
+
 use crate::{
-    errors::standard_error::StandardError,
-    interpreting::{context::Context, runtime_result::RuntimeResult},
-    lexing::position::Position,
+    errors::standard_error::StandardError, interpreting::context::Context,
+    lexing::position::Position, values::number::Number,
 };
-use std::{any::Any, fmt::Display};
 
-pub trait Value: Display {
-    fn position_start(&self) -> Option<Position>;
-    fn position_end(&self) -> Option<Position>;
-
-    fn added_to(&self, other: Box<dyn Value>) -> (Option<Box<dyn Value>>, Option<StandardError>);
-    fn subtracted_by(
-        &self,
-        other: Box<dyn Value>,
-    ) -> (Option<Box<dyn Value>>, Option<StandardError>);
-    fn multiplied_by(
-        &self,
-        other: Box<dyn Value>,
-    ) -> (Option<Box<dyn Value>>, Option<StandardError>);
-    fn divided_by(&self, other: Box<dyn Value>) -> (Option<Box<dyn Value>>, Option<StandardError>);
-    fn powered_by(&self, other: Box<dyn Value>) -> (Option<Box<dyn Value>>, Option<StandardError>);
-    fn get_comparison_eq(
-        &self,
-        other: Box<dyn Value>,
-    ) -> (Option<Box<dyn Value>>, Option<StandardError>);
-    fn get_comparison_ne(
-        &self,
-        other: Box<dyn Value>,
-    ) -> (Option<Box<dyn Value>>, Option<StandardError>);
-    fn get_comparison_lt(
-        &self,
-        other: Box<dyn Value>,
-    ) -> (Option<Box<dyn Value>>, Option<StandardError>);
-    fn get_comparison_gt(
-        &self,
-        other: Box<dyn Value>,
-    ) -> (Option<Box<dyn Value>>, Option<StandardError>);
-    fn get_comparison_lte(
-        &self,
-        other: Box<dyn Value>,
-    ) -> (Option<Box<dyn Value>>, Option<StandardError>);
-    fn get_comparison_gte(
-        &self,
-        other: Box<dyn Value>,
-    ) -> (Option<Box<dyn Value>>, Option<StandardError>);
-    fn anded_by(&self, other: Box<dyn Value>) -> (Option<Box<dyn Value>>, Option<StandardError>);
-    fn ored_by(&self, other: Box<dyn Value>) -> (Option<Box<dyn Value>>, Option<StandardError>);
-    fn notted(&self) -> (Option<Box<dyn Value>>, Option<StandardError>);
-    fn is_true(&self) -> (Option<Box<dyn Value>>, Option<StandardError>);
-    fn execute(&self, args: Vec<Box<dyn Value>>) -> RuntimeResult {
-        RuntimeResult::new().failure(self.illegal_operation(None))
-    }
-    fn illegal_operation(&self, other: Option<Box<dyn Value>>) -> Option<StandardError>;
-    fn clone_box(&self) -> Box<dyn Value>;
-    fn as_any(&self) -> &dyn Any;
+#[derive(Clone)]
+pub enum Value {
+    NumberValue(Number),
 }
 
-impl Clone for Box<dyn Value> {
-    fn clone(&self) -> Box<dyn Value> {
-        self.clone_box()
+impl Value {
+    pub fn position_start(&self) -> Option<Position> {
+        match self {
+            Value::NumberValue(number) => number.pos_start.clone(),
+        }
+    }
+
+    pub fn position_end(&self) -> Option<Position> {
+        match self {
+            Value::NumberValue(number) => number.pos_end.clone(),
+        }
+    }
+
+    pub fn set_position(
+        &mut self,
+        pos_start: Option<Position>,
+        pos_end: Option<Position>,
+    ) -> Box<Value> {
+        match self {
+            Value::NumberValue(number) => {
+                number.pos_start = pos_start;
+                number.pos_end = pos_end;
+            }
+        }
+
+        Box::new(self.clone())
+    }
+
+    pub fn set_context(&mut self, context: Option<Context>) -> Box<Value> {
+        match self {
+            Value::NumberValue(number) => number.context = context,
+        }
+
+        Box::new(self.clone())
+    }
+
+    pub fn added_to(&self, other: Box<Value>) -> (Option<Box<Value>>, Option<StandardError>) {
+        match self {
+            Value::NumberValue(number) => number.added_to(other),
+        }
+    }
+
+    pub fn as_string(&self) -> String {
+        match self {
+            Value::NumberValue(number) => number.as_string(),
+        }
+    }
+}
+
+impl Display for Value {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "")
     }
 }

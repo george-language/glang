@@ -1,10 +1,7 @@
-use crate::{
-    lexing::{position::Position, token::Token},
-    nodes::common_node::CommonNode,
-};
-use std::{any::Any, fmt::Display};
+use crate::lexing::{position::Position, token::Token};
+use std::fmt::Display;
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct NumberNode {
     pub token: Token,
     pub pos_start: Option<Position>,
@@ -18,24 +15,6 @@ impl NumberNode {
             pos_start: token.clone().pos_start.clone(),
             pos_end: token.clone().pos_end.clone(),
         }
-    }
-}
-
-impl CommonNode for NumberNode {
-    fn position_start(&self) -> Option<Position> {
-        self.pos_start.clone()
-    }
-
-    fn position_end(&self) -> Option<Position> {
-        self.pos_end.clone()
-    }
-
-    fn clone_box(&self) -> Box<dyn CommonNode> {
-        Box::new(self.clone())
-    }
-
-    fn as_any(&self) -> &dyn Any {
-        return self;
     }
 }
 

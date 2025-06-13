@@ -1,10 +1,10 @@
-use crate::{lexing::position::Position, nodes::common_node::CommonNode};
-use std::{any::Any, fmt::Display};
+use crate::{lexing::position::Position, nodes::ast_node::AstNode};
+use std::fmt::Display;
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct WhileNode {
-    pub condition_node: Box<dyn CommonNode>,
-    pub body_node: Box<dyn CommonNode>,
+    pub condition_node: Box<AstNode>,
+    pub body_node: Box<AstNode>,
     pub should_return_null: bool,
     pub pos_start: Option<Position>,
     pub pos_end: Option<Position>,
@@ -12,8 +12,8 @@ pub struct WhileNode {
 
 impl WhileNode {
     pub fn new(
-        condition_node: Box<dyn CommonNode>,
-        body_node: Box<dyn CommonNode>,
+        condition_node: Box<AstNode>,
+        body_node: Box<AstNode>,
         should_return_null: bool,
     ) -> Self {
         WhileNode {
@@ -23,24 +23,6 @@ impl WhileNode {
             pos_start: condition_node.position_start(),
             pos_end: body_node.position_end(),
         }
-    }
-}
-
-impl CommonNode for WhileNode {
-    fn position_start(&self) -> Option<Position> {
-        self.pos_start.clone()
-    }
-
-    fn position_end(&self) -> Option<Position> {
-        self.pos_end.clone()
-    }
-
-    fn clone_box(&self) -> Box<dyn CommonNode> {
-        Box::new(self.clone())
-    }
-
-    fn as_any(&self) -> &dyn Any {
-        return self;
     }
 }
 

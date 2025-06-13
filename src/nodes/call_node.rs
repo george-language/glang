@@ -1,16 +1,16 @@
-use crate::{lexing::position::Position, nodes::common_node::CommonNode};
-use std::{any::Any, fmt::Display};
+use crate::{lexing::position::Position, nodes::ast_node::AstNode};
+use std::fmt::Display;
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct CallNode {
-    pub node_to_call: Box<dyn CommonNode>,
-    pub arg_nodes: Vec<Box<dyn CommonNode>>,
+    pub node_to_call: Box<AstNode>,
+    pub arg_nodes: Vec<Box<AstNode>>,
     pub pos_start: Option<Position>,
     pub pos_end: Option<Position>,
 }
 
 impl CallNode {
-    pub fn new(node_to_call: Box<dyn CommonNode>, arg_nodes: Vec<Box<dyn CommonNode>>) -> Self {
+    pub fn new(node_to_call: Box<AstNode>, arg_nodes: Vec<Box<AstNode>>) -> Self {
         CallNode {
             node_to_call: node_to_call.clone(),
             arg_nodes: arg_nodes.clone(),
@@ -21,24 +21,6 @@ impl CallNode {
                 node_to_call.position_end()
             },
         }
-    }
-}
-
-impl CommonNode for CallNode {
-    fn position_start(&self) -> Option<Position> {
-        self.pos_start.clone()
-    }
-
-    fn position_end(&self) -> Option<Position> {
-        self.pos_end.clone()
-    }
-
-    fn clone_box(&self) -> Box<dyn CommonNode> {
-        Box::new(self.clone())
-    }
-
-    fn as_any(&self) -> &dyn Any {
-        return self;
     }
 }
 

@@ -1,18 +1,18 @@
-use crate::{lexing::position::Position, nodes::common_node::CommonNode};
-use std::{any::Any, fmt::Display};
+use crate::{lexing::position::Position, nodes::ast_node::AstNode};
+use std::fmt::Display;
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct IfNode {
-    pub cases: Vec<(Box<dyn CommonNode>, Box<dyn CommonNode>, bool)>,
-    pub else_case: Option<(Box<dyn CommonNode>, bool)>,
+    pub cases: Vec<(Box<AstNode>, Box<AstNode>, bool)>,
+    pub else_case: Option<(Box<AstNode>, bool)>,
     pub pos_start: Option<Position>,
     pub pos_end: Option<Position>,
 }
 
 impl IfNode {
     pub fn new(
-        cases: Vec<(Box<dyn CommonNode>, Box<dyn CommonNode>, bool)>,
-        else_case: Option<(Box<dyn CommonNode>, bool)>,
+        cases: Vec<(Box<AstNode>, Box<AstNode>, bool)>,
+        else_case: Option<(Box<AstNode>, bool)>,
     ) -> Self {
         IfNode {
             cases: cases.clone(),
@@ -24,24 +24,6 @@ impl IfNode {
                 Some(else_case.unwrap().0.position_end().unwrap())
             },
         }
-    }
-}
-
-impl CommonNode for IfNode {
-    fn position_start(&self) -> Option<Position> {
-        self.pos_start.clone()
-    }
-
-    fn position_end(&self) -> Option<Position> {
-        self.pos_end.clone()
-    }
-
-    fn clone_box(&self) -> Box<dyn CommonNode> {
-        Box::new(self.clone())
-    }
-
-    fn as_any(&self) -> &dyn Any {
-        return self;
     }
 }
 

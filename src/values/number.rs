@@ -1,82 +1,59 @@
 use crate::{
-    errors::standard_error::StandardError,
-    interpreting::{context::Context, runtime_result::RuntimeResult},
-    lexing::position::Position,
-    values::value::Value,
+    errors::standard_error::StandardError, interpreting::context::Context,
+    lexing::position::Position, values::value::Value,
 };
 use std::fmt::Display;
 
 #[derive(Clone)]
 pub struct Number {
-    pub value: Option<String>,
+    pub value: Option<isize>,
     pub context: Option<Context>,
     pub pos_start: Option<Position>,
     pub pos_end: Option<Position>,
 }
 
 impl Number {
-    pub fn new(&self, value: Option<String>) -> Self {
-        let number = Number {
+    pub fn new(value: Option<isize>) -> Self {
+        Number {
             value: value,
             context: None,
             pos_start: None,
             pos_end: None,
-        };
-
-        number
-    }
-}
-
-impl Value for Number {
-    fn position_start(&self) -> Option<Position> {
-        self.pos_start.clone()
-    }
-
-    fn position_end(&self) -> Option<Position> {
-        self.pos_end.clone()
-    }
-
-    fn added_to(&self, other: Box<dyn Value>) -> (Option<Box<dyn Value>>, Option<StandardError>) {
-        if let Some(other_num) = other.as_any().downcast_ref::<Number>() {
-            let left = self.value.as_ref().unwrap().parse::<isize>().unwrap();
-            let right = other_num.value.as_ref().unwrap().parse::<isize>().unwrap();
-
-            let sum = left + right;
-            let new_number = Number {
-                value: Some(sum.to_string()),
-                context: self.context.clone(),
-                pos_start: None,
-                pos_end: None,
-            };
-            (Some(Box::new(new_number) as Box<dyn Value>), None)
-        } else {
-            (None, self.illegal_operation(Some(other)))
         }
     }
 
-    fn illegal_operation(&self, other: Option<Box<dyn Value>>) -> Option<StandardError> {
-        let mut other_value = &other;
-
-        if other.is_none() {
-            other_value = &Some(Box::new(self.to_owned()) as Box<dyn Value>);
+    pub fn added_to(&self, other: Box<Value>) -> (Option<Box<Value>>, Option<StandardError>) {
+        match other.as_ref() {
+            Value::NumberValue(right) => (
+                Some(Box::new(Value::NumberValue(Number::new(Some(
+                    self.value.unwrap() + right.value.unwrap(),
+                ))))),
+                None,
+            ),
         }
-
-        Some(StandardError::new(
-            "operation not allowed".to_string(),
-            self.pos_start.clone().unwrap(),
-            other.unwrap().position_end().unwrap(),
-            Some("integers and floats only allow operations on each other".to_string()),
-        ))
     }
 
-    fn clone_box(&self) -> Box<dyn Value> {
-        Box::new(self.clone())
+    pub fn illegal_operation(&self, other: Option<Box<Value>>) -> StandardError {
+        StandardError::new(
+            "operation not supported by type".to_string(),
+            self.pos_start.as_ref().unwrap().clone(),
+            if other.is_some() {
+                other.unwrap().position_end().unwrap()
+            } else {
+                self.pos_end.as_ref().unwrap().clone()
+            },
+            None,
+        )
+    }
+
+    pub fn as_string(&self) -> String {
+        format!("{}", self.value.unwrap()).to_string()
     }
 }
 
 impl Display for Number {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "")
+        write!(f, "<number: {}>", self.value.unwrap_or_else(|| { 0 }))
     }
 }
 

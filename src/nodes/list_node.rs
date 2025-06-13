@@ -1,16 +1,16 @@
-use crate::{lexing::position::Position, nodes::common_node::CommonNode};
-use std::{any::Any, fmt::Display};
+use crate::{lexing::position::Position, nodes::ast_node::AstNode};
+use std::fmt::Display;
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct ListNode {
-    pub element_nodes: Vec<Option<Box<dyn CommonNode>>>,
+    pub element_nodes: Vec<Option<Box<AstNode>>>,
     pub pos_start: Option<Position>,
     pub pos_end: Option<Position>,
 }
 
 impl ListNode {
     pub fn new(
-        element_nodes: Vec<Option<Box<dyn CommonNode>>>,
+        element_nodes: Vec<Option<Box<AstNode>>>,
         pos_start: Option<Position>,
         pos_end: Option<Position>,
     ) -> Self {
@@ -19,24 +19,6 @@ impl ListNode {
             pos_start: pos_start,
             pos_end: pos_end,
         }
-    }
-}
-
-impl CommonNode for ListNode {
-    fn position_start(&self) -> Option<Position> {
-        self.pos_start.clone()
-    }
-
-    fn position_end(&self) -> Option<Position> {
-        self.pos_end.clone()
-    }
-
-    fn clone_box(&self) -> Box<dyn CommonNode> {
-        Box::new(self.clone())
-    }
-
-    fn as_any(&self) -> &dyn Any {
-        return self;
     }
 }
 

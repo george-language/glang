@@ -2,8 +2,8 @@ use crate::{
     errors::standard_error::StandardError,
     lexing::{position::Position, token::Token, token_type::TokenType},
     nodes::{
-        binary_operator_node::BinaryOperatorNode, break_node::BreakNode, call_node::CallNode,
-        common_node::CommonNode, continue_node::ContinueNode, for_node::ForNode,
+        ast_node::AstNode, binary_operator_node::BinaryOperatorNode, break_node::BreakNode,
+        call_node::CallNode, continue_node::ContinueNode, for_node::ForNode,
         function_definition_node::FunctionDefinitionNode, if_node::IfNode, list_node::ListNode,
         number_node::NumberNode, return_node::ReturnNode, string_node::StringNode,
         unary_operator_node::UnaryOperatorNode, variable_access_node::VariableAccessNode,
@@ -117,10 +117,9 @@ impl Parser {
                 return parse_result;
             }
 
-            return parse_result.success(Some(Box::new(UnaryOperatorNode::new(
-                op_token.clone(),
-                node.clone(),
-            )) as Box<dyn CommonNode>));
+            return parse_result.success(Some(Box::new(AstNode::UnaryOperator(
+                UnaryOperatorNode::new(op_token.clone(), node.clone()),
+            ))));
         }
 
         let node = parse_result.register(self.binary_operator(
@@ -158,7 +157,7 @@ impl Parser {
 
     pub fn list_expr(&mut self) -> ParseResult {
         let mut parse_result = ParseResult::new();
-        let mut element_nodes: Vec<Option<Box<dyn CommonNode>>> = Vec::new();
+        let mut element_nodes: Vec<Option<Box<AstNode>>> = Vec::new();
         let pos_start = self.current_token_ref().pos_start.clone();
 
         if self.current_token_ref().token_type != TokenType::TT_LSQUARE {
@@ -218,11 +217,11 @@ impl Parser {
             self.advance();
         }
 
-        parse_result.success(Some(Box::new(ListNode::new(
+        parse_result.success(Some(Box::new(AstNode::List(ListNode::new(
             element_nodes.clone(),
             pos_start,
             self.current_token_copy().pos_end,
-        )) as Box<dyn CommonNode>))
+        )))))
     }
 
     pub fn if_expr(&mut self) -> ParseResult {
@@ -233,24 +232,22 @@ impl Parser {
             return if_parse_result;
         }
 
-        parse_result.success(Some(
-            Box::new(IfNode::new(cases, else_case)) as Box<dyn CommonNode>
-        ))
+        parse_result.success(Some(Box::new(AstNode::If(IfNode::new(cases, else_case)))))
     }
 
     pub fn if_expr_b(
         &mut self,
     ) -> (
         ParseResult,
-        Vec<(Box<dyn CommonNode>, Box<dyn CommonNode>, bool)>,
-        Option<(Box<dyn CommonNode>, bool)>,
+        Vec<(Box<AstNode>, Box<AstNode>, bool)>,
+        Option<(Box<AstNode>, bool)>,
     ) {
         self.if_expr_cases("alsoif")
     }
 
-    pub fn if_expr_c(&mut self) -> (ParseResult, Option<(Box<dyn CommonNode>, bool)>) {
+    pub fn if_expr_c(&mut self) -> (ParseResult, Option<(Box<AstNode>, bool)>) {
         let mut parse_result = ParseResult::new();
-        let mut else_case: Option<(Box<dyn CommonNode>, bool)> = None;
+        let mut else_case: Option<(Box<AstNode>, bool)> = None;
 
         if self
             .current_token_ref()
@@ -307,12 +304,12 @@ impl Parser {
         &mut self,
     ) -> (
         ParseResult,
-        Vec<(Box<dyn CommonNode>, Box<dyn CommonNode>, bool)>,
-        Option<(Box<dyn CommonNode>, bool)>,
+        Vec<(Box<AstNode>, Box<AstNode>, bool)>,
+        Option<(Box<AstNode>, bool)>,
     ) {
         let mut parse_result = ParseResult::new();
-        let mut cases: Vec<(Box<dyn CommonNode>, Box<dyn CommonNode>, bool)> = Vec::new();
-        let mut else_case: Option<(Box<dyn CommonNode>, bool)> = None;
+        let mut cases: Vec<(Box<AstNode>, Box<AstNode>, bool)> = Vec::new();
+        let mut else_case: Option<(Box<AstNode>, bool)> = None;
 
         if self
             .current_token_ref()
@@ -347,12 +344,12 @@ impl Parser {
         keyword: &'static str,
     ) -> (
         ParseResult,
-        Vec<(Box<dyn CommonNode>, Box<dyn CommonNode>, bool)>,
-        Option<(Box<dyn CommonNode>, bool)>,
+        Vec<(Box<AstNode>, Box<AstNode>, bool)>,
+        Option<(Box<AstNode>, bool)>,
     ) {
         let mut parse_result = ParseResult::new();
-        let mut cases: Vec<(Box<dyn CommonNode>, Box<dyn CommonNode>, bool)> = Vec::new();
-        let mut else_case: Option<(Box<dyn CommonNode>, bool)> = None;
+        let mut cases: Vec<(Box<AstNode>, Box<AstNode>, bool)> = Vec::new();
+        let mut else_case: Option<(Box<AstNode>, bool)> = None;
 
         if !self
             .current_token_ref()
@@ -526,7 +523,7 @@ impl Parser {
             return parse_result;
         }
 
-        let step_value: Option<Box<dyn CommonNode>>;
+        let step_value: Option<Box<AstNode>>;
 
         if self
             .current_token_ref()
@@ -580,14 +577,14 @@ impl Parser {
             parse_result.register_advancement();
             self.advance();
 
-            return parse_result.success(Some(Box::new(ForNode::new(
+            return parse_result.success(Some(Box::new(AstNode::For(ForNode::new(
                 var_name,
                 start_value.unwrap(),
                 end_value.unwrap(),
                 step_value,
                 body.unwrap(),
                 true,
-            )) as Box<dyn CommonNode>));
+            )))));
         }
 
         let body = parse_result.register(self.statement());
@@ -596,14 +593,14 @@ impl Parser {
             return parse_result;
         }
 
-        parse_result.success(Some(Box::new(ForNode::new(
+        parse_result.success(Some(Box::new(AstNode::For(ForNode::new(
             var_name,
             start_value.unwrap(),
             end_value.unwrap(),
             step_value,
             body.unwrap(),
             false,
-        )) as Box<dyn CommonNode>))
+        )))))
     }
 
     pub fn while_expr(&mut self) -> ParseResult {
@@ -666,11 +663,11 @@ impl Parser {
             parse_result.register_advancement();
             self.advance();
 
-            return parse_result.success(Some(Box::new(WhileNode::new(
+            return parse_result.success(Some(Box::new(AstNode::While(WhileNode::new(
                 condition.unwrap(),
                 body.unwrap(),
                 true,
-            )) as Box<dyn CommonNode>));
+            )))));
         }
 
         let body = parse_result.register(self.statement());
@@ -679,19 +676,18 @@ impl Parser {
             return parse_result;
         }
 
-        parse_result.success(Some(
-            Box::new(WhileNode::new(condition.unwrap(), body.unwrap(), true))
-                as Box<dyn CommonNode>,
-        ))
+        parse_result.success(Some(Box::new(AstNode::While(WhileNode::new(
+            condition.unwrap(),
+            body.unwrap(),
+            true,
+        )))))
     }
 
     pub fn expr(&mut self) -> ParseResult {
         let mut parse_result = ParseResult::new();
 
         if self
-            .current_token
-            .as_ref()
-            .unwrap()
+            .current_token_ref()
             .matches(TokenType::TT_KEYWORD, Some("obj"))
         {
             parse_result.register_advancement();
@@ -706,7 +702,7 @@ impl Parser {
                 )));
             }
 
-            let var_name = self.current_token.clone().unwrap();
+            let var_name = self.current_token_copy();
             parse_result.register_advancement();
             self.advance();
 
@@ -733,10 +729,9 @@ impl Parser {
                 return parse_result;
             }
 
-            return parse_result.success(Some(Box::new(VariableAssignNode::new(
-                var_name.clone(),
-                expr.unwrap(),
-            )) as Box<dyn CommonNode>));
+            return parse_result.success(Some(Box::new(AstNode::VariableAssign(
+                VariableAssignNode::new(var_name.clone(), expr.unwrap()),
+            ))));
         }
 
         let node = parse_result.register(self.binary_operator(
@@ -777,11 +772,11 @@ impl Parser {
                 self.reverse(parse_result.to_reverse_count);
             }
 
-            return parse_result.success(Some(Box::new(ReturnNode::new(
+            return parse_result.success(Some(Box::new(AstNode::Return(ReturnNode::new(
                 expr.unwrap(),
                 Some(pos_start),
                 Some(self.current_pos_start()),
-            )) as Box<dyn CommonNode>));
+            )))));
         } else if self
             .current_token_ref()
             .matches(TokenType::TT_KEYWORD, Some("next"))
@@ -789,10 +784,10 @@ impl Parser {
             parse_result.register_advancement();
             self.advance();
 
-            return parse_result.success(Some(Box::new(ContinueNode::new(
+            return parse_result.success(Some(Box::new(AstNode::Continue(ContinueNode::new(
                 Some(pos_start),
                 Some(self.current_pos_start()),
-            )) as Box<dyn CommonNode>));
+            )))));
         } else if self
             .current_token_ref()
             .matches(TokenType::TT_KEYWORD, Some("leave"))
@@ -800,10 +795,10 @@ impl Parser {
             parse_result.register_advancement();
             self.advance();
 
-            return parse_result.success(Some(Box::new(BreakNode::new(
+            return parse_result.success(Some(Box::new(AstNode::Break(BreakNode::new(
                 Some(pos_start),
                 Some(self.current_pos_start()),
-            )) as Box<dyn CommonNode>));
+            )))));
         }
 
         let expr = parse_result.register(self.expr());
@@ -822,7 +817,7 @@ impl Parser {
 
     pub fn statements(&mut self) -> ParseResult {
         let mut parse_result = ParseResult::new();
-        let mut statements: Vec<Option<Box<dyn CommonNode>>> = Vec::new();
+        let mut statements: Vec<Option<Box<AstNode>>> = Vec::new();
         let pos_start = self.current_pos_start();
 
         while self.current_token_ref().token_type == TokenType::TT_NEWLINE {
@@ -831,11 +826,11 @@ impl Parser {
         }
 
         if self.current_token_ref().token_type == TokenType::TT_EOF {
-            return parse_result.success(Some(Box::new(ListNode::new(
+            return parse_result.success(Some(Box::new(AstNode::List(ListNode::new(
                 Vec::new(),
                 Some(pos_start),
                 Some(self.current_pos_end()),
-            )) as Box<dyn CommonNode>));
+            )))));
         }
 
         let statement = parse_result.register(self.statement());
@@ -878,11 +873,11 @@ impl Parser {
             statements.push(statement);
         }
 
-        return parse_result.success(Some(Box::new(ListNode::new(
+        return parse_result.success(Some(Box::new(AstNode::List(ListNode::new(
             statements,
             Some(pos_start),
             Some(self.current_pos_end()),
-        )) as Box<dyn CommonNode>));
+        )))));
     }
 
     pub fn call(&mut self) -> ParseResult {
@@ -897,7 +892,7 @@ impl Parser {
             parse_result.register_advancement();
             self.advance();
 
-            let mut arg_nodes: Vec<Box<dyn CommonNode>> = Vec::new();
+            let mut arg_nodes: Vec<Box<AstNode>> = Vec::new();
 
             if self.current_token_ref().token_type == TokenType::TT_RPAREN {
                 parse_result.register_advancement();
@@ -938,10 +933,10 @@ impl Parser {
                 self.advance();
             }
 
-            return parse_result.success(Some(Box::new(CallNode::new(
+            return parse_result.success(Some(Box::new(AstNode::Call(CallNode::new(
                 atom.unwrap().clone(),
                 arg_nodes,
-            )) as Box<dyn CommonNode>));
+            )))));
         }
 
         parse_result.success(atom)
@@ -955,21 +950,19 @@ impl Parser {
             parse_result.register_advancement();
             self.advance();
 
-            return parse_result
-                .success(Some(Box::new(NumberNode::new(token)) as Box<dyn CommonNode>));
+            return parse_result.success(Some(Box::new(AstNode::Number(NumberNode::new(token)))));
         } else if token.token_type == TokenType::TT_STR {
             parse_result.register_advancement();
             self.advance();
 
-            return parse_result
-                .success(Some(Box::new(StringNode::new(token)) as Box<dyn CommonNode>));
+            return parse_result.success(Some(Box::new(AstNode::Strings(StringNode::new(token)))));
         } else if token.token_type == TokenType::TT_IDENTIFIER {
             parse_result.register_advancement();
             self.advance();
 
-            return parse_result.success(Some(
-                Box::new(VariableAccessNode::new(token)) as Box<dyn CommonNode>
-            ));
+            return parse_result.success(Some(Box::new(AstNode::VariableAccess(
+                VariableAccessNode::new(token),
+            ))));
         } else if token.token_type == TokenType::TT_LPAREN {
             parse_result.register_advancement();
             self.advance();
@@ -1059,9 +1052,8 @@ impl Parser {
                 return parse_result;
             }
 
-            return parse_result.success(Some(Box::new(UnaryOperatorNode::new(
-                token,
-                factor.unwrap(),
+            return parse_result.success(Some(Box::new(AstNode::UnaryOperator(
+                UnaryOperatorNode::new(token, factor.unwrap()),
             ))));
         }
 
@@ -1184,12 +1176,14 @@ impl Parser {
                 return parse_result;
             }
 
-            return parse_result.success(Some(Box::new(FunctionDefinitionNode::new(
-                var_name_token.clone(),
-                arg_name_tokens,
-                node_to_return.unwrap(),
-                true,
-            )) as Box<dyn CommonNode>));
+            return parse_result.success(Some(Box::new(AstNode::FunctionDefinition(
+                FunctionDefinitionNode::new(
+                    var_name_token.clone(),
+                    arg_name_tokens,
+                    node_to_return.unwrap(),
+                    true,
+                ),
+            ))));
         }
 
         self.skip_newlines(&mut parse_result);
@@ -1224,12 +1218,9 @@ impl Parser {
         parse_result.register_advancement();
         self.advance();
 
-        parse_result.success(Some(Box::new(FunctionDefinitionNode::new(
-            var_name_token,
-            arg_name_tokens,
-            body.unwrap(),
-            false,
-        )) as Box<dyn CommonNode>))
+        parse_result.success(Some(Box::new(AstNode::FunctionDefinition(
+            FunctionDefinitionNode::new(var_name_token, arg_name_tokens, body.unwrap(), false),
+        ))))
     }
 
     pub fn binary_operator(
@@ -1280,11 +1271,11 @@ impl Parser {
                 return parse_result;
             }
 
-            left = Some(Box::new(BinaryOperatorNode::new(
+            left = Some(Box::new(AstNode::BinaryOperator(BinaryOperatorNode::new(
                 left.unwrap().clone(),
                 op_token,
                 right.unwrap(),
-            )) as Box<dyn CommonNode>);
+            ))));
         }
 
         parse_result.success(left)

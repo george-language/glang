@@ -1,6 +1,12 @@
 use crate::{
+    errors::standard_error::StandardError,
     interpreting::{context::Context, runtime_result::RuntimeResult, symbol_table::SymbolTable},
-    nodes::{common_node::CommonNode, number_node::NumberNode},
+    lexing::token_type::TokenType,
+    nodes::{
+        ast_node::AstNode, binary_operator_node::BinaryOperatorNode, list_node::ListNode,
+        number_node::NumberNode,
+    },
+    values::{number::Number, value::Value},
 };
 
 pub struct Interpreter {
@@ -14,16 +20,107 @@ impl Interpreter {
         }
     }
 
-    pub fn visit(&mut self, node: Box<dyn CommonNode>, context: Context) -> RuntimeResult {
-        if let Some(node_type) = node.as_any().downcast_ref::<NumberNode>() {
-            return self.visit_number_node(node_type.to_owned(), context);
-        } else {
-            panic!("CRITICAL ERROR: NO METHOD DEFINED FOR NODE TYPE");
+    pub fn visit(&mut self, node: Box<AstNode>, context: Context) -> RuntimeResult {
+        match node.as_ref() {
+            AstNode::List(node) => {
+                return self.visit_list_node(&node, context);
+            }
+            AstNode::Number(node) => {
+                return self.visit_number_node(&node, context);
+            }
+            AstNode::BinaryOperator(node) => {
+                return self.visit_binary_operator_node(&node, context);
+            }
+            _ => {
+                panic!("CRITICAL ERROR: NO METHOD DEFINED FOR NODE TYPE");
+            }
         }
     }
 
-    pub fn visit_number_node(&self, node: NumberNode, context: Context) -> RuntimeResult {
-        RuntimeResult::new()
+    pub fn visit_number_node(&self, node: &NumberNode, context: Context) -> RuntimeResult {
+        let value: isize = node.token.value.as_ref().unwrap().parse().unwrap();
+
+        RuntimeResult::new().success(Some(
+            Value::NumberValue(Number::new(Some(value))).set_context(Some(context)),
+        ))
+    }
+
+    pub fn visit_binary_operator_node(
+        &mut self,
+        node: &BinaryOperatorNode,
+        context: Context,
+    ) -> RuntimeResult {
+        let mut result = RuntimeResult::new();
+        let left = result
+            .register(self.visit(node.left_node.clone(), context.clone()))
+            .unwrap();
+
+        if result.should_return() {
+            return result;
+        }
+
+        let right = result
+            .register(self.visit(node.right_node.clone(), context.clone()))
+            .unwrap();
+
+        if result.should_return() {
+            return result;
+        }
+
+        let (mut number, mut error): (Option<Box<Value>>, Option<StandardError>) = (None, None);
+
+        if node.op_token.token_type == TokenType::TT_PLUS {
+            (number, error) = left.added_to(right);
+        }
+
+        if error.is_some() {
+            return result.failure(error);
+        } else {
+            return result.success(Some(
+                number
+                    .unwrap()
+                    .set_position(node.pos_start.clone(), node.pos_end.clone()),
+            ));
+        }
+
+        //         if node.op_token.type == TT_PLUS:
+        //             number, error = left.addedTo(right)
+        //         elif node.op_token.type == TT_MINUS:
+        //             number, error = left.subtractedBy(right)
+        //         elif node.op_token.type == TT_MUL:
+        //             number, error = left.multipliedBy(right)
+        //         elif node.op_token.type == TT_DIV:
+        //             number, error = left.dividedBy(right)
+        //         elif node.op_token.type == TT_POW:
+        //             number, error = left.poweredBy(right)
+        //         elif node.op_token.type == TT_EE:
+        //             number, error = left.getComparisonEq(right)
+        //         elif node.op_token.type == TT_NE:
+        //             number, error = left.getComparisonNe(right)
+        //         elif node.op_token.type == TT_LT:
+        //             number, error = left.getComparisonLt(right)
+        //         elif node.op_token.type == TT_GT:
+        //             number, error = left.getComparisonGt(right)
+        //         elif node.op_token.type == TT_LTE:
+        //             number, error = left.getComparisonLte(right)
+        //         elif node.op_token.type == TT_GTE:
+        //             number, error = left.getComparisonGte(right)
+        //         elif node.op_token.matches(TT_KEYWORD, 'and'):
+        //             number, error = left.andedBy(right)
+        //         elif node.op_token.matches(TT_KEYWORD, 'or'):
+        //             number, error = left.oredBy(right)
+
+        //         if error:
+        //             return result.failure(error)
+
+        //         else:
+        //             return result.success(number.setPos(node.pos_start, node.pos_end))
+    }
+
+    pub fn visit_list_node(&self, node: &ListNode, context: Context) -> RuntimeResult {
+        let result = RuntimeResult::new();
+
+        result
     }
 }
 

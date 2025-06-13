@@ -1,24 +1,20 @@
 use crate::{
     lexing::{position::Position, token::Token},
-    nodes::common_node::CommonNode,
+    nodes::ast_node::AstNode,
 };
-use std::{any::Any, fmt::Display};
+use std::fmt::Display;
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct BinaryOperatorNode {
-    pub left_node: Box<dyn CommonNode>,
+    pub left_node: Box<AstNode>,
     pub op_token: Token,
-    pub right_node: Box<dyn CommonNode>,
+    pub right_node: Box<AstNode>,
     pub pos_start: Option<Position>,
     pub pos_end: Option<Position>,
 }
 
 impl BinaryOperatorNode {
-    pub fn new(
-        left_node: Box<dyn CommonNode>,
-        op_token: Token,
-        right_node: Box<dyn CommonNode>,
-    ) -> Self {
+    pub fn new(left_node: Box<AstNode>, op_token: Token, right_node: Box<AstNode>) -> Self {
         let pos_start = left_node.position_start();
         let pos_end = right_node.position_end();
 
@@ -29,24 +25,6 @@ impl BinaryOperatorNode {
             pos_start: pos_start,
             pos_end: pos_end,
         }
-    }
-}
-
-impl CommonNode for BinaryOperatorNode {
-    fn position_start(&self) -> Option<Position> {
-        self.pos_start.clone()
-    }
-
-    fn position_end(&self) -> Option<Position> {
-        self.pos_end.clone()
-    }
-
-    fn clone_box(&self) -> Box<dyn CommonNode> {
-        Box::new(self.clone())
-    }
-
-    fn as_any(&self) -> &dyn Any {
-        return self;
     }
 }
 
