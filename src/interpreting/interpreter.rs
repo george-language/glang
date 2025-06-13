@@ -41,7 +41,9 @@ impl Interpreter {
         let value: isize = node.token.value.as_ref().unwrap().parse().unwrap();
 
         RuntimeResult::new().success(Some(
-            Value::NumberValue(Number::new(Some(value))).set_context(Some(context)),
+            Value::NumberValue(Number::new(Some(value)))
+                .set_context(Some(context))
+                .set_position(node.pos_start.clone(), node.pos_end.clone()),
         ))
     }
 
@@ -83,8 +85,6 @@ impl Interpreter {
             ));
         }
 
-        //         if node.op_token.type == TT_PLUS:
-        //             number, error = left.addedTo(right)
         //         elif node.op_token.type == TT_MINUS:
         //             number, error = left.subtractedBy(right)
         //         elif node.op_token.type == TT_MUL:
@@ -119,13 +119,11 @@ impl Interpreter {
 
     pub fn visit_list_node(&mut self, node: &ListNode, context: Context) -> RuntimeResult {
         let mut result = RuntimeResult::new();
-        let mut elements: Vec<Box<Value>> = Vec::new();
+        let mut elements: Vec<Option<Box<Value>>> = Vec::new();
 
         for element in &node.element_nodes {
             elements.push(
-                result
-                    .register(self.visit(element.as_ref().unwrap().clone(), context.clone()))
-                    .unwrap(),
+                result.register(self.visit(element.as_ref().unwrap().clone(), context.clone())),
             );
 
             if result.should_return() {
@@ -133,7 +131,11 @@ impl Interpreter {
             }
         }
 
-        result.success(Some(Box::new(Value::ListValue(List::new(elements)))))
+        result.success(Some(
+            Value::ListValue(List::new(elements))
+                .set_context(Some(context))
+                .set_position(node.pos_start.clone(), node.pos_end.clone()),
+        ))
         //     def visit_ListNode(self, node: ListNode, context):
         //         result = RuntimeResult()
         //         elements = []

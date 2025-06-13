@@ -4,7 +4,7 @@ use crate::{
 };
 use std::fmt::Display;
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct Number {
     pub value: Option<isize>,
     pub context: Option<Context>,
@@ -30,7 +30,7 @@ impl Number {
                 ))))),
                 None,
             ),
-            _ => (None, None),
+            _ => (None, Some(self.illegal_operation(Some(other)))),
         }
     }
 

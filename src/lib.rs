@@ -10,6 +10,7 @@ use crate::{
     interpreting::{context::Context, interpreter::Interpreter},
     lexing::lexer::Lexer,
     parsing::parser::Parser,
+    values::{list::List, value::Value},
 };
 use std::fs;
 
@@ -50,5 +51,13 @@ pub fn run(filename: &str, code: Option<String>) -> (Option<String>, Option<Stan
     context.symbol_table = Some(interpreter.global_symbol_table.clone());
     let result = interpreter.visit(ast.node.unwrap(), context);
 
-    (Some(result.value.unwrap().as_string()), result.error)
+    (
+        Some(
+            result
+                .value
+                .unwrap_or_else(|| Box::new(Value::ListValue(List::new(Vec::new()))))
+                .as_string(),
+        ),
+        result.error,
+    )
 }

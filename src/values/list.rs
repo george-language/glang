@@ -4,16 +4,16 @@ use crate::{
 };
 use std::fmt::Display;
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct List {
-    pub elements: Vec<Box<Value>>,
+    pub elements: Vec<Option<Box<Value>>>,
     pub context: Option<Context>,
     pub pos_start: Option<Position>,
     pub pos_end: Option<Position>,
 }
 
 impl List {
-    pub fn new(elements: Vec<Box<Value>>) -> Self {
+    pub fn new(elements: Vec<Option<Box<Value>>>) -> Self {
         List {
             elements: elements,
             context: None,
@@ -39,7 +39,7 @@ impl List {
         let mut output = self
             .elements
             .iter()
-            .map(|item| item.as_string())
+            .map(|item| item.as_ref().unwrap().as_string())
             .collect::<Vec<_>>()
             .join(", ");
 

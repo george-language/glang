@@ -7,7 +7,7 @@ use crate::{
     values::{list::List, number::Number},
 };
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub enum Value {
     NumberValue(Number),
     ListValue(List),
@@ -59,7 +59,15 @@ impl Value {
     pub fn added_to(&self, other: Box<Value>) -> (Option<Box<Value>>, Option<StandardError>) {
         match self {
             Value::NumberValue(value) => value.added_to(other),
-            _ => (None, None),
+            _ => (
+                None,
+                Some(StandardError::new(
+                    "type doesn't support the '+' operator".to_string(),
+                    self.position_start().unwrap(),
+                    self.position_end().unwrap(),
+                    None,
+                )),
+            ),
         }
     }
 

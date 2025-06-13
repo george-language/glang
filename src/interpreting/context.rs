@@ -1,6 +1,6 @@
 use crate::{interpreting::symbol_table::SymbolTable, lexing::position::Position};
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct Context {
     pub display_name: &'static str,
     pub parent: Option<Box<Context>>,
