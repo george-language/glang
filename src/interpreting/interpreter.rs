@@ -6,7 +6,7 @@ use crate::{
         ast_node::AstNode, binary_operator_node::BinaryOperatorNode, list_node::ListNode,
         number_node::NumberNode,
     },
-    values::{number::Number, value::Value},
+    values::{list::List, number::Number, value::Value},
 };
 
 pub struct Interpreter {
@@ -32,7 +32,7 @@ impl Interpreter {
                 return self.visit_binary_operator_node(&node, context);
             }
             _ => {
-                panic!("CRITICAL ERROR: NO METHOD DEFINED FOR NODE TYPE");
+                panic!("CRITICAL ERROR: NO METHOD DEFINED FOR NODE TYPE {:?}", node);
             }
         }
     }
@@ -117,10 +117,34 @@ impl Interpreter {
         //             return result.success(number.setPos(node.pos_start, node.pos_end))
     }
 
-    pub fn visit_list_node(&self, node: &ListNode, context: Context) -> RuntimeResult {
-        let result = RuntimeResult::new();
+    pub fn visit_list_node(&mut self, node: &ListNode, context: Context) -> RuntimeResult {
+        let mut result = RuntimeResult::new();
+        let mut elements: Vec<Box<Value>> = Vec::new();
 
-        result
+        for element in &node.element_nodes {
+            elements.push(
+                result
+                    .register(self.visit(element.as_ref().unwrap().clone(), context.clone()))
+                    .unwrap(),
+            );
+
+            if result.should_return() {
+                return result;
+            }
+        }
+
+        result.success(Some(Box::new(Value::ListValue(List::new(elements)))))
+        //     def visit_ListNode(self, node: ListNode, context):
+        //         result = RuntimeResult()
+        //         elements = []
+
+        //         for element in node.element_nodes:
+        //             elements.append(result.register(self.visit(element, context)))
+
+        //             if result.shouldReturn():
+        //                 return result
+
+        //         return result.success(List(elements).setContext(context).setPos(node.pos_start, node.pos_end))
     }
 }
 

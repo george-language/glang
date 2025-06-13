@@ -1,25 +1,30 @@
 use std::fmt::Display;
 
 use crate::{
-    errors::standard_error::StandardError, interpreting::context::Context,
-    lexing::position::Position, values::number::Number,
+    errors::standard_error::StandardError,
+    interpreting::context::Context,
+    lexing::position::Position,
+    values::{list::List, number::Number},
 };
 
 #[derive(Clone)]
 pub enum Value {
     NumberValue(Number),
+    ListValue(List),
 }
 
 impl Value {
     pub fn position_start(&self) -> Option<Position> {
         match self {
-            Value::NumberValue(number) => number.pos_start.clone(),
+            Value::NumberValue(value) => value.pos_start.clone(),
+            Value::ListValue(value) => value.pos_start.clone(),
         }
     }
 
     pub fn position_end(&self) -> Option<Position> {
         match self {
-            Value::NumberValue(number) => number.pos_end.clone(),
+            Value::NumberValue(value) => value.pos_end.clone(),
+            Value::ListValue(value) => value.pos_end.clone(),
         }
     }
 
@@ -29,9 +34,13 @@ impl Value {
         pos_end: Option<Position>,
     ) -> Box<Value> {
         match self {
-            Value::NumberValue(number) => {
-                number.pos_start = pos_start;
-                number.pos_end = pos_end;
+            Value::NumberValue(value) => {
+                value.pos_start = pos_start;
+                value.pos_end = pos_end;
+            }
+            Value::ListValue(value) => {
+                value.pos_start = pos_start;
+                value.pos_end = pos_end;
             }
         }
 
@@ -40,7 +49,8 @@ impl Value {
 
     pub fn set_context(&mut self, context: Option<Context>) -> Box<Value> {
         match self {
-            Value::NumberValue(number) => number.context = context,
+            Value::NumberValue(value) => value.context = context,
+            Value::ListValue(value) => value.context = context,
         }
 
         Box::new(self.clone())
@@ -48,13 +58,16 @@ impl Value {
 
     pub fn added_to(&self, other: Box<Value>) -> (Option<Box<Value>>, Option<StandardError>) {
         match self {
-            Value::NumberValue(number) => number.added_to(other),
+            Value::NumberValue(value) => value.added_to(other),
+            _ => (None, None),
         }
     }
 
     pub fn as_string(&self) -> String {
         match self {
-            Value::NumberValue(number) => number.as_string(),
+            Value::NumberValue(value) => value.as_string(),
+            Value::ListValue(value) => value.as_string(),
+            _ => "".to_string(),
         }
     }
 }

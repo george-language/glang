@@ -30,6 +30,7 @@ impl Number {
                 ))))),
                 None,
             ),
+            _ => (None, None),
         }
     }
 
