@@ -2,12 +2,12 @@ use crate::{
     errors::standard_error::StandardError,
     lexing::{position::Position, token::Token, token_type::TokenType},
     nodes::{
-        binary_operator_node::BinaryOperatorNode, call_node::CallNode, common_node::CommonNode,
-        for_node::ForNode, function_definition_node::FunctionDefinitionNode, if_node::IfNode,
-        list_node::ListNode, number_node::NumberNode, return_node::ReturnNode,
-        string_node::StringNode, unary_operator_node::UnaryOperatorNode,
-        variable_access_node::VariableAccessNode, variable_assign_node::VariableAssignNode,
-        while_node::WhileNode,
+        binary_operator_node::BinaryOperatorNode, break_node::BreakNode, call_node::CallNode,
+        common_node::CommonNode, continue_node::ContinueNode, for_node::ForNode,
+        function_definition_node::FunctionDefinitionNode, if_node::IfNode, list_node::ListNode,
+        number_node::NumberNode, return_node::ReturnNode, string_node::StringNode,
+        unary_operator_node::UnaryOperatorNode, variable_access_node::VariableAccessNode,
+        variable_assign_node::VariableAssignNode, while_node::WhileNode,
     },
     parsing::parse_result::ParseResult,
 };
@@ -765,9 +765,7 @@ impl Parser {
         let pos_start = self.current_pos_start();
 
         if self
-            .current_token
-            .as_ref()
-            .unwrap()
+            .current_token_ref()
             .matches(TokenType::TT_KEYWORD, Some("give"))
         {
             parse_result.register_advancement();
@@ -781,6 +779,28 @@ impl Parser {
 
             return parse_result.success(Some(Box::new(ReturnNode::new(
                 expr.unwrap(),
+                Some(pos_start),
+                Some(self.current_pos_start()),
+            )) as Box<dyn CommonNode>));
+        } else if self
+            .current_token_ref()
+            .matches(TokenType::TT_KEYWORD, Some("next"))
+        {
+            parse_result.register_advancement();
+            self.advance();
+
+            return parse_result.success(Some(Box::new(ContinueNode::new(
+                Some(pos_start),
+                Some(self.current_pos_start()),
+            )) as Box<dyn CommonNode>));
+        } else if self
+            .current_token_ref()
+            .matches(TokenType::TT_KEYWORD, Some("leave"))
+        {
+            parse_result.register_advancement();
+            self.advance();
+
+            return parse_result.success(Some(Box::new(BreakNode::new(
                 Some(pos_start),
                 Some(self.current_pos_start()),
             )) as Box<dyn CommonNode>));
