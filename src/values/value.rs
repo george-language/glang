@@ -4,13 +4,14 @@ use crate::{
     errors::standard_error::StandardError,
     interpreting::{context::Context, runtime_result::RuntimeResult},
     lexing::position::Position,
-    values::{list::List, number::Number},
+    values::{list::List, number::Number, string::StringObj},
 };
 
 #[derive(Debug, Clone)]
 pub enum Value {
     NumberValue(Number),
     ListValue(List),
+    StringValue(StringObj),
 }
 
 impl Value {
@@ -18,6 +19,7 @@ impl Value {
         match self {
             Value::NumberValue(value) => value.pos_start.clone(),
             Value::ListValue(value) => value.pos_start.clone(),
+            Value::StringValue(value) => value.pos_start.clone(),
         }
     }
 
@@ -25,6 +27,7 @@ impl Value {
         match self {
             Value::NumberValue(value) => value.pos_end.clone(),
             Value::ListValue(value) => value.pos_end.clone(),
+            Value::StringValue(value) => value.pos_end.clone(),
         }
     }
 
@@ -42,6 +45,10 @@ impl Value {
                 value.pos_start = pos_start;
                 value.pos_end = pos_end;
             }
+            Value::StringValue(value) => {
+                value.pos_start = pos_start;
+                value.pos_end = pos_end;
+            }
         }
 
         Box::new(self.clone())
@@ -51,6 +58,7 @@ impl Value {
         match self {
             Value::NumberValue(value) => value.context = context,
             Value::ListValue(value) => value.context = context,
+            Value::StringValue(value) => value.context = context,
         }
 
         Box::new(self.clone())
@@ -64,6 +72,7 @@ impl Value {
         match self {
             Value::NumberValue(value) => value.perform_operation(operator, other),
             Value::ListValue(value) => value.perform_operation(operator, other),
+            Value::StringValue(value) => value.perform_operation(operator, other),
             _ => (
                 None,
                 Some(StandardError::new(
@@ -80,6 +89,7 @@ impl Value {
         match self {
             Value::NumberValue(_) => "number",
             Value::ListValue(_) => "list",
+            Value::StringValue(_) => "string",
             _ => "null",
         }
     }
@@ -88,6 +98,7 @@ impl Value {
         match self {
             Value::NumberValue(value) => value.value == 1,
             Value::ListValue(value) => value.elements.is_empty(),
+            Value::StringValue(value) => value.value.is_empty(),
             _ => false,
         }
     }
@@ -96,6 +107,7 @@ impl Value {
         match self {
             Value::NumberValue(value) => value.as_string(),
             Value::ListValue(value) => value.as_string(),
+            Value::StringValue(value) => value.as_string(),
             _ => "".to_string(),
         }
     }

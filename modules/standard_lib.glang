@@ -48,3 +48,8 @@ func isbool(value) {
 func isnull(value) {
     value == 0;
 }
+
+func sigh() {
+    # empty value representing unimplemented code
+    obj _ = 0;
+}

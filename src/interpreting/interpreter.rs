@@ -4,9 +4,9 @@ use crate::{
     lexing::token_type::TokenType,
     nodes::{
         ast_node::AstNode, binary_operator_node::BinaryOperatorNode, list_node::ListNode,
-        number_node::NumberNode, unary_operator_node::UnaryOperatorNode,
+        number_node::NumberNode, string_node::StringNode, unary_operator_node::UnaryOperatorNode,
     },
-    values::{list::List, number::Number, value::Value},
+    values::{list::List, number::Number, string::StringObj, value::Value},
 };
 
 pub struct Interpreter {
@@ -27,6 +27,9 @@ impl Interpreter {
             }
             AstNode::Number(node) => {
                 return self.visit_number_node(&node, context);
+            }
+            AstNode::Strings(node) => {
+                return self.visit_string_node(&node, context);
             }
             AstNode::BinaryOperator(node) => {
                 return self.visit_binary_operator_node(&node, context);
@@ -175,6 +178,14 @@ impl Interpreter {
 
         result.success(Some(
             Value::ListValue(List::new(elements))
+                .set_context(Some(context.clone()))
+                .set_position(node.pos_start.clone(), node.pos_end.clone()),
+        ))
+    }
+
+    pub fn visit_string_node(&mut self, node: &StringNode, context: &Context) -> RuntimeResult {
+        RuntimeResult::new().success(Some(
+            Value::StringValue(StringObj::new(node.token.value.as_ref().unwrap().clone()))
                 .set_context(Some(context.clone()))
                 .set_position(node.pos_start.clone(), node.pos_end.clone()),
         ))
