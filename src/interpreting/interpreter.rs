@@ -4,7 +4,7 @@ use crate::{
     lexing::token_type::TokenType,
     nodes::{
         ast_node::AstNode, binary_operator_node::BinaryOperatorNode, list_node::ListNode,
-        number_node::NumberNode,
+        number_node::NumberNode, unary_operator_node::UnaryOperatorNode,
     },
     values::{list::List, number::Number, value::Value},
 };
@@ -20,7 +20,7 @@ impl Interpreter {
         }
     }
 
-    pub fn visit(&mut self, node: Box<AstNode>, context: Context) -> RuntimeResult {
+    pub fn visit(&mut self, node: Box<AstNode>, context: &Context) -> RuntimeResult {
         match node.as_ref() {
             AstNode::List(node) => {
                 return self.visit_list_node(&node, context);
@@ -31,18 +31,21 @@ impl Interpreter {
             AstNode::BinaryOperator(node) => {
                 return self.visit_binary_operator_node(&node, context);
             }
+            AstNode::UnaryOperator(node) => {
+                return self.visit_unary_operator_node(&node, context);
+            }
             _ => {
                 panic!("CRITICAL ERROR: NO METHOD DEFINED FOR NODE TYPE {:?}", node);
             }
         }
     }
 
-    pub fn visit_number_node(&self, node: &NumberNode, context: Context) -> RuntimeResult {
+    pub fn visit_number_node(&self, node: &NumberNode, context: &Context) -> RuntimeResult {
         let value: isize = node.token.value.as_ref().unwrap().parse().unwrap();
 
         RuntimeResult::new().success(Some(
             Value::NumberValue(Number::new(Some(value)))
-                .set_context(Some(context))
+                .set_context(Some(context.clone()))
                 .set_position(node.pos_start.clone(), node.pos_end.clone()),
         ))
     }
@@ -50,11 +53,11 @@ impl Interpreter {
     pub fn visit_binary_operator_node(
         &mut self,
         node: &BinaryOperatorNode,
-        context: Context,
+        context: &Context,
     ) -> RuntimeResult {
         let mut result = RuntimeResult::new();
         let left = result
-            .register(self.visit(node.left_node.clone(), context.clone()))
+            .register(self.visit(node.left_node.clone(), context))
             .unwrap();
 
         if result.should_return() {
@@ -62,7 +65,7 @@ impl Interpreter {
         }
 
         let right = result
-            .register(self.visit(node.right_node.clone(), context.clone()))
+            .register(self.visit(node.right_node.clone(), context))
             .unwrap();
 
         if result.should_return() {
@@ -110,47 +113,56 @@ impl Interpreter {
                     .set_position(node.pos_start.clone(), node.pos_end.clone()),
             ));
         }
-
-        //         elif node.op_token.type == TT_MINUS:
-        //             number, error = left.subtractedBy(right)
-        //         elif node.op_token.type == TT_MUL:
-        //             number, error = left.multipliedBy(right)
-        //         elif node.op_token.type == TT_DIV:
-        //             number, error = left.dividedBy(right)
-        //         elif node.op_token.type == TT_POW:
-        //             number, error = left.poweredBy(right)
-        //         elif node.op_token.type == TT_EE:
-        //             number, error = left.getComparisonEq(right)
-        //         elif node.op_token.type == TT_NE:
-        //             number, error = left.getComparisonNe(right)
-        //         elif node.op_token.type == TT_LT:
-        //             number, error = left.getComparisonLt(right)
-        //         elif node.op_token.type == TT_GT:
-        //             number, error = left.getComparisonGt(right)
-        //         elif node.op_token.type == TT_LTE:
-        //             number, error = left.getComparisonLte(right)
-        //         elif node.op_token.type == TT_GTE:
-        //             number, error = left.getComparisonGte(right)
-        //         elif node.op_token.matches(TT_KEYWORD, 'and'):
-        //             number, error = left.andedBy(right)
-        //         elif node.op_token.matches(TT_KEYWORD, 'or'):
-        //             number, error = left.oredBy(right)
-
-        //         if error:
-        //             return result.failure(error)
-
-        //         else:
-        //             return result.success(number.setPos(node.pos_start, node.pos_end))
     }
 
-    pub fn visit_list_node(&mut self, node: &ListNode, context: Context) -> RuntimeResult {
+    pub fn visit_unary_operator_node(
+        &mut self,
+        node: &UnaryOperatorNode,
+        context: &Context,
+    ) -> RuntimeResult {
+        let mut result = RuntimeResult::new();
+        let value = result
+            .register(self.visit(node.node.clone(), context))
+            .unwrap();
+
+        if result.should_return() {
+            return result;
+        }
+
+        let (mut number, mut error): (Option<Box<Value>>, Option<StandardError>) = (None, None);
+
+        if node.op_token.token_type == TokenType::TT_MINUS {
+            (number, error) =
+                value.perform_operation("*", Box::new(Value::NumberValue(Number::new(Some(-1)))));
+        } else if node
+            .op_token
+            .matches(TokenType::TT_KEYWORD, Some("oppositeof"))
+        {
+            (number, error) = value.perform_operation(
+                "oppositeof",
+                Box::new(Value::NumberValue(Number::new(Some(0)))),
+            )
+        }
+
+        if error.is_some() {
+            return result.failure(error);
+        } else {
+            return result.success(Some(
+                number
+                    .unwrap()
+                    .set_position(node.pos_start.clone(), node.pos_end.clone()),
+            ));
+        }
+
+        result
+    }
+
+    pub fn visit_list_node(&mut self, node: &ListNode, context: &Context) -> RuntimeResult {
         let mut result = RuntimeResult::new();
         let mut elements: Vec<Option<Box<Value>>> = Vec::new();
 
         for element in &node.element_nodes {
-            elements.push(
-                result.register(self.visit(element.as_ref().unwrap().clone(), context.clone())),
-            );
+            elements.push(result.register(self.visit(element.as_ref().unwrap().clone(), context)));
 
             if result.should_return() {
                 return result;
@@ -159,26 +171,11 @@ impl Interpreter {
 
         result.success(Some(
             Value::ListValue(List::new(elements))
-                .set_context(Some(context))
+                .set_context(Some(context.clone()))
                 .set_position(node.pos_start.clone(), node.pos_end.clone()),
         ))
-        //     def visit_ListNode(self, node: ListNode, context):
-        //         result = RuntimeResult()
-        //         elements = []
-
-        //         for element in node.element_nodes:
-        //             elements.append(result.register(self.visit(element, context)))
-
-        //             if result.shouldReturn():
-        //                 return result
-
-        //         return result.success(List(elements).setContext(context).setPos(node.pos_start, node.pos_end))
     }
 }
-
-//     def visit_NumberNode(self, node: NumberNode, context):
-//         return RuntimeResult().success(
-//             Number(node.token.value).setContext(context).setPos(node.pos_start, node.pos_end))
 
 //     def visit_StringNode(self, node: StringNode, context):
 //         return RuntimeResult().success(
