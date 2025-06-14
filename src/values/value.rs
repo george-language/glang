@@ -57,12 +57,13 @@ impl Value {
     }
 
     pub fn perform_operation(
-        &self,
+        &mut self,
         operator: &'static str,
         other: Box<Value>,
     ) -> (Option<Box<Value>>, Option<StandardError>) {
         match self {
             Value::NumberValue(value) => value.perform_operation(operator, other),
+            Value::ListValue(value) => value.perform_operation(operator, other),
             _ => (
                 None,
                 Some(StandardError::new(
@@ -75,9 +76,18 @@ impl Value {
         }
     }
 
+    pub fn object_type(&self) -> &'static str {
+        match self {
+            Value::NumberValue(_) => "number",
+            Value::ListValue(_) => "list",
+            _ => "null",
+        }
+    }
+
     pub fn is_true(&self) -> bool {
         match self {
-            Value::NumberValue(value) => value.is_true(),
+            Value::NumberValue(value) => value.value == 1,
+            Value::ListValue(value) => value.elements.is_empty(),
             _ => false,
         }
     }

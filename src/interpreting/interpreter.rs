@@ -44,7 +44,7 @@ impl Interpreter {
         let value: isize = node.token.value.as_ref().unwrap().parse().unwrap();
 
         RuntimeResult::new().success(Some(
-            Value::NumberValue(Number::new(Some(value)))
+            Value::NumberValue(Number::new(value))
                 .set_context(Some(context.clone()))
                 .set_position(node.pos_start.clone(), node.pos_end.clone()),
         ))
@@ -56,7 +56,7 @@ impl Interpreter {
         context: &Context,
     ) -> RuntimeResult {
         let mut result = RuntimeResult::new();
-        let left = result
+        let mut left = result
             .register(self.visit(node.left_node.clone(), context))
             .unwrap();
 
@@ -107,11 +107,15 @@ impl Interpreter {
         if error.is_some() {
             return result.failure(error);
         } else {
-            return result.success(Some(
-                number
-                    .unwrap()
-                    .set_position(node.pos_start.clone(), node.pos_end.clone()),
-            ));
+            if number.is_some() {
+                return result.success(Some(
+                    number
+                        .unwrap()
+                        .set_position(node.pos_start.clone(), node.pos_end.clone()),
+                ));
+            } else {
+                return result.success(None);
+            }
         }
     }
 
@@ -121,7 +125,7 @@ impl Interpreter {
         context: &Context,
     ) -> RuntimeResult {
         let mut result = RuntimeResult::new();
-        let value = result
+        let mut value = result
             .register(self.visit(node.node.clone(), context))
             .unwrap();
 
@@ -133,28 +137,28 @@ impl Interpreter {
 
         if node.op_token.token_type == TokenType::TT_MINUS {
             (number, error) =
-                value.perform_operation("*", Box::new(Value::NumberValue(Number::new(Some(-1)))));
+                value.perform_operation("*", Box::new(Value::NumberValue(Number::new(-1))));
         } else if node
             .op_token
             .matches(TokenType::TT_KEYWORD, Some("oppositeof"))
         {
-            (number, error) = value.perform_operation(
-                "oppositeof",
-                Box::new(Value::NumberValue(Number::new(Some(0)))),
-            )
+            (number, error) =
+                value.perform_operation("oppositeof", Box::new(Value::NumberValue(Number::new(0))))
         }
 
         if error.is_some() {
             return result.failure(error);
         } else {
-            return result.success(Some(
-                number
-                    .unwrap()
-                    .set_position(node.pos_start.clone(), node.pos_end.clone()),
-            ));
+            if number.is_some() {
+                return result.success(Some(
+                    number
+                        .unwrap()
+                        .set_position(node.pos_start.clone(), node.pos_end.clone()),
+                ));
+            } else {
+                return result.success(None);
+            }
         }
-
-        result
     }
 
     pub fn visit_list_node(&mut self, node: &ListNode, context: &Context) -> RuntimeResult {

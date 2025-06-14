@@ -1,8 +1,10 @@
 use crate::{
-    errors::standard_error::StandardError, interpreting::context::Context,
-    lexing::position::Position, values::value::Value,
+    errors::standard_error::StandardError,
+    interpreting::context::Context,
+    lexing::position::Position,
+    values::{number::Number, value::Value},
 };
-use std::fmt::Display;
+use std::{fmt::Display, iter::zip};
 
 #[derive(Debug, Clone)]
 pub struct List {
@@ -22,6 +24,185 @@ impl List {
         }
     }
 
+    pub fn perform_operation(
+        &mut self,
+        operator: &'static str,
+        other: Box<Value>,
+    ) -> (Option<Box<Value>>, Option<StandardError>) {
+        match other.as_ref() {
+            Value::ListValue(right) => match operator {
+                "+" => {
+                    let mut new_list = self.clone();
+                    new_list.elements.append(&mut right.elements.clone());
+
+                    return (Some(Box::new(Value::ListValue(new_list))), None);
+                }
+                "==" => {
+                    if self.elements.len() != right.elements.len() {
+                        return (
+                            Some(
+                                Value::NumberValue(Number::new(0))
+                                    .set_context(self.context.clone()),
+                            ),
+                            None,
+                        );
+                    } else {
+                        for (a, b) in zip(self.elements.clone(), right.elements.clone()) {
+                            let (result, error) = a.unwrap().perform_operation("==", b.unwrap());
+
+                            if error.is_some() {
+                                return (None, error);
+                            }
+                            if !result.is_some() {
+                                return (
+                                    Some(
+                                        Value::NumberValue(Number::new(0))
+                                            .set_context(self.context.clone()),
+                                    ),
+                                    None,
+                                );
+                            }
+                        }
+                    }
+
+                    return (
+                        Some(Value::NumberValue(Number::new(1)).set_context(self.context.clone())),
+                        None,
+                    );
+                }
+                "!=" => {
+                    if self.elements.len() != right.elements.len() {
+                        return (
+                            Some(
+                                Value::NumberValue(Number::new(1))
+                                    .set_context(self.context.clone()),
+                            ),
+                            None,
+                        );
+                    } else {
+                        for (a, b) in zip(self.elements.clone(), right.elements.clone()) {
+                            let (result, error) = a.unwrap().perform_operation("==", b.unwrap());
+
+                            if error.is_some() {
+                                return (None, error);
+                            }
+                            if !result.is_some() {
+                                return (
+                                    Some(
+                                        Value::NumberValue(Number::new(1))
+                                            .set_context(self.context.clone()),
+                                    ),
+                                    None,
+                                );
+                            }
+                        }
+                    }
+
+                    return (
+                        Some(Value::NumberValue(Number::new(0)).set_context(self.context.clone())),
+                        None,
+                    );
+                }
+                "and" => {
+                    return (
+                        Some(
+                            Value::NumberValue(Number::new(
+                                (!self.elements.is_empty() && !right.elements.is_empty()) as isize,
+                            ))
+                            .set_context(self.context.clone()),
+                        ),
+                        None,
+                    );
+                }
+                "or" => {
+                    return (
+                        Some(
+                            Value::NumberValue(Number::new(
+                                (!self.elements.is_empty() || !right.elements.is_empty()) as isize,
+                            ))
+                            .set_context(self.context.clone()),
+                        ),
+                        None,
+                    );
+                }
+                _ => return (None, Some(self.illegal_operation(Some(other)))),
+            },
+            Value::NumberValue(right) => match operator {
+                "^" => {
+                    if right.value < -1 {
+                        return (
+                            None,
+                            Some(StandardError::new(
+                                "cannot access a negative index".to_string(),
+                                right.pos_start.clone().unwrap(),
+                                right.pos_end.clone().unwrap(),
+                                Some("use an index greater than or equal to 0".to_string()),
+                            )),
+                        );
+                    }
+
+                    if right.value == -1 {
+                        self.reverse();
+
+                        return (None, None);
+                    }
+
+                    if (right.value as usize) > self.elements.len() {
+                        return (
+                            None,
+                            Some(StandardError::new(
+                                "index is out of bounds".to_string(),
+                                right.pos_start.clone().unwrap(),
+                                right.pos_end.clone().unwrap(),
+                                None,
+                            )),
+                        );
+                    }
+
+                    return (self.retrieve(right.value as usize), None);
+                }
+                "-" => {
+                    if right.value < 0 {
+                        return (
+                            None,
+                            Some(StandardError::new(
+                                "cannot access a negative index".to_string(),
+                                right.pos_start.clone().unwrap(),
+                                right.pos_end.clone().unwrap(),
+                                Some("use an index greater than or equal to 0".to_string()),
+                            )),
+                        );
+                    }
+
+                    if (right.value as usize) > self.elements.len() {
+                        return (
+                            None,
+                            Some(StandardError::new(
+                                "index is out of bounds".to_string(),
+                                right.pos_start.clone().unwrap(),
+                                right.pos_end.clone().unwrap(),
+                                None,
+                            )),
+                        );
+                    }
+
+                    return (Some(self.remove(right.value as usize)), None);
+                }
+                _ => return (None, Some(self.illegal_operation(Some(other)))),
+            },
+            _ => {
+                if operator == "*" {
+                    let mut new_list = self.clone();
+                    new_list.push(Some(other.clone()));
+
+                    return (Some(Box::new(Value::ListValue(new_list))), None);
+                }
+
+                return (None, Some(self.illegal_operation(Some(other))));
+            }
+        }
+    }
+
     pub fn illegal_operation(&self, other: Option<Box<Value>>) -> StandardError {
         StandardError::new(
             "operation not supported by type".to_string(),
@@ -35,11 +216,35 @@ impl List {
         )
     }
 
+    pub fn push(&mut self, item: Option<Box<Value>>) -> Box<Value> {
+        let mut copy = self.clone();
+        copy.elements.push(item);
+
+        Box::new(Value::ListValue(copy))
+    }
+
+    pub fn remove(&mut self, index: usize) -> Box<Value> {
+        self.elements.remove(index).unwrap()
+    }
+
+    pub fn retrieve(&self, index: usize) -> Option<Box<Value>> {
+        self.elements[index].clone()
+    }
+
+    pub fn reverse(&mut self) {
+        self.elements.reverse();
+    }
+
     pub fn as_string(&self) -> String {
         let mut output = self
             .elements
             .iter()
-            .map(|item| item.as_ref().unwrap().as_string())
+            .map(|item| {
+                item.as_ref().map_or_else(
+                    || Value::NumberValue(Number::new(0)).as_string(),
+                    |boxed| boxed.as_string(),
+                )
+            })
             .collect::<Vec<_>>()
             .join(", ");
 
@@ -53,6 +258,6 @@ impl List {
 
 impl Display for List {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "<list: {}>", self)
+        write!(f, "<list: {:?}>", self.elements)
     }
 }
