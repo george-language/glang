@@ -32,10 +32,14 @@ impl List {
         match other.as_ref() {
             Value::ListValue(right) => match operator {
                 "+" => {
-                    let mut new_list = self.clone();
-                    new_list.elements.append(&mut right.elements.clone());
+                    self.elements.append(&mut right.elements.clone());
 
-                    return (Some(Box::new(Value::ListValue(new_list))), None);
+                    return self.return_null();
+                }
+                "*" => {
+                    self.push(Some(other.clone()));
+
+                    return self.return_null();
                 }
                 "==" => {
                     if self.elements.len() != right.elements.len() {
@@ -128,6 +132,11 @@ impl List {
                 _ => return (None, Some(self.illegal_operation(Some(other)))),
             },
             Value::NumberValue(right) => match operator {
+                "*" => {
+                    self.push(Some(other.clone()));
+
+                    return self.return_null();
+                }
                 "^" => {
                     if right.value < -1 {
                         return (
@@ -144,7 +153,7 @@ impl List {
                     if right.value == -1 {
                         self.reverse();
 
-                        return (None, None);
+                        return self.return_null();
                     }
 
                     if (right.value as usize) > self.elements.len() {
@@ -192,10 +201,9 @@ impl List {
             },
             _ => {
                 if operator == "*" {
-                    let mut new_list = self.clone();
-                    new_list.push(Some(other.clone()));
+                    self.push(Some(other.clone()));
 
-                    return (Some(Box::new(Value::ListValue(new_list))), None);
+                    return self.return_null();
                 }
 
                 return (None, Some(self.illegal_operation(Some(other))));
@@ -233,6 +241,13 @@ impl List {
 
     pub fn reverse(&mut self) {
         self.elements.reverse();
+    }
+
+    pub fn return_null(&mut self) -> (Option<Box<Value>>, Option<StandardError>) {
+        (
+            Some(Value::NumberValue(Number::new(0)).set_context(self.context.clone())),
+            None,
+        )
     }
 
     pub fn as_string(&self) -> String {

@@ -103,6 +103,13 @@ impl Number {
         )
     }
 
+    pub fn return_null(&mut self) -> (Option<Box<Value>>, Option<StandardError>) {
+        (
+            Some(Value::NumberValue(Number::new(0)).set_context(self.context.clone())),
+            None,
+        )
+    }
+
     pub fn as_string(&self) -> String {
         format!("{}", self.value).to_string()
     }
