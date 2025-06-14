@@ -5,6 +5,7 @@ use crate::{
     nodes::{
         ast_node::AstNode, binary_operator_node::BinaryOperatorNode, list_node::ListNode,
         number_node::NumberNode, string_node::StringNode, unary_operator_node::UnaryOperatorNode,
+        variable_access_node::VariableAccessNode, variable_assign_node::VariableAssignNode,
     },
     values::{list::List, number::Number, string::StringObj, value::Value},
 };
@@ -20,7 +21,7 @@ impl Interpreter {
         }
     }
 
-    pub fn visit(&mut self, node: Box<AstNode>, context: &Context) -> RuntimeResult {
+    pub fn visit(&mut self, node: Box<AstNode>, context: &mut Context) -> RuntimeResult {
         match node.as_ref() {
             AstNode::List(node) => {
                 return self.visit_list_node(&node, context);
@@ -30,6 +31,12 @@ impl Interpreter {
             }
             AstNode::Strings(node) => {
                 return self.visit_string_node(&node, context);
+            }
+            AstNode::VariableAssign(node) => {
+                return self.visit_variable_assign_node(&node, context);
+            }
+            AstNode::VariableAccess(node) => {
+                return self.visit_variable_access_node(&node, context);
             }
             AstNode::BinaryOperator(node) => {
                 return self.visit_binary_operator_node(&node, context);
@@ -43,7 +50,7 @@ impl Interpreter {
         }
     }
 
-    pub fn visit_number_node(&self, node: &NumberNode, context: &Context) -> RuntimeResult {
+    pub fn visit_number_node(&self, node: &NumberNode, context: &mut Context) -> RuntimeResult {
         let value: isize = node.token.value.as_ref().unwrap().parse().unwrap();
 
         RuntimeResult::new().success(Some(
@@ -53,10 +60,93 @@ impl Interpreter {
         ))
     }
 
+    pub fn visit_list_node(&mut self, node: &ListNode, context: &mut Context) -> RuntimeResult {
+        let mut result = RuntimeResult::new();
+        let mut elements: Vec<Option<Box<Value>>> = Vec::new();
+
+        for element in &node.element_nodes {
+            elements.push(result.register(self.visit(element.as_ref().unwrap().clone(), context)));
+
+            if result.should_return() {
+                return result;
+            }
+        }
+
+        result.success(Some(
+            Value::ListValue(List::new(elements))
+                .set_context(Some(context.clone()))
+                .set_position(node.pos_start.clone(), node.pos_end.clone()),
+        ))
+    }
+
+    pub fn visit_string_node(&mut self, node: &StringNode, context: &mut Context) -> RuntimeResult {
+        RuntimeResult::new().success(Some(
+            Value::StringValue(StringObj::new(node.token.value.as_ref().unwrap().clone()))
+                .set_context(Some(context.clone()))
+                .set_position(node.pos_start.clone(), node.pos_end.clone()),
+        ))
+    }
+
+    pub fn visit_variable_assign_node(
+        &mut self,
+        node: &VariableAssignNode,
+        context: &mut Context,
+    ) -> RuntimeResult {
+        let mut result = RuntimeResult::new();
+        let var_name = node.var_name_token.value.as_ref().unwrap().clone();
+        let value = result.register(self.visit(node.value_node.clone(), context));
+
+        if result.should_return() {
+            return result;
+        }
+
+        context
+            .symbol_table
+            .as_mut()
+            .unwrap()
+            .set(var_name, value.clone());
+
+        result.success(value)
+    }
+
+    pub fn visit_variable_access_node(
+        &mut self,
+        node: &VariableAccessNode,
+        context: &mut Context,
+    ) -> RuntimeResult {
+        let mut result = RuntimeResult::new();
+        let var_name = node.var_name_token.value.as_ref().unwrap();
+        let mut value = context
+            .symbol_table
+            .as_ref()
+            .unwrap()
+            .get(var_name.as_str())
+            .clone();
+
+        if value.is_none() {
+            return result.failure(Some(StandardError::new(
+                format!("variable name '{}' is undefined", var_name).to_string(),
+                node.pos_start.as_ref().unwrap().clone(),
+                node.pos_end.as_ref().unwrap().clone(),
+                None,
+            )));
+        }
+
+        value = Some(
+            value
+                .clone()
+                .unwrap()
+                .set_position(node.pos_start.clone(), node.pos_end.clone())
+                .set_context(Some(context.clone())),
+        );
+
+        result.success(value)
+    }
+
     pub fn visit_binary_operator_node(
         &mut self,
         node: &BinaryOperatorNode,
-        context: &Context,
+        context: &mut Context,
     ) -> RuntimeResult {
         let mut result = RuntimeResult::new();
         let mut left = result
@@ -125,7 +215,7 @@ impl Interpreter {
     pub fn visit_unary_operator_node(
         &mut self,
         node: &UnaryOperatorNode,
-        context: &Context,
+        context: &mut Context,
     ) -> RuntimeResult {
         let mut result = RuntimeResult::new();
         let mut value = result
@@ -163,50 +253,7 @@ impl Interpreter {
             }
         }
     }
-
-    pub fn visit_list_node(&mut self, node: &ListNode, context: &Context) -> RuntimeResult {
-        let mut result = RuntimeResult::new();
-        let mut elements: Vec<Option<Box<Value>>> = Vec::new();
-
-        for element in &node.element_nodes {
-            elements.push(result.register(self.visit(element.as_ref().unwrap().clone(), context)));
-
-            if result.should_return() {
-                return result;
-            }
-        }
-
-        result.success(Some(
-            Value::ListValue(List::new(elements))
-                .set_context(Some(context.clone()))
-                .set_position(node.pos_start.clone(), node.pos_end.clone()),
-        ))
-    }
-
-    pub fn visit_string_node(&mut self, node: &StringNode, context: &Context) -> RuntimeResult {
-        RuntimeResult::new().success(Some(
-            Value::StringValue(StringObj::new(node.token.value.as_ref().unwrap().clone()))
-                .set_context(Some(context.clone()))
-                .set_position(node.pos_start.clone(), node.pos_end.clone()),
-        ))
-    }
 }
-
-//     def visit_StringNode(self, node: StringNode, context):
-//         return RuntimeResult().success(
-//             String(node.token.value).setContext(context).setPos(node.pos_start, node.pos_end))
-
-//     def visit_ListNode(self, node: ListNode, context):
-//         result = RuntimeResult()
-//         elements = []
-
-//         for element in node.element_nodes:
-//             elements.append(result.register(self.visit(element, context)))
-
-//             if result.shouldReturn():
-//                 return result
-
-//         return result.success(List(elements).setContext(context).setPos(node.pos_start, node.pos_end))
 
 //     def visit_VariableAccessNode(self, node: VariableAccessNode, context):
 //         result = RuntimeResult()

@@ -49,7 +49,7 @@ pub fn run(filename: &str, code: Option<String>) -> (Option<String>, Option<Stan
     let mut interpreter = Interpreter::new();
     let mut context = Context::new("<program>", None, None);
     context.symbol_table = Some(interpreter.global_symbol_table.clone());
-    let result = interpreter.visit(ast.node.unwrap(), &context);
+    let result = interpreter.visit(ast.node.unwrap(), &mut context);
 
     (
         Some(
