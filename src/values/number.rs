@@ -22,16 +22,73 @@ impl Number {
         }
     }
 
-    pub fn added_to(&self, other: Box<Value>) -> (Option<Box<Value>>, Option<StandardError>) {
+    pub fn perform_operation(
+        &self,
+        operator: &'static str,
+        other: Box<Value>,
+    ) -> (Option<Box<Value>>, Option<StandardError>) {
         match other.as_ref() {
-            Value::NumberValue(right) => (
-                Some(Box::new(Value::NumberValue(Number::new(Some(
-                    self.value.unwrap() + right.value.unwrap(),
-                ))))),
-                None,
-            ),
+            Value::NumberValue(right) => {
+                let left_val = self.value.unwrap();
+                let right_val = right.value.unwrap();
+
+                let result = match operator {
+                    "+" => Some(left_val + right_val),
+                    "-" => Some(left_val - right_val),
+                    "*" => Some(left_val * right_val),
+                    "/" => {
+                        if right_val == 0 {
+                            return (
+                                None,
+                                Some(StandardError::new(
+                                    "division by zero".to_string(),
+                                    right.pos_start.clone().unwrap(),
+                                    right.pos_end.clone().unwrap(),
+                                    None,
+                                )),
+                            );
+                        }
+
+                        Some(left_val / right_val)
+                    }
+                    "^" => {
+                        if right_val <= 0 {
+                            return (
+                                None,
+                                Some(StandardError::new(
+                                    "powered by operator less than or equal to 0".to_string(),
+                                    right.pos_start.clone().unwrap(),
+                                    right.pos_end.clone().unwrap(),
+                                    None,
+                                )),
+                            );
+                        }
+
+                        Some(left_val.pow(right_val as u32) as isize)
+                    }
+                    "==" => Some((left_val == right_val) as isize),
+                    "!=" => Some((left_val != right_val) as isize),
+                    "<" => Some((left_val < right_val) as isize),
+                    ">" => Some((left_val > right_val) as isize),
+                    "<=" => Some((left_val <= right_val) as isize),
+                    ">=" => Some((left_val >= right_val) as isize),
+                    "and" => Some(((left_val != 0) && (right_val != 0)) as isize),
+                    "or" => Some(((left_val != 0) || (right_val != 0)) as isize),
+                    "oppositeof" => Some(if self.value.unwrap() == 0 { 1 } else { 0 }),
+                    _ => return (None, Some(self.illegal_operation(Some(other)))),
+                };
+
+                (
+                    Some(Value::NumberValue(Number::new(result)).set_context(self.context.clone())),
+                    None,
+                )
+            }
             _ => (None, Some(self.illegal_operation(Some(other)))),
         }
+    }
+
+    pub fn is_true(&self) -> bool {
+        self.value.unwrap() != 0
     }
 
     pub fn illegal_operation(&self, other: Option<Box<Value>>) -> StandardError {

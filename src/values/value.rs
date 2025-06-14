@@ -2,7 +2,7 @@ use std::fmt::Display;
 
 use crate::{
     errors::standard_error::StandardError,
-    interpreting::context::Context,
+    interpreting::{context::Context, runtime_result::RuntimeResult},
     lexing::position::Position,
     values::{list::List, number::Number},
 };
@@ -56,18 +56,29 @@ impl Value {
         Box::new(self.clone())
     }
 
-    pub fn added_to(&self, other: Box<Value>) -> (Option<Box<Value>>, Option<StandardError>) {
+    pub fn perform_operation(
+        &self,
+        operator: &'static str,
+        other: Box<Value>,
+    ) -> (Option<Box<Value>>, Option<StandardError>) {
         match self {
-            Value::NumberValue(value) => value.added_to(other),
+            Value::NumberValue(value) => value.perform_operation(operator, other),
             _ => (
                 None,
                 Some(StandardError::new(
-                    "type doesn't support the '+' operator".to_string(),
+                    format!("type doesn't support the '{}' operator", operator).to_string(),
                     self.position_start().unwrap(),
                     self.position_end().unwrap(),
                     None,
                 )),
             ),
+        }
+    }
+
+    pub fn is_true(&self) -> bool {
+        match self {
+            Value::NumberValue(value) => value.is_true(),
+            _ => false,
         }
     }
 

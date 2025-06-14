@@ -1,6 +1,6 @@
 > [!NOTE]
 > This is GLang's rust-based branch, and is under active development. We plan to rewrite everything to Rust and
-merge into the `main` branch by late 2025.
+merge into the `main` branch by mid 2025.
 
 <img src="resources/icons/george_language_icon.svg" width="125">
 
@@ -9,30 +9,30 @@ George Language (GLang for short) is a dynamically-typed, interpreted programmin
 represented as a dog doing day-to-day activities.
 
 ```
-gettoy(["math_pi"], "modules/math.glang")
+gettoy "modules/math.glang";
 
-object x = 0
+obj x = 0;
 
 # Lets go for a walk!
-walk i = 0 through 10 then
-    object x = x + 1
+walk i = 0 through 10 {
+    obj x = x + 1;
 
-    if x == 5 then
-        leave
-    endbody
-endbody
+    if x == 5 {
+        leave;
+    }
+}
 
-bark(x)
+bark(x);
 
 # Greet someone!
-func greet(name)
-    bark("Hello, " + name + "!")
-endbody
+func greet(name) {
+    bark("Hello, " + name + "!");
+}
 
-greet("George")
+greet("George");
 
-bark("Pi is equal to: " + tostring(math_pi))
-bark("We have reached the end of our program. I hope you enjoyed!")
+bark("Pi is equal to: " + tostring(math_pi));
+bark("We have reached the end of our program. I hope you enjoyed!");
 ```
 
 ## Why Make George Language?
@@ -51,15 +51,11 @@ bark("Hello, World!")
 
 This is just one of the many examples that makes GLang easier to learn and work with.
 
-## Is It fast?
-GLang gets performance matching languages like Python (as it is implemented in Python.)
-It uses a very light type checker, but nothing large that creates a major overhead. It also
-doesn't require a garbage collector, as that is already managed by Python. This makes GLang
-**FAST** for many applications.
+## Speed
+As of recent updates, GLang gets _fast_ performance due to it's simplicity and new Rust backend. It doesn't require a garbage collector or type checker, just lexing -> parsing -> interpreting. _That's it._
 
-## In The Terminal?
-GLang works in the terminal by itself as well. Use the `;` character to define multi-line programs
-on one line.
+## REPL
+GLang includes it's own Read-Eval-Print-Loop (REPL). As long as you have GLang installed, there's no need for a text editor if you want to use GLang strictly in the terminal.
 
 
 _More info on this project is available on our [website](https://sites.google.com/view/george-lang/home)._

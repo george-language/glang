@@ -72,7 +72,33 @@ impl Interpreter {
         let (mut number, mut error): (Option<Box<Value>>, Option<StandardError>) = (None, None);
 
         if node.op_token.token_type == TokenType::TT_PLUS {
-            (number, error) = left.added_to(right);
+            (number, error) = left.perform_operation("+", right);
+        } else if node.op_token.token_type == TokenType::TT_MINUS {
+            (number, error) = left.perform_operation("-", right);
+        } else if node.op_token.token_type == TokenType::TT_MUL {
+            (number, error) = left.perform_operation("*", right);
+        } else if node.op_token.token_type == TokenType::TT_DIV {
+            (number, error) = left.perform_operation("/", right);
+        } else if node.op_token.token_type == TokenType::TT_POW {
+            (number, error) = left.perform_operation("^", right);
+        } else if node.op_token.token_type == TokenType::TT_GT {
+            (number, error) = left.perform_operation(">", right);
+        } else if node.op_token.token_type == TokenType::TT_LT {
+            (number, error) = left.perform_operation("<", right);
+        } else if node.op_token.token_type == TokenType::TT_EE {
+            (number, error) = left.perform_operation("==", right);
+        } else if node.op_token.token_type == TokenType::TT_NE {
+            (number, error) = left.perform_operation("!=", right);
+        } else if node.op_token.token_type == TokenType::TT_LTE {
+            (number, error) = left.perform_operation("<=", right);
+        } else if node.op_token.token_type == TokenType::TT_GTE {
+            (number, error) = left.perform_operation(">=", right);
+        } else if node.op_token.matches(TokenType::TT_KEYWORD, Some("and")) {
+            (number, error) = left.perform_operation("and", right);
+        } else if node.op_token.matches(TokenType::TT_KEYWORD, Some("or")) {
+            (number, error) = left.perform_operation("or", right);
+        } else {
+            (number, error) = left.perform_operation("", right);
         }
 
         if error.is_some() {
