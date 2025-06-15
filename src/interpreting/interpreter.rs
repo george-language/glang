@@ -3,8 +3,8 @@ use crate::{
     interpreting::{context::Context, runtime_result::RuntimeResult, symbol_table::SymbolTable},
     lexing::token_type::TokenType,
     nodes::{
-        ast_node::AstNode, binary_operator_node::BinaryOperatorNode, if_node::IfNode,
-        list_node::ListNode, number_node::NumberNode, string_node::StringNode,
+        ast_node::AstNode, binary_operator_node::BinaryOperatorNode, for_node::ForNode,
+        if_node::IfNode, list_node::ListNode, number_node::NumberNode, string_node::StringNode,
         unary_operator_node::UnaryOperatorNode, variable_access_node::VariableAccessNode,
         variable_assign_node::VariableAssignNode,
     },
@@ -41,6 +41,9 @@ impl Interpreter {
             }
             AstNode::If(node) => {
                 return self.visit_if_node(&node, context);
+            }
+            AstNode::For(node) => {
+                return self.visit_for_node(&node, context);
             }
             AstNode::BinaryOperator(node) => {
                 return self.visit_binary_operator_node(&node, context);
@@ -192,27 +195,170 @@ impl Interpreter {
         result.success(Some(Number::null_value()))
     }
 
+    pub fn visit_for_node(&mut self, node: &ForNode, context: &mut Context) -> RuntimeResult {
+        let mut result = RuntimeResult::new();
+        let mut elements: Vec<Option<Box<Value>>> = Vec::new();
+
+        let start_value = match result
+            .register(self.visit(node.start_value_node.clone(), context))
+            .unwrap()
+            .as_ref()
+        {
+            Value::NumberValue(value) => Number::new(value.value),
+            _ => {
+                return result.failure(Some(StandardError::new(
+                    "expected start value as number".to_string(),
+                    node.pos_start.as_ref().unwrap().clone(),
+                    node.pos_end.as_ref().unwrap().clone(),
+                    None,
+                )));
+            }
+        };
+
+        if result.should_return() {
+            return result;
+        }
+
+        let end_value = match result
+            .register(self.visit(node.end_value_node.clone(), context))
+            .unwrap()
+            .as_ref()
+        {
+            Value::NumberValue(value) => Number::new(value.value),
+            _ => {
+                return result.failure(Some(StandardError::new(
+                    "expected end value as number".to_string(),
+                    node.pos_start.as_ref().unwrap().clone(),
+                    node.pos_end.as_ref().unwrap().clone(),
+                    None,
+                )));
+            }
+        };
+
+        if result.should_return() {
+            return result;
+        }
+
+        let mut step_value: Number;
+
+        if node.step_value_node.is_some() {
+            step_value = match result
+                .register(self.visit(node.step_value_node.as_ref().unwrap().clone(), context))
+                .unwrap()
+                .as_ref()
+            {
+                Value::NumberValue(value) => Number::new(value.value),
+                _ => {
+                    return result.failure(Some(StandardError::new(
+                        "expected step value as number".to_string(),
+                        node.pos_start.as_ref().unwrap().clone(),
+                        node.pos_end.as_ref().unwrap().clone(),
+                        None,
+                    )));
+                }
+            };
+
+            if result.should_return() {
+                return result;
+            }
+        } else {
+            step_value = Number::new(1);
+        }
+
+        let mut i = start_value.value;
+
+        if step_value.value >= 0 {
+            while i < end_value.value {
+                context.symbol_table.as_mut().unwrap().set(
+                    node.var_name_token.value.as_ref().unwrap().clone(),
+                    Some(Box::new(Value::NumberValue(Number::new(i)))),
+                );
+                i += step_value.value;
+
+                let value = result.register(self.visit(node.body_node.clone(), context));
+
+                if result.should_return()
+                    && result.loop_should_continue == false
+                    && result.loop_should_break == false
+                {
+                    return result;
+                }
+
+                if result.loop_should_continue {
+                    continue;
+                }
+
+                if result.loop_should_break {
+                    break;
+                }
+
+                let value = value.unwrap();
+
+                elements.push(Some(value));
+            }
+        } else {
+            while i > end_value.value {
+                context.symbol_table.as_mut().unwrap().set(
+                    node.var_name_token.value.as_ref().unwrap().clone(),
+                    Some(Box::new(Value::NumberValue(Number::new(i)))),
+                );
+                i += step_value.value;
+
+                let value = result.register(self.visit(node.body_node.clone(), context));
+
+                if result.should_return()
+                    && result.loop_should_continue == false
+                    && result.loop_should_break == false
+                {
+                    return result;
+                }
+
+                if result.loop_should_continue {
+                    continue;
+                }
+
+                if result.loop_should_break {
+                    break;
+                }
+
+                let value = value.unwrap();
+
+                elements.push(Some(value));
+            }
+        }
+
+        result.success(if node.should_return_null {
+            Some(Number::null_value())
+        } else {
+            Some(
+                Value::ListValue(List::new(elements))
+                    .set_context(Some(context.clone()))
+                    .set_position(node.pos_start.clone(), node.pos_end.clone()),
+            )
+        })
+    }
+
     pub fn visit_binary_operator_node(
         &mut self,
         node: &BinaryOperatorNode,
         context: &mut Context,
     ) -> RuntimeResult {
         let mut result = RuntimeResult::new();
-        let mut left = result
-            .register(self.visit(node.left_node.clone(), context))
-            .unwrap();
+        let mut left = result.register(self.visit(node.left_node.clone(), context));
 
         if result.should_return() {
             return result;
         }
 
-        let right = result
-            .register(self.visit(node.right_node.clone(), context))
-            .unwrap();
+        let mut left = left.unwrap();
+
+        let right = result.register(self.visit(node.right_node.clone(), context));
 
         if result.should_return() {
             return result;
         }
+
+        let mut right = right.unwrap();
 
         let (mut number, mut error): (Option<Box<Value>>, Option<StandardError>) = (None, None);
 
