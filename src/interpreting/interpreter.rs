@@ -3,8 +3,9 @@ use crate::{
     interpreting::{context::Context, runtime_result::RuntimeResult, symbol_table::SymbolTable},
     lexing::token_type::TokenType,
     nodes::{
-        ast_node::AstNode, binary_operator_node::BinaryOperatorNode, for_node::ForNode,
-        if_node::IfNode, list_node::ListNode, number_node::NumberNode, string_node::StringNode,
+        ast_node::AstNode, binary_operator_node::BinaryOperatorNode, break_node::BreakNode,
+        continue_node::ContinueNode, for_node::ForNode, if_node::IfNode, list_node::ListNode,
+        number_node::NumberNode, return_node::ReturnNode, string_node::StringNode,
         unary_operator_node::UnaryOperatorNode, variable_access_node::VariableAccessNode,
         variable_assign_node::VariableAssignNode, while_node::WhileNode,
     },
@@ -54,8 +55,20 @@ impl Interpreter {
             AstNode::UnaryOperator(node) => {
                 return self.visit_unary_operator_node(&node, context);
             }
+            AstNode::Return(node) => {
+                return self.visit_return_node(&node, context);
+            }
+            AstNode::Continue(node) => {
+                return self.visit_continue_node(&node, context);
+            }
+            AstNode::Break(node) => {
+                return self.visit_break_node(&node, context);
+            }
             _ => {
-                panic!("CRITICAL ERROR: NO METHOD DEFINED FOR NODE TYPE {:?}", node);
+                panic!(
+                    "CRITICAL ERROR: NO METHOD DEFINED FOR NODE TYPE:\n {:#?}",
+                    node
+                );
             }
         }
     }
@@ -501,6 +514,38 @@ impl Interpreter {
             }
         }
     }
+
+    pub fn visit_return_node(&mut self, node: &ReturnNode, context: &mut Context) -> RuntimeResult {
+        let mut result = RuntimeResult::new();
+        let mut value: Option<Box<Value>> = None;
+
+        if node.node_to_return.is_some() {
+            value =
+                result.register(self.visit(node.node_to_return.as_ref().unwrap().clone(), context));
+
+            if result.should_return() {
+                return result;
+            }
+        } else {
+            value = Some(Number::null_value())
+        }
+
+        let value = value.unwrap();
+
+        result.success_return(Some(value))
+    }
+
+    pub fn visit_continue_node(
+        &mut self,
+        node: &ContinueNode,
+        context: &mut Context,
+    ) -> RuntimeResult {
+        RuntimeResult::new().success_continue()
+    }
+
+    pub fn visit_break_node(&mut self, node: &BreakNode, context: &mut Context) -> RuntimeResult {
+        RuntimeResult::new().success_break()
+    }
 }
 
 //     def visit_FunctionDefinitionNode(self, node, context):
@@ -543,23 +588,3 @@ impl Interpreter {
 //         return_value = return_value.copy().setPos(node.pos_start, node.pos_end).setContext(context)
 
 //         return result.success(return_value)
-
-//     def visit_ReturnNode(self, node, context):
-//         result = RuntimeResult()
-
-//         if node.node_to_return:
-//             value = result.register(self.visit(node.node_to_return, context))
-
-//             if result.shouldReturn():
-//                 return result
-
-//         else:
-//             value = Number.null
-
-//         return result.successReturn(value)
-
-//     def visit_ContinueNode(self, node, context):
-//         return RuntimeResult().successContinue()
-
-//     def visit_BreakNode(self, node, context):
-//         return RuntimeResult().successBreak()

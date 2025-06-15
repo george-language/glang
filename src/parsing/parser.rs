@@ -790,7 +790,7 @@ impl Parser {
             }
 
             return parse_result.success(Some(Box::new(AstNode::Return(ReturnNode::new(
-                expr.unwrap(),
+                expr,
                 Some(pos_start),
                 Some(self.current_pos_start()),
             )))));
