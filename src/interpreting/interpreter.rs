@@ -6,7 +6,7 @@ use crate::{
         ast_node::AstNode, binary_operator_node::BinaryOperatorNode, for_node::ForNode,
         if_node::IfNode, list_node::ListNode, number_node::NumberNode, string_node::StringNode,
         unary_operator_node::UnaryOperatorNode, variable_access_node::VariableAccessNode,
-        variable_assign_node::VariableAssignNode,
+        variable_assign_node::VariableAssignNode, while_node::WhileNode,
     },
     values::{list::List, number::Number, string::StringObj, value::Value},
 };
@@ -44,6 +44,9 @@ impl Interpreter {
             }
             AstNode::For(node) => {
                 return self.visit_for_node(&node, context);
+            }
+            AstNode::While(node) => {
+                return self.visit_while_node(&node, context);
             }
             AstNode::BinaryOperator(node) => {
                 return self.visit_binary_operator_node(&node, context);
@@ -338,6 +341,56 @@ impl Interpreter {
         })
     }
 
+    pub fn visit_while_node(&mut self, node: &WhileNode, context: &mut Context) -> RuntimeResult {
+        let mut result = RuntimeResult::new();
+        let mut elements: Vec<Option<Box<Value>>> = Vec::new();
+
+        loop {
+            let condition = result.register(self.visit(node.condition_node.clone(), context));
+
+            if result.should_return() {
+                return result;
+            }
+
+            let condition = condition.unwrap();
+
+            if !condition.is_true() {
+                break;
+            }
+
+            let value = result.register(self.visit(node.body_node.clone(), context));
+
+            if result.should_return()
+                && result.loop_should_continue == false
+                && result.loop_should_break == false
+            {
+                return result;
+            }
+
+            if result.loop_should_continue {
+                continue;
+            }
+
+            if result.loop_should_break {
+                break;
+            }
+
+            let value = value.unwrap();
+
+            elements.push(Some(value))
+        }
+
+        result.success(if node.should_return_null {
+            Some(Number::null_value())
+        } else {
+            Some(
+                Value::ListValue(List::new(elements))
+                    .set_context(Some(context.clone()))
+                    .set_position(node.pos_start.clone(), node.pos_end.clone()),
+            )
+        })
+    }
+
     pub fn visit_binary_operator_node(
         &mut self,
         node: &BinaryOperatorNode,
@@ -449,89 +502,6 @@ impl Interpreter {
         }
     }
 }
-
-//     def visit_ForNode(self, node, context):
-//         result = RuntimeResult()
-//         elements = []
-
-//         start_value = result.register(self.visit(node.start_value_node, context))
-
-//         if result.shouldReturn():
-//             return result
-
-//         end_value = result.register(self.visit(node.end_value_node, context))
-
-//         if result.shouldReturn():
-//             return result
-
-//         if node.step_value_node:
-//             step_value = result.register(self.visit(node.step_value_node, context))
-
-//             if result.shouldReturn():
-//                 return result
-
-//         else:
-//             step_value = Number(1)
-
-//         i = start_value.value
-
-//         if step_value.value >= 0:
-//             condition = lambda: i < end_value.value
-
-//         else:
-//             condition = lambda: i > end_value.value
-
-//         while condition():
-//             context.symbol_table.set(node.var_name_token.value, Number(i))
-//             i += step_value.value
-
-//             value = result.register(self.visit(node.body_node, context))
-
-//             if result.shouldReturn() and result.loop_should_continue == False and result.loop_should_break == False:
-//                 return result
-
-//             if result.loop_should_continue:
-//                 continue
-
-//             if result.loop_should_break:
-//                 break
-
-//             elements.append(value)
-
-//         return result.success(
-//             Number.null if node.should_return_null else List(elements).setContext(
-//                 context).setPos(node.pos_start, node.pos_end)
-//         )
-
-//     def visit_WhileNode(self, node, context):
-//         result = RuntimeResult()
-//         elements = []
-
-//         while True:
-//             condition = result.register(self.visit(node.condition_node, context))
-
-//             if result.shouldReturn():
-//                 return result
-
-//             if not condition.isTrue():
-//                 break
-
-//             value = result.register(self.visit(node.body_node, context))
-
-//             if result.shouldReturn() and result.loop_should_continue is False and result.loop_should_break is False:
-//                 return result
-
-//             if result.loop_should_continue:
-//                 continue
-
-//             if result.loop_should_break:
-//                 break
-
-//             elements.append(value)
-
-//         return result.success(Number.null if node.should_return_null else
-//                               List(elements).setContext(context).setPos(node.pos_start, node.pos_end)
-//                               )
 
 //     def visit_FunctionDefinitionNode(self, node, context):
 //         result = RuntimeResult()
