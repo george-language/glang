@@ -762,10 +762,10 @@ impl Parser {
 
         if parse_result.error.is_some() {
             return parse_result.failure(Some(StandardError::new(
-                "expected a keyword, type, or function".to_string(),
+                "expected keyword, object, function, expression".to_string(),
                 self.current_pos_start(),
                 self.current_pos_end(),
-                Some("add one of the following: 'obj', 'if', 'walk', 'while', 'func', 'oppositeof', integer, float, identifier, '+', '-', '(', or '['".to_string()),
+                None,
             )));
         }
 

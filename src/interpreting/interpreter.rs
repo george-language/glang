@@ -4,12 +4,13 @@ use crate::{
     lexing::token_type::TokenType,
     nodes::{
         ast_node::AstNode, binary_operator_node::BinaryOperatorNode, break_node::BreakNode,
-        continue_node::ContinueNode, for_node::ForNode, if_node::IfNode, list_node::ListNode,
+        call_node::CallNode, continue_node::ContinueNode, for_node::ForNode,
+        function_definition_node::FunctionDefinitionNode, if_node::IfNode, list_node::ListNode,
         number_node::NumberNode, return_node::ReturnNode, string_node::StringNode,
         unary_operator_node::UnaryOperatorNode, variable_access_node::VariableAccessNode,
         variable_assign_node::VariableAssignNode, while_node::WhileNode,
     },
-    values::{list::List, number::Number, string::StringObj, value::Value},
+    values::{function::Function, list::List, number::Number, string::StringObj, value::Value},
 };
 
 pub struct Interpreter {
@@ -48,6 +49,12 @@ impl Interpreter {
             }
             AstNode::While(node) => {
                 return self.visit_while_node(&node, context);
+            }
+            AstNode::FunctionDefinition(node) => {
+                return self.visit_function_definition_node(&node, context);
+            }
+            AstNode::Call(node) => {
+                return self.visit_call_node(&node, context);
             }
             AstNode::BinaryOperator(node) => {
                 return self.visit_binary_operator_node(&node, context);
@@ -170,13 +177,13 @@ impl Interpreter {
         let mut result = RuntimeResult::new();
 
         for (condition, expr, should_return_null) in &node.cases {
-            let condition_value = result
-                .register(self.visit(condition.clone(), context))
-                .unwrap();
+            let condition_value = result.register(self.visit(condition.clone(), context));
 
             if result.should_return() {
                 return result;
             }
+
+            let condition_value = condition_value.unwrap();
 
             if condition_value.is_true() {
                 let expr_value = result.register(self.visit(expr.clone(), context));
@@ -404,6 +411,101 @@ impl Interpreter {
         })
     }
 
+    pub fn visit_function_definition_node(
+        &mut self,
+        node: &FunctionDefinitionNode,
+        context: &mut Context,
+    ) -> RuntimeResult {
+        let mut result = RuntimeResult::new();
+
+        let func_name = if node.var_name_token.is_some() {
+            node.var_name_token
+                .as_ref()
+                .unwrap()
+                .value
+                .as_ref()
+                .unwrap()
+                .clone()
+        } else {
+            "".to_string()
+        };
+        let body_node = node.body_node.clone();
+        let mut arg_names: Vec<String> = Vec::new();
+
+        for arg_name in &node.arg_name_tokens {
+            arg_names.push(arg_name.value.as_ref().unwrap().clone());
+        }
+
+        let func_value = Value::FunctionValue(Function::new(
+            func_name.clone(),
+            body_node,
+            arg_names,
+            node.should_auto_return,
+        ))
+        .set_context(Some(context.clone()))
+        .set_position(node.pos_start.clone(), node.pos_end.clone());
+
+        if !&func_name.is_empty() {
+            context
+                .symbol_table
+                .as_mut()
+                .unwrap()
+                .set(func_name, Some(func_value.clone()));
+        }
+
+        result.success(Some(func_value))
+    }
+
+    pub fn visit_call_node(&mut self, node: &CallNode, context: &mut Context) -> RuntimeResult {
+        let mut result = RuntimeResult::new();
+        let mut args: Vec<Box<Value>> = Vec::new();
+
+        let value_to_call = result.register(self.visit(node.node_to_call.clone(), context));
+
+        if result.should_return() {
+            return result;
+        }
+
+        let value_to_call = value_to_call
+            .unwrap()
+            .set_position(node.pos_start.clone(), node.pos_end.clone());
+
+        for arg_node in &node.arg_nodes {
+            let arg = result.register(self.visit(arg_node.to_owned(), context));
+
+            if result.should_return() {
+                return result;
+            }
+
+            let arg = arg.unwrap();
+
+            args.push(arg);
+        }
+
+        let return_value = result.register(match value_to_call.as_ref() {
+            Value::FunctionValue(value) => value.execute(&args),
+            _ => {
+                return result.failure(Some(StandardError::new(
+                    "expected function as call".to_string(),
+                    node.pos_start.as_ref().unwrap().clone(),
+                    node.pos_end.as_ref().unwrap().clone(),
+                    None,
+                )));
+            }
+        });
+
+        if result.should_return() {
+            return result;
+        }
+
+        let return_value = return_value
+            .unwrap()
+            .set_position(node.pos_start.clone(), node.pos_end.clone())
+            .set_context(Some(context.clone()));
+
+        result.success(None)
+    }
+
     pub fn visit_binary_operator_node(
         &mut self,
         node: &BinaryOperatorNode,
@@ -562,29 +664,3 @@ impl Interpreter {
 //             context.symbol_table.set(func_name, func_value)
 
 //         return result.success(func_value)
-
-//     def visit_CallNode(self, node, context):
-//         result = RuntimeResult()
-//         args = []
-
-//         value_to_call = result.register(self.visit(node.node_to_call, context))
-
-//         if result.shouldReturn():
-//             return result
-
-//         value_to_call = value_to_call.copy().setPos(node.pos_start, node.pos_end)
-
-//         for arg_node in node.arg_nodes:
-//             args.append(result.register(self.visit(arg_node, context)))
-
-//             if result.shouldReturn():
-//                 return result
-
-//         return_value = result.register(value_to_call.execute(args))
-
-//         if result.shouldReturn():
-//             return result
-
-//         return_value = return_value.copy().setPos(node.pos_start, node.pos_end).setContext(context)
-
-//         return result.success(return_value)

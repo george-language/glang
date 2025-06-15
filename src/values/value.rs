@@ -2,7 +2,7 @@ use crate::{
     errors::standard_error::StandardError,
     interpreting::context::Context,
     lexing::position::Position,
-    values::{list::List, number::Number, string::StringObj},
+    values::{function::Function, list::List, number::Number, string::StringObj},
 };
 
 #[derive(Debug, Clone)]
@@ -10,6 +10,7 @@ pub enum Value {
     NumberValue(Number),
     ListValue(List),
     StringValue(StringObj),
+    FunctionValue(Function),
 }
 
 impl Value {
@@ -18,6 +19,7 @@ impl Value {
             Value::NumberValue(value) => value.pos_start.clone(),
             Value::ListValue(value) => value.pos_start.clone(),
             Value::StringValue(value) => value.pos_start.clone(),
+            Value::FunctionValue(value) => value.pos_start.clone(),
         }
     }
 
@@ -26,6 +28,7 @@ impl Value {
             Value::NumberValue(value) => value.pos_end.clone(),
             Value::ListValue(value) => value.pos_end.clone(),
             Value::StringValue(value) => value.pos_end.clone(),
+            Value::FunctionValue(value) => value.pos_end.clone(),
         }
     }
 
@@ -47,6 +50,10 @@ impl Value {
                 value.pos_start = pos_start;
                 value.pos_end = pos_end;
             }
+            Value::FunctionValue(value) => {
+                value.pos_start = pos_start;
+                value.pos_end = pos_end;
+            }
         }
 
         Box::new(self.clone())
@@ -57,6 +64,7 @@ impl Value {
             Value::NumberValue(value) => value.context = context,
             Value::ListValue(value) => value.context = context,
             Value::StringValue(value) => value.context = context,
+            Value::FunctionValue(value) => value.context = context,
         }
 
         Box::new(self.clone())
@@ -88,6 +96,7 @@ impl Value {
             Value::NumberValue(_) => "number",
             Value::ListValue(_) => "list",
             Value::StringValue(_) => "string",
+            Value::FunctionValue(_) => "function",
             _ => "null",
         }
     }
@@ -97,6 +106,7 @@ impl Value {
             Value::NumberValue(value) => value.value != 0,
             Value::ListValue(value) => value.elements.is_empty(),
             Value::StringValue(value) => value.value.is_empty(),
+            Value::FunctionValue(value) => value.name.is_empty(),
             _ => false,
         }
     }
@@ -106,6 +116,7 @@ impl Value {
             Value::NumberValue(value) => value.as_string(),
             Value::ListValue(value) => value.as_string(),
             Value::StringValue(value) => value.as_string(),
+            Value::FunctionValue(value) => value.as_string(),
             _ => "".to_string(),
         }
     }
