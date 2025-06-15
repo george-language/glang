@@ -10,7 +10,7 @@ use crate::{
     interpreting::{context::Context, interpreter::Interpreter},
     lexing::lexer::Lexer,
     parsing::parser::Parser,
-    values::{list::List, number::Number, value::Value},
+    values::number::Number,
 };
 use std::fs;
 

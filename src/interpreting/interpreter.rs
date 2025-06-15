@@ -255,7 +255,7 @@ impl Interpreter {
             return result;
         }
 
-        let mut step_value: Number;
+        let step_value: Number;
 
         if node.step_value_node.is_some() {
             step_value = match result
@@ -410,7 +410,7 @@ impl Interpreter {
         context: &mut Context,
     ) -> RuntimeResult {
         let mut result = RuntimeResult::new();
-        let mut left = result.register(self.visit(node.left_node.clone(), context));
+        let left = result.register(self.visit(node.left_node.clone(), context));
 
         if result.should_return() {
             return result;
@@ -424,7 +424,7 @@ impl Interpreter {
             return result;
         }
 
-        let mut right = right.unwrap();
+        let right = right.unwrap();
 
         let (mut number, mut error): (Option<Box<Value>>, Option<StandardError>) = (None, None);
 
