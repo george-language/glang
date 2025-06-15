@@ -1,5 +1,3 @@
-use std::fmt::Display;
-
 use crate::{
     errors::standard_error::StandardError,
     interpreting::{context::Context, runtime_result::RuntimeResult},
@@ -96,7 +94,7 @@ impl Value {
 
     pub fn is_true(&self) -> bool {
         match self {
-            Value::NumberValue(value) => value.value == 1,
+            Value::NumberValue(value) => value.value != 0,
             Value::ListValue(value) => value.elements.is_empty(),
             Value::StringValue(value) => value.value.is_empty(),
             _ => false,
@@ -110,11 +108,5 @@ impl Value {
             Value::StringValue(value) => value.as_string(),
             _ => "".to_string(),
         }
-    }
-}
-
-impl Display for Value {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "")
     }
 }

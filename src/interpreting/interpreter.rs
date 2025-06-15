@@ -3,9 +3,10 @@ use crate::{
     interpreting::{context::Context, runtime_result::RuntimeResult, symbol_table::SymbolTable},
     lexing::token_type::TokenType,
     nodes::{
-        ast_node::AstNode, binary_operator_node::BinaryOperatorNode, list_node::ListNode,
-        number_node::NumberNode, string_node::StringNode, unary_operator_node::UnaryOperatorNode,
-        variable_access_node::VariableAccessNode, variable_assign_node::VariableAssignNode,
+        ast_node::AstNode, binary_operator_node::BinaryOperatorNode, if_node::IfNode,
+        list_node::ListNode, number_node::NumberNode, string_node::StringNode,
+        unary_operator_node::UnaryOperatorNode, variable_access_node::VariableAccessNode,
+        variable_assign_node::VariableAssignNode,
     },
     values::{list::List, number::Number, string::StringObj, value::Value},
 };
@@ -37,6 +38,9 @@ impl Interpreter {
             }
             AstNode::VariableAccess(node) => {
                 return self.visit_variable_access_node(&node, context);
+            }
+            AstNode::If(node) => {
+                return self.visit_if_node(&node, context);
             }
             AstNode::BinaryOperator(node) => {
                 return self.visit_binary_operator_node(&node, context);
@@ -141,6 +145,51 @@ impl Interpreter {
         );
 
         result.success(value)
+    }
+
+    pub fn visit_if_node(&mut self, node: &IfNode, context: &mut Context) -> RuntimeResult {
+        let mut result = RuntimeResult::new();
+
+        for (condition, expr, should_return_null) in &node.cases {
+            let condition_value = result
+                .register(self.visit(condition.clone(), context))
+                .unwrap();
+
+            if result.should_return() {
+                return result;
+            }
+
+            if condition_value.is_true() {
+                let expr_value = result.register(self.visit(expr.clone(), context));
+
+                if result.should_return() {
+                    return result;
+                }
+
+                return result.success(if *should_return_null {
+                    Some(Number::null_value())
+                } else {
+                    expr_value
+                });
+            }
+        }
+
+        if node.else_case.is_some() {
+            let (expr, should_return_null) = node.else_case.as_ref().unwrap().clone();
+            let else_value = result.register(self.visit(expr.clone(), context));
+
+            if result.should_return() {
+                return result;
+            }
+
+            return result.success(if should_return_null {
+                Some(Number::null_value())
+            } else {
+                else_value
+            });
+        }
+
+        result.success(Some(Number::null_value()))
     }
 
     pub fn visit_binary_operator_node(
@@ -254,126 +303,6 @@ impl Interpreter {
         }
     }
 }
-
-//     def visit_VariableAccessNode(self, node: VariableAccessNode, context):
-//         result = RuntimeResult()
-//         var_name = node.var_name_token.value
-//         value = context.symbol_table.get(var_name)
-
-//         if not value:
-//             return result.failure(
-//                 RunTimeError(node.pos_start,
-//                              node.pos_end,
-//                              f'"{var_name}" is not defined',
-//                              context))
-
-//         value = value.copy().setPos(node.pos_start, node.pos_end).setContext(context)
-//         return result.success(value)
-
-//     def visit_VariableAssignNode(self, node: VariableAssignNode, context):
-//         result = RuntimeResult()
-//         var_name = node.var_name_token.value
-//         value = result.register(self.visit(node.value_node, context))
-
-//         if result.shouldReturn():
-//             return result
-
-//         context.symbol_table.set(var_name, value)
-//         return result.success(value)
-
-//     def visit_BinaryOperatorNode(self, node: BinaryOperatorNode, context):
-//         result = RuntimeResult()
-//         left = result.register(self.visit(node.left_node, context))
-
-//         if result.shouldReturn():
-//             return result
-
-//         right = result.register(self.visit(node.right_node, context))
-
-//         if result.shouldReturn():
-//             return result
-
-//         if node.op_token.type == TT_PLUS:
-//             number, error = left.addedTo(right)
-//         elif node.op_token.type == TT_MINUS:
-//             number, error = left.subtractedBy(right)
-//         elif node.op_token.type == TT_MUL:
-//             number, error = left.multipliedBy(right)
-//         elif node.op_token.type == TT_DIV:
-//             number, error = left.dividedBy(right)
-//         elif node.op_token.type == TT_POW:
-//             number, error = left.poweredBy(right)
-//         elif node.op_token.type == TT_EE:
-//             number, error = left.getComparisonEq(right)
-//         elif node.op_token.type == TT_NE:
-//             number, error = left.getComparisonNe(right)
-//         elif node.op_token.type == TT_LT:
-//             number, error = left.getComparisonLt(right)
-//         elif node.op_token.type == TT_GT:
-//             number, error = left.getComparisonGt(right)
-//         elif node.op_token.type == TT_LTE:
-//             number, error = left.getComparisonLte(right)
-//         elif node.op_token.type == TT_GTE:
-//             number, error = left.getComparisonGte(right)
-//         elif node.op_token.matches(TT_KEYWORD, 'and'):
-//             number, error = left.andedBy(right)
-//         elif node.op_token.matches(TT_KEYWORD, 'or'):
-//             number, error = left.oredBy(right)
-
-//         if error:
-//             return result.failure(error)
-
-//         else:
-//             return result.success(number.setPos(node.pos_start, node.pos_end))
-
-//     def visit_UnaryOperatorNode(self, node: UnaryOperatorNode, context):
-//         result = RuntimeResult()
-//         number = result.register(self.visit(node.node, context))
-
-//         if result.shouldReturn():
-//             return result
-
-//         error = None
-
-//         if node.op_token.type == TT_MINUS:
-//             number, error = number.multipliedBy(Number(-1))
-
-//         elif node.op_token.matches(TT_KEYWORD, 'oppositeof'):
-//             number, error = number.notted()
-
-//         if error:
-//             return result.failure(error)
-
-//         else:
-//             return result.success(number.setPos(node.pos_start, node.pos_end))
-
-//     def visit_IfNode(self, node, context):
-//         result = RuntimeResult()
-
-//         for condition, expr, should_return_null in node.cases:
-//             condition_value = result.register(self.visit(condition, context))
-
-//             if result.shouldReturn():
-//                 return result
-
-//             if condition_value.isTrue():
-//                 expr_value = result.register(self.visit(expr, context))
-
-//                 if result.shouldReturn():
-//                     return result
-
-//                 return result.success(Number.null if should_return_null else expr_value)
-
-//         if node.else_case:
-//             expr, should_return_null = node.else_case
-//             else_value = result.register(self.visit(expr, context))
-
-//             if result.shouldReturn():
-//                 return result
-
-//             return result.success(Number.null if should_return_null else else_value)
-
-//         return result.success(Number.null)
 
 //     def visit_ForNode(self, node, context):
 //         result = RuntimeResult()

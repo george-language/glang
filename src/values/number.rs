@@ -2,7 +2,6 @@ use crate::{
     errors::standard_error::StandardError, interpreting::context::Context,
     lexing::position::Position, values::value::Value,
 };
-use std::fmt::Display;
 
 #[derive(Debug, Clone)]
 pub struct Number {
@@ -20,6 +19,18 @@ impl Number {
             pos_start: None,
             pos_end: None,
         }
+    }
+
+    pub fn null_value() -> Box<Value> {
+        Box::new(Value::NumberValue(Number::new(0)))
+    }
+
+    pub fn true_value() -> Box<Value> {
+        Box::new(Value::NumberValue(Number::new(1)))
+    }
+
+    pub fn false_value() -> Box<Value> {
+        Box::new(Value::NumberValue(Number::new(0)))
     }
 
     pub fn perform_operation(
@@ -103,20 +114,7 @@ impl Number {
         )
     }
 
-    pub fn return_null(&mut self) -> (Option<Box<Value>>, Option<StandardError>) {
-        (
-            Some(Value::NumberValue(Number::new(0)).set_context(self.context.clone())),
-            None,
-        )
-    }
-
     pub fn as_string(&self) -> String {
         format!("{}", self.value).to_string()
-    }
-}
-
-impl Display for Number {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "<number: {}>", self.value)
     }
 }

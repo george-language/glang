@@ -249,6 +249,8 @@ impl Parser {
         let mut parse_result = ParseResult::new();
         let mut else_case: Option<(Box<AstNode>, bool)> = None;
 
+        self.skip_newlines(&mut parse_result);
+
         if self
             .current_token_ref()
             .matches(TokenType::TT_KEYWORD, Some("otherwise"))
@@ -442,7 +444,7 @@ impl Parser {
         }
 
         else_case = else_clause;
-        cases.append(all_cases.clone().as_mut());
+        cases.append(&mut all_cases.clone());
 
         return (parse_result, cases, else_case);
     }

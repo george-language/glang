@@ -4,7 +4,7 @@ use crate::{
     lexing::position::Position,
     values::{number::Number, value::Value},
 };
-use std::{fmt::Display, iter::zip};
+use std::iter::zip;
 
 #[derive(Debug, Clone)]
 pub struct List {
@@ -34,20 +34,17 @@ impl List {
                 "+" => {
                     self.elements.append(&mut right.elements.clone());
 
-                    return self.return_null();
+                    return (Some(Number::null_value()), None);
                 }
                 "*" => {
                     self.push(Some(other.clone()));
 
-                    return self.return_null();
+                    return (Some(Number::null_value()), None);
                 }
                 "==" => {
                     if self.elements.len() != right.elements.len() {
                         return (
-                            Some(
-                                Value::NumberValue(Number::new(0))
-                                    .set_context(self.context.clone()),
-                            ),
+                            Some(Number::false_value().set_context(self.context.clone())),
                             None,
                         );
                     } else {
@@ -59,10 +56,7 @@ impl List {
                             }
                             if !result.is_some() {
                                 return (
-                                    Some(
-                                        Value::NumberValue(Number::new(0))
-                                            .set_context(self.context.clone()),
-                                    ),
+                                    Some(Number::false_value().set_context(self.context.clone())),
                                     None,
                                 );
                             }
@@ -70,17 +64,14 @@ impl List {
                     }
 
                     return (
-                        Some(Value::NumberValue(Number::new(1)).set_context(self.context.clone())),
+                        Some(Number::true_value().set_context(self.context.clone())),
                         None,
                     );
                 }
                 "!=" => {
                     if self.elements.len() != right.elements.len() {
                         return (
-                            Some(
-                                Value::NumberValue(Number::new(1))
-                                    .set_context(self.context.clone()),
-                            ),
+                            Some(Number::false_value().set_context(self.context.clone())),
                             None,
                         );
                     } else {
@@ -92,10 +83,7 @@ impl List {
                             }
                             if !result.is_some() {
                                 return (
-                                    Some(
-                                        Value::NumberValue(Number::new(1))
-                                            .set_context(self.context.clone()),
-                                    ),
+                                    Some(Number::true_value().set_context(self.context.clone())),
                                     None,
                                 );
                             }
@@ -103,7 +91,7 @@ impl List {
                     }
 
                     return (
-                        Some(Value::NumberValue(Number::new(0)).set_context(self.context.clone())),
+                        Some(Number::false_value().set_context(self.context.clone())),
                         None,
                     );
                 }
@@ -135,7 +123,7 @@ impl List {
                 "*" => {
                     self.push(Some(other.clone()));
 
-                    return self.return_null();
+                    return (Some(Number::null_value()), None);
                 }
                 "^" => {
                     if right.value < -1 {
@@ -153,7 +141,7 @@ impl List {
                     if right.value == -1 {
                         self.reverse();
 
-                        return self.return_null();
+                        return (Some(Number::null_value()), None);
                     }
 
                     if (right.value as usize) > self.elements.len() {
@@ -203,7 +191,7 @@ impl List {
                 if operator == "*" {
                     self.push(Some(other.clone()));
 
-                    return self.return_null();
+                    return (Some(Number::null_value()), None);
                 }
 
                 return (None, Some(self.illegal_operation(Some(other))));
@@ -243,13 +231,6 @@ impl List {
         self.elements.reverse();
     }
 
-    pub fn return_null(&mut self) -> (Option<Box<Value>>, Option<StandardError>) {
-        (
-            Some(Value::NumberValue(Number::new(0)).set_context(self.context.clone())),
-            None,
-        )
-    }
-
     pub fn as_string(&self) -> String {
         let mut output = self
             .elements
@@ -268,11 +249,5 @@ impl List {
         }
 
         format!("{}", output).to_string()
-    }
-}
-
-impl Display for List {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "<list: {:?}>", self.elements)
     }
 }

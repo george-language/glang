@@ -4,7 +4,6 @@ use crate::{
     lexing::position::Position,
     values::{number::Number, value::Value},
 };
-use std::{fmt::Display, iter::zip};
 
 #[derive(Debug, Clone)]
 pub struct StringObj {
@@ -34,13 +33,13 @@ impl StringObj {
                 "+" => {
                     self.value.push_str(&value.value);
 
-                    return self.return_null();
+                    return (Some(Number::null_value()), None);
                 }
                 "-" => {
                     self.value.clear();
                     self.value.push_str(&value.value);
 
-                    return self.return_null();
+                    return (Some(Number::null_value()), None);
                 }
                 "==" => {
                     return (
@@ -122,20 +121,7 @@ impl StringObj {
         )
     }
 
-    pub fn return_null(&mut self) -> (Option<Box<Value>>, Option<StandardError>) {
-        (
-            Some(Value::NumberValue(Number::new(0)).set_context(self.context.clone())),
-            None,
-        )
-    }
-
     pub fn as_string(&self) -> String {
         format!("{}", self.value).to_string()
-    }
-}
-
-impl Display for StringObj {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "<string: {:?}>", self.value)
     }
 }

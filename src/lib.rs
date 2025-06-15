@@ -10,7 +10,7 @@ use crate::{
     interpreting::{context::Context, interpreter::Interpreter},
     lexing::lexer::Lexer,
     parsing::parser::Parser,
-    values::{list::List, value::Value},
+    values::{list::List, number::Number, value::Value},
 };
 use std::fs;
 
@@ -55,7 +55,7 @@ pub fn run(filename: &str, code: Option<String>) -> (Option<String>, Option<Stan
         Some(
             result
                 .value
-                .unwrap_or_else(|| Box::new(Value::ListValue(List::new(Vec::new()))))
+                .unwrap_or_else(|| Number::null_value())
                 .as_string(),
         ),
         result.error,
