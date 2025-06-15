@@ -275,13 +275,28 @@ impl Parser {
             parse_result.register_advancement();
             self.advance();
 
-            let statements = parse_result.register(self.statements());
+            let body = if self.current_token_ref().token_type == TokenType::TT_NEWLINE {
+                parse_result.register_advancement();
+                self.advance();
 
-            if parse_result.error.is_some() {
-                return (parse_result, None);
-            }
+                let stmts = parse_result.register(self.statements());
 
-            else_case = Some((statements.unwrap(), true));
+                if parse_result.error.is_some() {
+                    return (parse_result, None);
+                }
+
+                (stmts.unwrap(), true)
+            } else {
+                let expr = parse_result.register(self.expr());
+
+                if parse_result.error.is_some() {
+                    return (parse_result, None);
+                }
+
+                (expr.unwrap(), false)
+            };
+
+            else_case = Some(body);
 
             if self.current_token_ref().token_type != TokenType::TT_RBRACKET {
                 return (
