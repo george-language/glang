@@ -29,7 +29,13 @@ impl Interpreter {
         interpreter.global_symbol_table.set(
             "bark".to_string(),
             Some(Box::new(Value::BuiltInFunction(BuiltInFunction::new(
-                "print".to_string(),
+                "bark".to_string(),
+            )))),
+        );
+        interpreter.global_symbol_table.set(
+            "type".to_string(),
+            Some(Box::new(Value::BuiltInFunction(BuiltInFunction::new(
+                "type".to_string(),
             )))),
         );
 

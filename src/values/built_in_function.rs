@@ -6,7 +6,7 @@ use crate::{
     },
     lexing::position::Position,
     nodes::ast_node::AstNode,
-    values::{number::Number, value::Value},
+    values::{number::Number, string::StringObj, value::Value},
 };
 
 #[derive(Debug, Clone)]
@@ -108,15 +108,13 @@ impl BuiltInFunction {
     }
 
     pub fn execute(&self, args: &Vec<Box<Value>>) -> RuntimeResult {
-        let mut result = RuntimeResult::new();
         let mut exec_context = self.generate_new_context();
 
         match self.name.as_str() {
-            "print" => self.execute_print(args, &mut exec_context),
+            "bark" => return self.execute_print(args, &mut exec_context),
+            "type" => return self.execute_type(args, &mut exec_context),
             _ => panic!("CRITICAL ERROR: BUILT IN NAME IS NOT DEFINED"),
         };
-
-        result.success(Some(Number::null_value()))
     }
 
     pub fn execute_print(&self, args: &Vec<Box<Value>>, expr_ctx: &mut Context) -> RuntimeResult {
@@ -127,13 +125,22 @@ impl BuiltInFunction {
             return result;
         }
 
-        for arg in args {
-            match arg {
-                _ => println!("{}", arg.as_string()),
-            }
-        }
+        println!("{}", args[0].as_string());
 
         result.success(Some(Number::null_value()))
+    }
+
+    pub fn execute_type(&self, args: &Vec<Box<Value>>, expr_ctx: &mut Context) -> RuntimeResult {
+        let mut result = RuntimeResult::new();
+        result.register(self.check_and_populate_args(&vec!["value".to_string()], args, expr_ctx));
+
+        if result.should_return() {
+            return result;
+        }
+
+        result.success(Some(StringObj::from(
+            format!("{}", args[0].object_type()).as_str(),
+        )))
     }
 
     pub fn as_string(&self) -> String {

@@ -23,6 +23,10 @@ impl StringObj {
         }
     }
 
+    pub fn from(string: &str) -> Box<Value> {
+        Box::new(Value::StringValue(StringObj::new(string.to_string())))
+    }
+
     pub fn perform_operation(
         &mut self,
         operator: &'static str,
