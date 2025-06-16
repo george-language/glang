@@ -1,3 +1,5 @@
+use std::fs;
+
 use crate::{
     errors::standard_error::StandardError,
     interpreting::{
@@ -113,6 +115,7 @@ impl BuiltInFunction {
         match self.name.as_str() {
             "bark" => return self.execute_print(args, &mut exec_context),
             "type" => return self.execute_type(args, &mut exec_context),
+            "fetch" => return self.execute_import(args, &mut exec_context),
             _ => panic!("CRITICAL ERROR: BUILT IN NAME IS NOT DEFINED"),
         };
     }
@@ -141,6 +144,37 @@ impl BuiltInFunction {
         result.success(Some(StringObj::from(
             format!("{}", args[0].object_type()).as_str(),
         )))
+    }
+
+    pub fn execute_import(&self, args: &Vec<Box<Value>>, expr_ctx: &mut Context) -> RuntimeResult {
+        let mut result = RuntimeResult::new();
+        result.register(self.check_and_populate_args(&vec!["file".to_string()], args, expr_ctx));
+
+        if result.should_return() {
+            return result;
+        }
+
+        let import = args[0].clone();
+
+        if import.object_type().to_string() != "string".to_string() {
+            return result.failure(Some(StandardError::new(
+                "expected type string".to_string(),
+                import.position_start().unwrap().clone(),
+                import.position_end().unwrap().clone(),
+                Some("add the '.glang' file you would like to import".to_string()),
+            )));
+        }
+
+        if !fs::exists(import.as_string()).is_ok() || !import.as_string().ends_with(".glang") {
+            return result.failure(Some(StandardError::new(
+                "file doesn't exist or isn't valid".to_string(),
+                import.position_start().unwrap().clone(),
+                import.position_end().unwrap().clone(),
+                Some("add the '.glang' file you would like to import".to_string()),
+            )));
+        }
+
+        result.success(Some(Number::null_value()))
     }
 
     pub fn as_string(&self) -> String {

@@ -15,7 +15,7 @@ use crate::{
 use std::fs;
 
 pub fn run(filename: &str, code: Option<String>) -> (Option<String>, Option<StandardError>) {
-    let mut contents = String::new();
+    let mut contents = String::from("fetch \"modules/standard_lib.glang\"");
 
     if filename == "<stdin>" {
         contents = code.unwrap_or_else(|| "".to_string());

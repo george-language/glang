@@ -38,6 +38,12 @@ impl Interpreter {
                 "type".to_string(),
             )))),
         );
+        interpreter.global_symbol_table.set(
+            "fetch".to_string(),
+            Some(Box::new(Value::BuiltInFunction(BuiltInFunction::new(
+                "fetch".to_string(),
+            )))),
+        );
 
         interpreter
     }
