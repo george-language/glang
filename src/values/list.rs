@@ -237,17 +237,13 @@ impl List {
             .iter()
             .map(|item| {
                 item.as_ref().map_or_else(
-                    || Value::NumberValue(Number::new(0)).as_string(),
+                    || Number::null_value().as_string(),
                     |boxed| boxed.as_string(),
                 )
             })
             .collect::<Vec<_>>()
             .join(", ");
 
-        if self.elements.is_empty() {
-            output = "[]".to_string();
-        }
-
-        format!("{}", output).to_string()
+        format!("[{}]", output).to_string()
     }
 }
