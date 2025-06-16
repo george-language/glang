@@ -2,7 +2,10 @@ use crate::{
     errors::standard_error::StandardError,
     interpreting::context::Context,
     lexing::position::Position,
-    values::{function::Function, list::List, number::Number, string::StringObj},
+    values::{
+        built_in_function::BuiltInFunction, function::Function, list::List, number::Number,
+        string::StringObj,
+    },
 };
 
 #[derive(Debug, Clone)]
@@ -11,6 +14,7 @@ pub enum Value {
     ListValue(List),
     StringValue(StringObj),
     FunctionValue(Function),
+    BuiltInFunction(BuiltInFunction),
 }
 
 impl Value {
@@ -20,6 +24,7 @@ impl Value {
             Value::ListValue(value) => value.pos_start.clone(),
             Value::StringValue(value) => value.pos_start.clone(),
             Value::FunctionValue(value) => value.pos_start.clone(),
+            Value::BuiltInFunction(value) => value.pos_start.clone(),
         }
     }
 
@@ -29,6 +34,7 @@ impl Value {
             Value::ListValue(value) => value.pos_end.clone(),
             Value::StringValue(value) => value.pos_end.clone(),
             Value::FunctionValue(value) => value.pos_end.clone(),
+            Value::BuiltInFunction(value) => value.pos_end.clone(),
         }
     }
 
@@ -54,6 +60,10 @@ impl Value {
                 value.pos_start = pos_start;
                 value.pos_end = pos_end;
             }
+            Value::BuiltInFunction(value) => {
+                value.pos_start = pos_start;
+                value.pos_end = pos_end;
+            }
         }
 
         Box::new(self.clone())
@@ -65,6 +75,7 @@ impl Value {
             Value::ListValue(value) => value.context = context,
             Value::StringValue(value) => value.context = context,
             Value::FunctionValue(value) => value.context = context,
+            Value::BuiltInFunction(value) => value.context = context,
         }
 
         Box::new(self.clone())
@@ -97,6 +108,7 @@ impl Value {
             Value::ListValue(_) => "list",
             Value::StringValue(_) => "string",
             Value::FunctionValue(_) => "function",
+            Value::BuiltInFunction(_) => "built-in-function",
             _ => "null",
         }
     }
@@ -107,6 +119,7 @@ impl Value {
             Value::ListValue(value) => value.elements.is_empty(),
             Value::StringValue(value) => value.value.is_empty(),
             Value::FunctionValue(value) => value.name.is_empty(),
+            Value::BuiltInFunction(value) => value.name.is_empty(),
             _ => false,
         }
     }
@@ -117,6 +130,7 @@ impl Value {
             Value::ListValue(value) => value.as_string(),
             Value::StringValue(value) => value.as_string(),
             Value::FunctionValue(value) => value.as_string(),
+            Value::BuiltInFunction(value) => value.as_string(),
             _ => "".to_string(),
         }
     }

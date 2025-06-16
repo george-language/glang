@@ -10,28 +10,17 @@ use crate::{
 };
 
 #[derive(Debug, Clone)]
-pub struct Function {
+pub struct BuiltInFunction {
     pub name: String,
-    pub body_node: Box<AstNode>,
-    pub arg_names: Vec<String>,
-    pub should_auto_return: bool,
     pub context: Option<Context>,
     pub pos_start: Option<Position>,
     pub pos_end: Option<Position>,
 }
 
-impl Function {
-    pub fn new(
-        name: String,
-        body_node: Box<AstNode>,
-        arg_names: Vec<String>,
-        should_auto_return: bool,
-    ) -> Self {
-        Function {
+impl BuiltInFunction {
+    pub fn new(name: String) -> Self {
+        BuiltInFunction {
             name: name,
-            body_node: body_node,
-            arg_names: arg_names,
-            should_auto_return: should_auto_return,
             context: None,
             pos_start: None,
             pos_end: None,
@@ -120,29 +109,34 @@ impl Function {
 
     pub fn execute(&self, args: &Vec<Box<Value>>) -> RuntimeResult {
         let mut result = RuntimeResult::new();
-        let mut interpreter = Interpreter::new();
         let mut exec_context = self.generate_new_context();
 
-        result.register(self.check_and_populate_args(&self.arg_names, args, &mut exec_context));
+        match self.name.as_str() {
+            "print" => self.execute_print(args, &mut exec_context),
+            _ => panic!("CRITICAL ERROR: BUILT IN NAME IS NOT DEFINED"),
+        };
+
+        result.success(Some(Number::null_value()))
+    }
+
+    pub fn execute_print(&self, args: &Vec<Box<Value>>, expr_ctx: &mut Context) -> RuntimeResult {
+        let mut result = RuntimeResult::new();
+        result.register(self.check_and_populate_args(&vec!["value".to_string()], args, expr_ctx));
 
         if result.should_return() {
             return result;
         }
 
-        let value = result.register(interpreter.visit(self.body_node.clone(), &mut exec_context));
-
-        if result.should_return() && result.func_return_value.is_none() {
-            return result;
+        for arg in args {
+            match arg {
+                _ => println!("{}", arg.as_string()),
+            }
         }
 
-        let return_value = if self.should_auto_return { value } else { None }
-            .or(result.func_return_value.clone())
-            .or(Some(Number::null_value()));
-
-        result.success(return_value)
+        result.success(Some(Number::null_value()))
     }
 
     pub fn as_string(&self) -> String {
-        format!("function: {}", self.name).to_string()
+        format!("built-in-function: {}", self.name).to_string()
     }
 }

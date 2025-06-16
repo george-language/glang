@@ -10,7 +10,10 @@ use crate::{
         unary_operator_node::UnaryOperatorNode, variable_access_node::VariableAccessNode,
         variable_assign_node::VariableAssignNode, while_node::WhileNode,
     },
-    values::{function::Function, list::List, number::Number, string::StringObj, value::Value},
+    values::{
+        built_in_function::BuiltInFunction, function::Function, list::List, number::Number,
+        string::StringObj, value::Value,
+    },
 };
 
 pub struct Interpreter {
@@ -19,9 +22,18 @@ pub struct Interpreter {
 
 impl Interpreter {
     pub fn new() -> Self {
-        Interpreter {
+        let mut interpreter = Interpreter {
             global_symbol_table: SymbolTable::new(None),
-        }
+        };
+
+        interpreter.global_symbol_table.set(
+            "bark".to_string(),
+            Some(Box::new(Value::BuiltInFunction(BuiltInFunction::new(
+                "print".to_string(),
+            )))),
+        );
+
+        interpreter
     }
 
     pub fn visit(&mut self, node: Box<AstNode>, context: &mut Context) -> RuntimeResult {
@@ -484,6 +496,7 @@ impl Interpreter {
 
         let return_value = result.register(match value_to_call.as_ref() {
             Value::FunctionValue(value) => value.execute(&args),
+            Value::BuiltInFunction(value) => value.execute(&args),
             _ => {
                 return result.failure(Some(StandardError::new(
                     "expected function as call".to_string(),
@@ -503,7 +516,7 @@ impl Interpreter {
             .set_position(node.pos_start.clone(), node.pos_end.clone())
             .set_context(Some(context.clone()));
 
-        result.success(None)
+        result.success(Some(return_value))
     }
 
     pub fn visit_binary_operator_node(
@@ -649,18 +662,3 @@ impl Interpreter {
         RuntimeResult::new().success_break()
     }
 }
-
-//     def visit_FunctionDefinitionNode(self, node, context):
-//         result = RuntimeResult()
-
-//         func_name = node.var_name_token.value if node.var_name_token else None
-//         body_node = node.body_node
-//         arg_names = [arg_name.value for arg_name in node.arg_name_tokens]
-//         func_value = Function(func_name, body_node, arg_names, node.should_auto_return).setContext(context).setPos(
-//             node.pos_start,
-//             node.pos_end)
-
-//         if node.var_name_token:
-//             context.symbol_table.set(func_name, func_value)
-
-//         return result.success(func_value)
