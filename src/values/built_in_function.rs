@@ -6,8 +6,8 @@ use crate::{
         context::Context, interpreter::Interpreter, runtime_result::RuntimeResult,
         symbol_table::SymbolTable,
     },
-    lexing::position::Position,
-    nodes::ast_node::AstNode,
+    lexing::{lexer::Lexer, position::Position},
+    parsing::parser::Parser,
     values::{number::Number, string::StringObj, value::Value},
 };
 
@@ -76,14 +76,14 @@ impl BuiltInFunction {
         &self,
         arg_names: &Vec<String>,
         args: &Vec<Box<Value>>,
-        expr_ctx: &mut Context,
+        exec_ctx: &mut Context,
     ) {
         for i in 0..args.len() {
             let arg_name = arg_names[i].clone();
             let mut arg_value = args[i].clone();
-            arg_value.set_context(Some(expr_ctx.clone()));
+            arg_value.set_context(Some(exec_ctx.clone()));
 
-            expr_ctx
+            exec_ctx
                 .symbol_table
                 .as_mut()
                 .unwrap()
@@ -95,7 +95,7 @@ impl BuiltInFunction {
         &self,
         arg_names: &Vec<String>,
         args: &Vec<Box<Value>>,
-        expr_ctx: &mut Context,
+        exec_ctx: &mut Context,
     ) -> RuntimeResult {
         let mut result = RuntimeResult::new();
         result.register(self.check_args(arg_names, args));
@@ -104,7 +104,7 @@ impl BuiltInFunction {
             return result;
         }
 
-        self.populate_args(arg_names, args, expr_ctx);
+        self.populate_args(arg_names, args, exec_ctx);
 
         result.success(None)
     }
@@ -114,15 +114,16 @@ impl BuiltInFunction {
 
         match self.name.as_str() {
             "bark" => return self.execute_print(args, &mut exec_context),
+            "tostring" => return self.execute_tostring(args, &mut exec_context),
             "type" => return self.execute_type(args, &mut exec_context),
             "fetch" => return self.execute_import(args, &mut exec_context),
             _ => panic!("CRITICAL ERROR: BUILT IN NAME IS NOT DEFINED"),
         };
     }
 
-    pub fn execute_print(&self, args: &Vec<Box<Value>>, expr_ctx: &mut Context) -> RuntimeResult {
+    pub fn execute_print(&self, args: &Vec<Box<Value>>, exec_ctx: &mut Context) -> RuntimeResult {
         let mut result = RuntimeResult::new();
-        result.register(self.check_and_populate_args(&vec!["value".to_string()], args, expr_ctx));
+        result.register(self.check_and_populate_args(&vec!["value".to_string()], args, exec_ctx));
 
         if result.should_return() {
             return result;
@@ -133,9 +134,24 @@ impl BuiltInFunction {
         result.success(Some(Number::null_value()))
     }
 
-    pub fn execute_type(&self, args: &Vec<Box<Value>>, expr_ctx: &mut Context) -> RuntimeResult {
+    pub fn execute_tostring(
+        &self,
+        args: &Vec<Box<Value>>,
+        exec_ctx: &mut Context,
+    ) -> RuntimeResult {
         let mut result = RuntimeResult::new();
-        result.register(self.check_and_populate_args(&vec!["value".to_string()], args, expr_ctx));
+        result.register(self.check_and_populate_args(&vec!["value".to_string()], args, exec_ctx));
+
+        if result.should_return() {
+            return result;
+        }
+
+        result.success(Some(StringObj::from(args[0].as_string().as_str())))
+    }
+
+    pub fn execute_type(&self, args: &Vec<Box<Value>>, exec_ctx: &mut Context) -> RuntimeResult {
+        let mut result = RuntimeResult::new();
+        result.register(self.check_and_populate_args(&vec!["value".to_string()], args, exec_ctx));
 
         if result.should_return() {
             return result;
@@ -146,9 +162,9 @@ impl BuiltInFunction {
         )))
     }
 
-    pub fn execute_import(&self, args: &Vec<Box<Value>>, expr_ctx: &mut Context) -> RuntimeResult {
+    pub fn execute_import(&self, args: &Vec<Box<Value>>, exec_ctx: &mut Context) -> RuntimeResult {
         let mut result = RuntimeResult::new();
-        result.register(self.check_and_populate_args(&vec!["file".to_string()], args, expr_ctx));
+        result.register(self.check_and_populate_args(&vec!["file".to_string()], args, exec_ctx));
 
         if result.should_return() {
             return result;
@@ -172,6 +188,66 @@ impl BuiltInFunction {
                 import.position_end().unwrap().clone(),
                 Some("add the '.glang' file you would like to import".to_string()),
             )));
+        }
+
+        let mut contents = String::new();
+
+        match fs::read_to_string(import.as_string()) {
+            Ok(extra) => contents.push_str(&extra),
+            Err(_) => {
+                return result.failure(Some(StandardError::new(
+                    "file contents couldn't be read properly".to_string(),
+                    import.position_start().unwrap().clone(),
+                    import.position_end().unwrap().clone(),
+                    Some("add a UTF-8 encoded '.glang' file you would like to import".to_string()),
+                )));
+            }
+        }
+
+        let mut lexer = Lexer::new(import.position_start().unwrap().filename, contents.clone());
+        let (tokens, error) = lexer.make_tokens();
+
+        if error.is_some() {
+            return result.failure(error);
+        }
+
+        let mut parser = Parser::new(tokens);
+        let ast = parser.parse();
+
+        if ast.error.is_some() {
+            return result.failure(ast.error);
+        }
+
+        let mut interpreter = Interpreter::new();
+        let mut module_context = Context::new("<module>".to_string(), None, None);
+        module_context.symbol_table = Some(interpreter.global_symbol_table.clone());
+        let module_result = interpreter.visit(ast.node.unwrap(), &mut module_context);
+
+        if module_result.error.is_some() {
+            return result.failure(module_result.error);
+        }
+
+        let exec_context_copy = exec_ctx.clone();
+
+        for (name, value) in module_context.symbol_table.unwrap().symbols.iter() {
+            println!("{name}");
+            exec_ctx
+                .parent
+                .as_mut()
+                .unwrap()
+                .symbol_table
+                .as_mut()
+                .unwrap()
+                .set(
+                    name.clone(),
+                    Some(
+                        value
+                            .clone()
+                            .unwrap()
+                            .set_context(Some(exec_context_copy.clone()))
+                            .set_position(self.pos_start.clone(), self.pos_end.clone()),
+                    ),
+                );
         }
 
         result.success(Some(Number::null_value()))

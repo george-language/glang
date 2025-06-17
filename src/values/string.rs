@@ -35,15 +35,17 @@ impl StringObj {
         match other.as_ref() {
             Value::StringValue(value) => match operator {
                 "+" => {
-                    self.value.push_str(&value.value);
+                    let mut copy = self.clone();
+                    copy.value.push_str(&value.value);
 
-                    return (Some(Number::null_value()), None);
+                    return (Some(Box::new(Value::StringValue(copy))), None);
                 }
                 "-" => {
-                    self.value.clear();
-                    self.value.push_str(&value.value);
+                    let mut copy = self.clone();
+                    copy.value.clear();
+                    copy.value.push_str(&value.value);
 
-                    return (Some(Number::null_value()), None);
+                    return (Some(Box::new(Value::StringValue(copy))), None);
                 }
                 "==" => {
                     return (
