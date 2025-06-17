@@ -5,14 +5,14 @@ use crate::{
 
 #[derive(Debug, Clone)]
 pub struct Number {
-    pub value: isize,
+    pub value: f64,
     pub context: Option<Context>,
     pub pos_start: Option<Position>,
     pub pos_end: Option<Position>,
 }
 
 impl Number {
-    pub fn new(value: isize) -> Self {
+    pub fn new(value: f64) -> Self {
         Number {
             value: value,
             context: None,
@@ -21,16 +21,20 @@ impl Number {
         }
     }
 
+    pub fn from(value: f64) -> Box<Value> {
+        Box::new(Value::NumberValue(Number::new(value)))
+    }
+
     pub fn null_value() -> Box<Value> {
-        Box::new(Value::NumberValue(Number::new(0)))
+        Box::new(Value::NumberValue(Number::new(0.0)))
     }
 
     pub fn true_value() -> Box<Value> {
-        Box::new(Value::NumberValue(Number::new(1)))
+        Box::new(Value::NumberValue(Number::new(1.0)))
     }
 
     pub fn false_value() -> Box<Value> {
-        Box::new(Value::NumberValue(Number::new(0)))
+        Box::new(Value::NumberValue(Number::new(0.0)))
     }
 
     pub fn perform_operation(
@@ -48,7 +52,7 @@ impl Number {
                     "-" => Some(left_val - right_val),
                     "*" => Some(left_val * right_val),
                     "/" => {
-                        if right_val == 0 {
+                        if right_val == 0.0 {
                             return (
                                 None,
                                 Some(StandardError::new(
@@ -59,11 +63,10 @@ impl Number {
                                 )),
                             );
                         }
-
                         Some(left_val / right_val)
                     }
                     "^" => {
-                        if right_val <= 0 {
+                        if right_val <= 0.0 {
                             return (
                                 None,
                                 Some(StandardError::new(
@@ -74,18 +77,17 @@ impl Number {
                                 )),
                             );
                         }
-
-                        Some(left_val.pow(right_val as u32) as isize)
+                        Some(left_val.powf(right_val))
                     }
-                    "==" => Some((left_val == right_val) as isize),
-                    "!=" => Some((left_val != right_val) as isize),
-                    "<" => Some((left_val < right_val) as isize),
-                    ">" => Some((left_val > right_val) as isize),
-                    "<=" => Some((left_val <= right_val) as isize),
-                    ">=" => Some((left_val >= right_val) as isize),
-                    "and" => Some(((left_val != 0) && (right_val != 0)) as isize),
-                    "or" => Some(((left_val != 0) || (right_val != 0)) as isize),
-                    "oppositeof" => Some(if self.value == 0 { 1 } else { 0 }),
+                    "==" => Some((left_val == right_val) as u8 as f64),
+                    "!=" => Some((left_val != right_val) as u8 as f64),
+                    "<" => Some((left_val < right_val) as u8 as f64),
+                    ">" => Some((left_val > right_val) as u8 as f64),
+                    "<=" => Some((left_val <= right_val) as u8 as f64),
+                    ">=" => Some((left_val >= right_val) as u8 as f64),
+                    "and" => Some(((left_val != 0.0) && (right_val != 0.0)) as u8 as f64),
+                    "or" => Some(((left_val != 0.0) || (right_val != 0.0)) as u8 as f64),
+                    "oppositeof" => Some(if self.value == 0.0 { 1.0 } else { 0.0 }),
                     _ => return (None, Some(self.illegal_operation(Some(other)))),
                 };
 

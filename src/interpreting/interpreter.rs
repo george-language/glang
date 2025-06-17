@@ -32,24 +32,42 @@ impl Interpreter {
             "bark".to_string(),
             Some(Box::new(Value::BuiltInFunction(BuiltInFunction::new(
                 "bark".to_string(),
+                interpreter.global_symbol_table.clone(),
             )))),
         );
         interpreter.global_symbol_table.borrow_mut().set(
             "uhoh".to_string(),
             Some(Box::new(Value::BuiltInFunction(BuiltInFunction::new(
                 "uhoh".to_string(),
+                interpreter.global_symbol_table.clone(),
+            )))),
+        );
+        interpreter.global_symbol_table.borrow_mut().set(
+            "tonumber".to_string(),
+            Some(Box::new(Value::BuiltInFunction(BuiltInFunction::new(
+                "tonumber".to_string(),
+                interpreter.global_symbol_table.clone(),
+            )))),
+        );
+        interpreter.global_symbol_table.borrow_mut().set(
+            "tostring".to_string(),
+            Some(Box::new(Value::BuiltInFunction(BuiltInFunction::new(
+                "tostring".to_string(),
+                interpreter.global_symbol_table.clone(),
             )))),
         );
         interpreter.global_symbol_table.borrow_mut().set(
             "type".to_string(),
             Some(Box::new(Value::BuiltInFunction(BuiltInFunction::new(
                 "type".to_string(),
+                interpreter.global_symbol_table.clone(),
             )))),
         );
         interpreter.global_symbol_table.borrow_mut().set(
             "fetch".to_string(),
             Some(Box::new(Value::BuiltInFunction(BuiltInFunction::new(
                 "fetch".to_string(),
+                interpreter.global_symbol_table.clone(),
             )))),
         );
 
@@ -113,7 +131,7 @@ impl Interpreter {
     }
 
     pub fn visit_number_node(&self, node: &NumberNode, context: &mut Context) -> RuntimeResult {
-        let value: isize = node.token.value.as_ref().unwrap().parse().unwrap();
+        let value: f64 = node.token.value.as_ref().unwrap().parse().unwrap();
 
         RuntimeResult::new().success(Some(
             Value::NumberValue(Number::new(value))
@@ -319,12 +337,12 @@ impl Interpreter {
                 return result;
             }
         } else {
-            step_value = Number::new(1);
+            step_value = Number::new(1.0);
         }
 
         let mut i = start_value.value;
 
-        if step_value.value >= 0 {
+        if step_value.value >= 0.0 {
             while i < end_value.value {
                 context.symbol_table.as_mut().unwrap().borrow_mut().set(
                     node.var_name_token.value.as_ref().unwrap().clone(),
@@ -629,13 +647,13 @@ impl Interpreter {
 
         if node.op_token.token_type == TokenType::TT_MINUS {
             (number, error) =
-                value.perform_operation("*", Box::new(Value::NumberValue(Number::new(-1))));
+                value.perform_operation("*", Box::new(Value::NumberValue(Number::new(-1.0))));
         } else if node
             .op_token
             .matches(TokenType::TT_KEYWORD, Some("oppositeof"))
         {
-            (number, error) =
-                value.perform_operation("oppositeof", Box::new(Value::NumberValue(Number::new(0))))
+            (number, error) = value
+                .perform_operation("oppositeof", Box::new(Value::NumberValue(Number::new(0.0))))
         }
 
         if error.is_some() {

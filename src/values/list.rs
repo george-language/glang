@@ -99,7 +99,8 @@ impl List {
                     return (
                         Some(
                             Value::NumberValue(Number::new(
-                                (!self.elements.is_empty() && !right.elements.is_empty()) as isize,
+                                (!self.elements.is_empty() && !right.elements.is_empty()) as u8
+                                    as f64,
                             ))
                             .set_context(self.context.clone()),
                         ),
@@ -110,7 +111,8 @@ impl List {
                     return (
                         Some(
                             Value::NumberValue(Number::new(
-                                (!self.elements.is_empty() || !right.elements.is_empty()) as isize,
+                                (!self.elements.is_empty() || !right.elements.is_empty()) as u8
+                                    as f64,
                             ))
                             .set_context(self.context.clone()),
                         ),
@@ -126,7 +128,7 @@ impl List {
                     return (Some(Number::null_value()), None);
                 }
                 "^" => {
-                    if right.value < -1 {
+                    if right.value < -1.0 {
                         return (
                             None,
                             Some(StandardError::new(
@@ -138,7 +140,7 @@ impl List {
                         );
                     }
 
-                    if right.value == -1 {
+                    if right.value == -1.0 {
                         self.reverse();
 
                         return (Some(Number::null_value()), None);
@@ -159,7 +161,7 @@ impl List {
                     return (self.retrieve(right.value as usize), None);
                 }
                 "-" => {
-                    if right.value < 0 {
+                    if right.value < 0.0 {
                         return (
                             None,
                             Some(StandardError::new(

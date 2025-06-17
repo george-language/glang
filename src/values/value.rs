@@ -115,7 +115,7 @@ impl Value {
 
     pub fn is_true(&self) -> bool {
         match self {
-            Value::NumberValue(value) => value.value != 0,
+            Value::NumberValue(value) => value.value != 0.0,
             Value::ListValue(value) => value.elements.is_empty(),
             Value::StringValue(value) => value.value.is_empty(),
             Value::FunctionValue(value) => value.name.is_empty(),

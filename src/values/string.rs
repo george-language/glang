@@ -50,8 +50,10 @@ impl StringObj {
                 "==" => {
                     return (
                         Some(
-                            Value::NumberValue(Number::new((self.value == value.value) as isize))
-                                .set_context(self.context.clone()),
+                            Value::NumberValue(Number::new(
+                                (self.value == value.value) as u8 as f64,
+                            ))
+                            .set_context(self.context.clone()),
                         ),
                         None,
                     );
@@ -59,8 +61,10 @@ impl StringObj {
                 "!=" => {
                     return (
                         Some(
-                            Value::NumberValue(Number::new((self.value != value.value) as isize))
-                                .set_context(self.context.clone()),
+                            Value::NumberValue(Number::new(
+                                (self.value != value.value) as u8 as f64,
+                            ))
+                            .set_context(self.context.clone()),
                         ),
                         None,
                     );
@@ -69,7 +73,7 @@ impl StringObj {
                     return (
                         Some(
                             Value::NumberValue(Number::new(
-                                (!self.value.is_empty() && !value.value.is_empty()) as isize,
+                                (!self.value.is_empty() && !value.value.is_empty()) as u8 as f64,
                             ))
                             .set_context(self.context.clone()),
                         ),
@@ -80,7 +84,7 @@ impl StringObj {
                     return (
                         Some(
                             Value::NumberValue(Number::new(
-                                (!self.value.is_empty() || !value.value.is_empty()) as isize,
+                                (!self.value.is_empty() || !value.value.is_empty()) as u8 as f64,
                             ))
                             .set_context(self.context.clone()),
                         ),
@@ -91,7 +95,7 @@ impl StringObj {
             },
             Value::NumberValue(value) => match operator {
                 "*" => {
-                    if value.value < 0 {
+                    if value.value < 0.0 {
                         return (
                             None,
                             Some(StandardError::new(

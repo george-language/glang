@@ -14,15 +14,17 @@ use crate::{
 #[derive(Debug, Clone)]
 pub struct BuiltInFunction {
     pub name: String,
+    pub global_symbol_table: Rc<RefCell<SymbolTable>>,
     pub context: Option<Context>,
     pub pos_start: Option<Position>,
     pub pos_end: Option<Position>,
 }
 
 impl BuiltInFunction {
-    pub fn new(name: String) -> Self {
+    pub fn new(name: String, global_symbol_table: Rc<RefCell<SymbolTable>>) -> Self {
         BuiltInFunction {
             name: name,
+            global_symbol_table: global_symbol_table,
             context: None,
             pos_start: None,
             pos_end: None,
@@ -116,6 +118,7 @@ impl BuiltInFunction {
 
         match self.name.as_str() {
             "bark" => return self.execute_print(args, &mut exec_context),
+            "tonumber" => return self.execute_tonumber(args, &mut exec_context),
             "tostring" => return self.execute_tostring(args, &mut exec_context),
             "uhoh" => return self.execute_error(args, &mut exec_context),
             "type" => return self.execute_type(args, &mut exec_context),
@@ -150,6 +153,47 @@ impl BuiltInFunction {
         }
 
         result.success(Some(StringObj::from(args[0].as_string().as_str())))
+    }
+
+    pub fn execute_tonumber(
+        &self,
+        args: &Vec<Box<Value>>,
+        exec_ctx: &mut Context,
+    ) -> RuntimeResult {
+        let mut result = RuntimeResult::new();
+        result.register(self.check_and_populate_args(&vec!["value".to_string()], args, exec_ctx));
+
+        if result.should_return() {
+            return result;
+        }
+
+        let string_to_convert = args[0].clone();
+
+        if string_to_convert.object_type().to_string() != "string".to_string() {
+            return result.failure(Some(StandardError::new(
+                "expected type string".to_string(),
+                string_to_convert.position_start().unwrap().clone(),
+                string_to_convert.position_end().unwrap().clone(),
+                Some("add a string like '1.0' to convert to a number object".to_string()),
+            )));
+        }
+
+        let value: f64 = match string_to_convert.as_string().parse() {
+            Ok(number) => number,
+            Err(e) => {
+                return result.failure(Some(StandardError::new(
+                    format!("string couldn't be converted to number {}", e).to_string(),
+                    string_to_convert.position_start().unwrap().clone(),
+                    string_to_convert.position_end().unwrap().clone(),
+                    Some(
+                        "make sure the string is represented as a valid number like '1.0'"
+                            .to_string(),
+                    ),
+                )));
+            }
+        };
+
+        result.success(Some(Number::from(value)))
     }
 
     pub fn execute_error(&self, args: &Vec<Box<Value>>, exec_ctx: &mut Context) -> RuntimeResult {
@@ -250,35 +294,34 @@ impl BuiltInFunction {
 
         let mut interpreter = Interpreter::new();
         let mut module_context = Context::new("<module>".to_string(), None, None);
-        module_context.symbol_table = Some(interpreter.global_symbol_table.clone());
+        module_context.symbol_table = Some(self.global_symbol_table.clone());
         let module_result = interpreter.visit(ast.node.unwrap(), &mut module_context);
 
         if module_result.error.is_some() {
             return result.failure(module_result.error);
         }
 
-        let exec_context_copy = exec_ctx.clone();
+        let symbols: Vec<(String, Option<Box<Value>>)> = module_context
+            .symbol_table
+            .as_ref()
+            .unwrap()
+            .borrow()
+            .symbols
+            .iter()
+            .map(|(k, v)| (k.clone(), v.clone()))
+            .collect();
 
-        for (name, value) in module_context.symbol_table.unwrap().borrow().symbols.iter() {
+        for (name, value) in symbols {
             println!("{name}");
-            exec_ctx
-                .parent
-                .as_mut()
-                .unwrap()
-                .symbol_table
-                .as_mut()
-                .unwrap()
-                .borrow_mut()
-                .set(
-                    name.clone(),
-                    Some(
-                        value
-                            .clone()
-                            .unwrap()
-                            .set_context(Some(exec_context_copy.clone()))
-                            .set_position(self.pos_start.clone(), self.pos_end.clone()),
-                    ),
-                );
+            self.global_symbol_table.borrow_mut().set(
+                name.clone(),
+                Some(
+                    value
+                        .unwrap()
+                        .set_context(Some(exec_ctx.clone()))
+                        .set_position(self.pos_start.clone(), self.pos_end.clone()),
+                ),
+            );
         }
 
         result.success(Some(Number::null_value()))
