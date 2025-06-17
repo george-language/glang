@@ -10,24 +10,23 @@ use crate::{
     interpreting::{context::Context, interpreter::Interpreter},
     lexing::lexer::Lexer,
     parsing::parser::Parser,
-    values::number::Number,
 };
 use std::fs;
 
-pub fn run(filename: &str, code: Option<String>) -> (Option<String>, Option<StandardError>) {
-    let mut contents = String::from("fetch \"modules/standard_lib.glang\"");
+pub fn run(filename: &str, code: Option<String>) -> Option<StandardError> {
+    let mut contents = String::new();
 
     if filename == "<stdin>" {
-        contents = code.unwrap_or_else(|| "".to_string());
+        contents.push_str(code.unwrap_or_else(|| "".to_string()).as_str());
     } else {
         let result = fs::read_to_string(filename);
 
         if !result.is_ok() {
-            println!("Failed to read .glang file");
+            println!("failed to read provided '.glang' file");
 
-            return (None, None);
+            return None;
         } else {
-            contents = result.unwrap();
+            contents.push_str(result.unwrap().as_str());
         }
     }
 
@@ -36,14 +35,14 @@ pub fn run(filename: &str, code: Option<String>) -> (Option<String>, Option<Stan
 
     if error.is_some() {
         // error exists
-        return (None, error);
+        return error;
     }
 
     let mut parser = Parser::new(tokens);
     let ast = parser.parse();
 
     if ast.error.is_some() {
-        return (None, ast.error);
+        return ast.error;
     }
 
     let mut interpreter = Interpreter::new();
@@ -51,13 +50,5 @@ pub fn run(filename: &str, code: Option<String>) -> (Option<String>, Option<Stan
     context.symbol_table = Some(interpreter.global_symbol_table.clone());
     let result = interpreter.visit(ast.node.unwrap(), &mut context);
 
-    (
-        Some(
-            result
-                .value
-                .unwrap_or_else(|| Number::null_value())
-                .as_string(),
-        ),
-        result.error,
-    )
+    result.error
 }

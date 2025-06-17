@@ -12,14 +12,10 @@ fn main() {
 
         if let Some(first_arg) = args.next() {
             if first_arg.ends_with(".glang") {
-                let (result, error) = run(first_arg.as_str(), None);
+                let error = run(first_arg.as_str(), None);
 
                 if error.is_some() {
                     println!("{}", error.unwrap());
-                }
-
-                if result.is_some() {
-                    println!("{}", result.unwrap());
                 }
             }
         }
@@ -45,15 +41,11 @@ fn main() {
                 break;
             }
 
-            let (result, error) = run("<stdin>", Some(code));
+            let error = run("<stdin>", Some(code));
 
             if error.is_some() {
                 println!("{}", error.unwrap());
                 continue;
-            }
-
-            if result.is_some() {
-                println!("{}", result.unwrap());
             }
         }
     }
