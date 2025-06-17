@@ -117,6 +117,7 @@ impl BuiltInFunction {
         match self.name.as_str() {
             "bark" => return self.execute_print(args, &mut exec_context),
             "tostring" => return self.execute_tostring(args, &mut exec_context),
+            "uhoh" => return self.execute_error(args, &mut exec_context),
             "type" => return self.execute_type(args, &mut exec_context),
             "fetch" => return self.execute_import(args, &mut exec_context),
             _ => panic!("CRITICAL ERROR: BUILT IN NAME IS NOT DEFINED"),
@@ -149,6 +150,33 @@ impl BuiltInFunction {
         }
 
         result.success(Some(StringObj::from(args[0].as_string().as_str())))
+    }
+
+    pub fn execute_error(&self, args: &Vec<Box<Value>>, exec_ctx: &mut Context) -> RuntimeResult {
+        let mut result = RuntimeResult::new();
+        result.register(self.check_and_populate_args(&vec!["msg".to_string()], args, exec_ctx));
+
+        if result.should_return() {
+            return result;
+        }
+
+        let error_message = args[0].clone();
+
+        if error_message.object_type().to_string() != "string".to_string() {
+            return result.failure(Some(StandardError::new(
+                "expected type string".to_string(),
+                error_message.position_start().unwrap().clone(),
+                error_message.position_end().unwrap().clone(),
+                Some("add an error message".to_string()),
+            )));
+        }
+
+        result.failure(Some(StandardError::new(
+            error_message.as_string(),
+            error_message.position_start().unwrap().clone(),
+            error_message.position_end().unwrap().clone(),
+            None,
+        )))
     }
 
     pub fn execute_type(&self, args: &Vec<Box<Value>>, exec_ctx: &mut Context) -> RuntimeResult {

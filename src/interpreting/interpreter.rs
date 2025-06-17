@@ -35,6 +35,12 @@ impl Interpreter {
             )))),
         );
         interpreter.global_symbol_table.borrow_mut().set(
+            "uhoh".to_string(),
+            Some(Box::new(Value::BuiltInFunction(BuiltInFunction::new(
+                "uhoh".to_string(),
+            )))),
+        );
+        interpreter.global_symbol_table.borrow_mut().set(
             "type".to_string(),
             Some(Box::new(Value::BuiltInFunction(BuiltInFunction::new(
                 "type".to_string(),
