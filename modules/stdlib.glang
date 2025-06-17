@@ -26,27 +26,27 @@ func reverse(list) {
 }
 
 func islist(value) {
-    type(value) == "list";
+    give type(value) == "list";
 }
 
 func isnumber(value) {
-    type(value) == "number";
+    give type(value) == "number";
 }
 
 func isstring(value) {
-    type(value) == "string";
+    give type(value) == "string";
 }
 
 func isfunction(value) {
-    type(value) == "function";
+    give type(value) == "function";
 }
 
 func isbool(value) {
-    value == 1 or 0;
+    give value == 1 or 0;
 }
 
 func isnull(value) {
-    value == 0;
+    give value == 0;
 }
 
 func sigh() {
