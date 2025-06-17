@@ -1,3 +1,5 @@
+use std::{cell::RefCell, rc::Rc};
+
 use crate::{
     errors::standard_error::StandardError,
     interpreting::{context::Context, runtime_result::RuntimeResult, symbol_table::SymbolTable},
@@ -17,28 +19,28 @@ use crate::{
 };
 
 pub struct Interpreter {
-    pub global_symbol_table: SymbolTable,
+    pub global_symbol_table: Rc<RefCell<SymbolTable>>,
 }
 
 impl Interpreter {
     pub fn new() -> Self {
         let mut interpreter = Interpreter {
-            global_symbol_table: SymbolTable::new(None),
+            global_symbol_table: Rc::new(RefCell::new(SymbolTable::new(None))),
         };
 
-        interpreter.global_symbol_table.set(
+        interpreter.global_symbol_table.borrow_mut().set(
             "bark".to_string(),
             Some(Box::new(Value::BuiltInFunction(BuiltInFunction::new(
                 "bark".to_string(),
             )))),
         );
-        interpreter.global_symbol_table.set(
+        interpreter.global_symbol_table.borrow_mut().set(
             "type".to_string(),
             Some(Box::new(Value::BuiltInFunction(BuiltInFunction::new(
                 "type".to_string(),
             )))),
         );
-        interpreter.global_symbol_table.set(
+        interpreter.global_symbol_table.borrow_mut().set(
             "fetch".to_string(),
             Some(Box::new(Value::BuiltInFunction(BuiltInFunction::new(
                 "fetch".to_string(),
@@ -158,6 +160,7 @@ impl Interpreter {
             .symbol_table
             .as_mut()
             .unwrap()
+            .borrow_mut()
             .set(var_name, value.clone());
 
         result.success(value)
@@ -174,6 +177,7 @@ impl Interpreter {
             .symbol_table
             .as_ref()
             .unwrap()
+            .borrow_mut()
             .get(var_name.as_str())
             .clone();
 
@@ -316,7 +320,7 @@ impl Interpreter {
 
         if step_value.value >= 0 {
             while i < end_value.value {
-                context.symbol_table.as_mut().unwrap().set(
+                context.symbol_table.as_mut().unwrap().borrow_mut().set(
                     node.var_name_token.value.as_ref().unwrap().clone(),
                     Some(Box::new(Value::NumberValue(Number::new(i)))),
                 );
@@ -345,7 +349,7 @@ impl Interpreter {
             }
         } else {
             while i > end_value.value {
-                context.symbol_table.as_mut().unwrap().set(
+                context.symbol_table.as_mut().unwrap().borrow_mut().set(
                     node.var_name_token.value.as_ref().unwrap().clone(),
                     Some(Box::new(Value::NumberValue(Number::new(i)))),
                 );
@@ -474,6 +478,7 @@ impl Interpreter {
                 .symbol_table
                 .as_mut()
                 .unwrap()
+                .borrow_mut()
                 .set(func_name, Some(func_value.clone()));
         }
 

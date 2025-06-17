@@ -1,4 +1,4 @@
-use std::fs;
+use std::{cell::RefCell, fs, rc::Rc};
 
 use crate::{
     errors::standard_error::StandardError,
@@ -35,7 +35,7 @@ impl BuiltInFunction {
             Some(Box::new(self.context.as_ref().unwrap().clone())),
             self.pos_start.clone(),
         );
-        new_context.symbol_table = Some(SymbolTable::new(Some(Box::new(
+        new_context.symbol_table = Some(Rc::new(RefCell::new(SymbolTable::new(Some(Box::new(
             new_context
                 .parent
                 .as_ref()
@@ -43,8 +43,9 @@ impl BuiltInFunction {
                 .symbol_table
                 .as_ref()
                 .unwrap()
+                .borrow()
                 .clone(),
-        ))));
+        ))))));
 
         new_context
     }
@@ -87,6 +88,7 @@ impl BuiltInFunction {
                 .symbol_table
                 .as_mut()
                 .unwrap()
+                .borrow_mut()
                 .set(arg_name, Some(arg_value));
         }
     }
@@ -229,7 +231,7 @@ impl BuiltInFunction {
 
         let exec_context_copy = exec_ctx.clone();
 
-        for (name, value) in module_context.symbol_table.unwrap().symbols.iter() {
+        for (name, value) in module_context.symbol_table.unwrap().borrow().symbols.iter() {
             println!("{name}");
             exec_ctx
                 .parent
@@ -238,6 +240,7 @@ impl BuiltInFunction {
                 .symbol_table
                 .as_mut()
                 .unwrap()
+                .borrow_mut()
                 .set(
                     name.clone(),
                     Some(

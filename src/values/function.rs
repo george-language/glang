@@ -1,3 +1,5 @@
+use std::{cell::RefCell, rc::Rc};
+
 use crate::{
     errors::standard_error::StandardError,
     interpreting::{
@@ -44,7 +46,7 @@ impl Function {
             Some(Box::new(self.context.as_ref().unwrap().clone())),
             self.pos_start.clone(),
         );
-        new_context.symbol_table = Some(SymbolTable::new(Some(Box::new(
+        new_context.symbol_table = Some(Rc::new(RefCell::new(SymbolTable::new(Some(Box::new(
             new_context
                 .parent
                 .as_ref()
@@ -52,8 +54,9 @@ impl Function {
                 .symbol_table
                 .as_ref()
                 .unwrap()
+                .borrow()
                 .clone(),
-        ))));
+        ))))));
 
         new_context
     }
@@ -96,6 +99,7 @@ impl Function {
                 .symbol_table
                 .as_mut()
                 .unwrap()
+                .borrow_mut()
                 .set(arg_name, Some(arg_value));
         }
     }
