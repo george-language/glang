@@ -6,14 +6,15 @@ merge into the `main` branch by mid 2025.
 
 # George Language
 George Language (GLang for short) is a dynamically-typed, interpreted programming language where program syntax is
-represented as a dog doing day-to-day activities.
+similar to a dog's day-to-day activities.
 
 ```
-gettoy "modules/math.glang";
+# import the math module
+fetch("modules/math.glang");
 
 obj x = 0;
 
-# Lets go for a walk!
+# let's go for a walk!
 walk i = 0 through 10 {
     obj x = x + 1;
 
@@ -22,39 +23,32 @@ walk i = 0 through 10 {
     }
 }
 
+# print the value of 'x'
 bark(x);
 
-# Greet someone!
+# greet someone
 func greet(name) {
     bark("Hello, " + name + "!");
 }
 
-greet("George");
+greet("John Doe");
 
 bark("Pi is equal to: " + tostring(math_pi));
 bark("We have reached the end of our program. I hope you enjoyed!");
 ```
 
 ## Why Make George Language?
-Well, it all started as a joke. You see, one of our team members has a cute pug named George. One day we said
+It all starts from a joke.
+
+You see, one of our team members has a cute pug named George. One day we said
 _"Why not make a language named after George that's funny and cute?"_ And that's when it was born.
 
-GLang makes programming more expressive and easier to read, using a mix of humor and fun to define the syntax.
+We made GLang because we believe there needs to be a more modern beginner language. Not only is it easier to learn, it **teaches users** common programming concepts and it's fun to use. If we want to print something, just use the `bark` built-in. If we want to indicate an error, just use the `uhoh` built-in.
 
-To a beginner programmer, they have to spend a lot of time learning and remembering keywords, built-ins, and
-values in the language. GLang instead uses _easy-to-remember_ language, for example the `print` statement
-is actually `bark`!
-
-```
-bark("Hello, World!")
-```
-
-This is just one of the many examples that makes GLang easier to learn and work with.
-
-## Speed
+## Its Fast
 As of recent updates, GLang gets _fast_ performance due to it's simplicity and new Rust backend. It doesn't require a garbage collector or type checker, just lexing -> parsing -> interpreting. _That's it._
 
-## REPL
+## Its REPL Based
 GLang includes it's own Read-Eval-Print-Loop (REPL). As long as you have GLang installed, there's no need for a text editor if you want to use GLang strictly in the terminal.
 
 
