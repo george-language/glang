@@ -32,14 +32,10 @@ impl List {
         match other.as_ref() {
             Value::ListValue(right) => match operator {
                 "+" => {
-                    self.elements.append(&mut right.elements.clone());
-
-                    return (Some(Number::null_value()), None);
+                    return (Some(self.append(&mut right.elements.clone())), None);
                 }
                 "*" => {
-                    self.push(Some(other.clone()));
-
-                    return (Some(Number::null_value()), None);
+                    return (Some(self.push(Some(other.clone()))), None);
                 }
                 "==" => {
                     if self.elements.len() != right.elements.len() {
@@ -123,9 +119,7 @@ impl List {
             },
             Value::NumberValue(right) => match operator {
                 "*" => {
-                    self.push(Some(other.clone()));
-
-                    return (Some(Number::null_value()), None);
+                    return (Some(self.push(Some(other.clone()))), None);
                 }
                 "^" => {
                     if right.value < -1.0 {
@@ -141,9 +135,7 @@ impl List {
                     }
 
                     if right.value == -1.0 {
-                        self.reverse();
-
-                        return (Some(Number::null_value()), None);
+                        return (Some(self.reverse()), None);
                     }
 
                     if (right.value as usize) > self.elements.len() {
@@ -191,9 +183,7 @@ impl List {
             },
             _ => {
                 if operator == "*" {
-                    self.push(Some(other.clone()));
-
-                    return (Some(Number::null_value()), None);
+                    return (Some(self.push(Some(other.clone()))), None);
                 }
 
                 return (None, Some(self.illegal_operation(Some(other))));
@@ -221,20 +211,33 @@ impl List {
         Box::new(Value::ListValue(copy))
     }
 
+    pub fn append(&mut self, other: &mut Vec<Option<Box<Value>>>) -> Box<Value> {
+        let mut copy = self.clone();
+        copy.elements.append(other);
+
+        Box::new(Value::ListValue(copy))
+    }
+
     pub fn remove(&mut self, index: usize) -> Box<Value> {
-        self.elements.remove(index).unwrap()
+        let mut copy = self.clone();
+        copy.elements.remove(index).unwrap();
+
+        Box::new(Value::ListValue(copy))
     }
 
     pub fn retrieve(&self, index: usize) -> Option<Box<Value>> {
         self.elements[index].clone()
     }
 
-    pub fn reverse(&mut self) {
-        self.elements.reverse();
+    pub fn reverse(&mut self) -> Box<Value> {
+        let mut copy = self.clone();
+        copy.elements.reverse();
+
+        Box::new(Value::ListValue(copy))
     }
 
     pub fn as_string(&self) -> String {
-        let mut output = self
+        let output = self
             .elements
             .iter()
             .map(|item| {
