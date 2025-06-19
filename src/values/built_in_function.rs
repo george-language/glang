@@ -169,26 +169,27 @@ impl BuiltInFunction {
 
         let string_to_convert = args[0].clone();
 
-        if string_to_convert.object_type().to_string() != "string".to_string() {
-            return result.failure(Some(StandardError::new(
-                "expected type string".to_string(),
-                string_to_convert.position_start().unwrap().clone(),
-                string_to_convert.position_end().unwrap().clone(),
-                Some("add a string like '1.0' to convert to a number object".to_string()),
-            )));
-        }
-
-        let value: f64 = match string_to_convert.as_string().parse() {
-            Ok(number) => number,
-            Err(e) => {
+        let value: f64 = match string_to_convert.as_ref() {
+            Value::StringValue(string) => match string.as_string().parse() {
+                Ok(number) => number,
+                Err(e) => {
+                    return result.failure(Some(StandardError::new(
+                        format!("string couldn't be converted to number {}", e).to_string(),
+                        string_to_convert.position_start().unwrap().clone(),
+                        string_to_convert.position_end().unwrap().clone(),
+                        Some(
+                            "make sure the string is represented as a valid number like '1.0'"
+                                .to_string(),
+                        ),
+                    )));
+                }
+            },
+            _ => {
                 return result.failure(Some(StandardError::new(
-                    format!("string couldn't be converted to number {}", e).to_string(),
+                    "expected type string".to_string(),
                     string_to_convert.position_start().unwrap().clone(),
                     string_to_convert.position_end().unwrap().clone(),
-                    Some(
-                        "make sure the string is represented as a valid number like '1.0'"
-                            .to_string(),
-                    ),
+                    Some("add a string like '1.0' to convert to a number object".to_string()),
                 )));
             }
         };
@@ -204,21 +205,24 @@ impl BuiltInFunction {
             return result;
         }
 
-        let error_message = args[0].clone();
+        let error = args[0].clone();
 
-        if error_message.object_type().to_string() != "string".to_string() {
-            return result.failure(Some(StandardError::new(
-                "expected type string".to_string(),
-                error_message.position_start().unwrap().clone(),
-                error_message.position_end().unwrap().clone(),
-                Some("add an error message".to_string()),
-            )));
-        }
+        let message = match error.as_ref() {
+            Value::StringValue(_) => error,
+            _ => {
+                return result.failure(Some(StandardError::new(
+                    "expected type string".to_string(),
+                    error.position_start().unwrap().clone(),
+                    error.position_end().unwrap().clone(),
+                    Some("add an error message".to_string()),
+                )));
+            }
+        };
 
         result.failure(Some(StandardError::new(
-            error_message.as_string(),
-            error_message.position_start().unwrap().clone(),
-            error_message.position_end().unwrap().clone(),
+            message.as_string(),
+            message.position_start().unwrap().clone(),
+            message.position_end().unwrap().clone(),
             None,
         )))
     }
@@ -246,16 +250,19 @@ impl BuiltInFunction {
 
         let import = args[0].clone();
 
-        if import.object_type().to_string() != "string".to_string() {
-            return result.failure(Some(StandardError::new(
-                "expected type string".to_string(),
-                import.position_start().unwrap().clone(),
-                import.position_end().unwrap().clone(),
-                Some("add the '.glang' file you would like to import".to_string()),
-            )));
-        }
+        let file_to_import = match import.as_ref() {
+            Value::StringValue(file) => file.as_string(),
+            _ => {
+                return result.failure(Some(StandardError::new(
+                    "expected type string".to_string(),
+                    import.position_start().unwrap().clone(),
+                    import.position_end().unwrap().clone(),
+                    Some("add the '.glang' file you would like to import".to_string()),
+                )));
+            }
+        };
 
-        if !fs::exists(import.as_string()).is_ok() || !import.as_string().ends_with(".glang") {
+        if !fs::exists(&file_to_import).is_ok() || !&file_to_import.ends_with(".glang") {
             return result.failure(Some(StandardError::new(
                 "file doesn't exist or isn't valid".to_string(),
                 import.position_start().unwrap().clone(),
@@ -266,7 +273,7 @@ impl BuiltInFunction {
 
         let mut contents = String::new();
 
-        match fs::read_to_string(import.as_string()) {
+        match fs::read_to_string(&file_to_import) {
             Ok(extra) => contents.push_str(&extra),
             Err(_) => {
                 return result.failure(Some(StandardError::new(
