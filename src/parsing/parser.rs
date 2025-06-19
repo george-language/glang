@@ -249,16 +249,12 @@ impl Parser {
         let mut parse_result = ParseResult::new();
         let mut else_case: Option<(Box<AstNode>, bool)> = None;
 
-        self.skip_newlines(&mut parse_result);
-
         if self
             .current_token_ref()
             .matches(TokenType::TT_KEYWORD, Some("otherwise"))
         {
             parse_result.register_advancement();
             self.advance();
-
-            self.skip_newlines(&mut parse_result);
 
             if self.current_token_ref().token_type != TokenType::TT_LBRACKET {
                 return (
@@ -392,8 +388,6 @@ impl Parser {
         if parse_result.error.is_some() {
             return (parse_result, Vec::new(), None);
         }
-
-        self.skip_newlines(&mut parse_result);
 
         if self.current_token_ref().token_type != TokenType::TT_LBRACKET {
             return (
