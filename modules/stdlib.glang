@@ -1,14 +1,23 @@
 # ---- The GLang Standard Library ---- #
-# This module is loaded automatically under every glang program.
+# This library is loaded automatically above every glang program.
 
+# Types and objects
 obj true = 1;
 obj false = 0;
 obj null = 0;
 
+# Add a value to a list object
+# arg <list>: the list to push into
+# arg <value>: the value to add into the list
+# returns: a copy of the list with the new value inside
 func push(list, value) {
     give list * value;
 }
 
+# Add two lists together
+# arg <list_a>: first list to add
+# arg <list_b>: second list to add
+# returns: a new version of the two lists combined
 func append(list_a, list_b) {
     give list_a + list_b;
 }
@@ -49,7 +58,17 @@ func isnull(value) {
     give value == 0;
 }
 
+# Empty function representing unimplemented code
+# returns: null
 func sigh() {
-    # empty value representing unimplemented code
-    obj _ = 0;
+    give 0;
+}
+
+# Display helpful info about a value
+# arg <value>: the value to display info about
+# returns: null
+func debug(value) {
+    bark("object type: '" + type(value) + "'");
+    bark("display value (stdout): '" + tostring(value) + "'");
+    # unimplemented: bark("documentation: " docs(value))
 }
