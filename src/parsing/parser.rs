@@ -543,6 +543,18 @@ impl Parser {
             parse_result.register_advancement();
             self.advance();
 
+            if self.current_token_ref().token_type != TokenType::TT_EQ {
+                return parse_result.failure(Some(StandardError::new(
+                    "expected '='".to_string(),
+                    self.current_pos_start(),
+                    self.current_pos_end(),
+                    Some("add an '=' to set the step amount".to_string()),
+                )));
+            }
+
+            parse_result.register_advancement();
+            self.advance();
+
             step_value = parse_result.register(self.expr());
 
             if parse_result.error.is_some() {
@@ -551,8 +563,6 @@ impl Parser {
         } else {
             step_value = None;
         }
-
-        self.skip_newlines(&mut parse_result);
 
         if self.current_token_ref().token_type != TokenType::TT_LBRACKET {
             return parse_result.failure(Some(StandardError::new(
@@ -637,8 +647,6 @@ impl Parser {
         if parse_result.error.is_some() {
             return parse_result;
         }
-
-        self.skip_newlines(&mut parse_result);
 
         if self.current_token_ref().token_type != TokenType::TT_LBRACKET {
             return parse_result.failure(Some(StandardError::new(
