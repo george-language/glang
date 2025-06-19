@@ -1,4 +1,4 @@
-gettoy("modules/math.glang");
+fetch("modules/math.glang");
 
 obj x = 0;
 
