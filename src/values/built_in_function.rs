@@ -312,7 +312,6 @@ impl BuiltInFunction {
             .collect();
 
         for (name, value) in symbols {
-            println!("{name}");
             self.global_symbol_table.borrow_mut().set(
                 name.clone(),
                 Some(
