@@ -878,6 +878,10 @@ impl Parser {
                 break;
             }
 
+            if self.current_token_ref().token_type == TokenType::TT_RBRACKET {
+                break;
+            }
+
             let statement = parse_result.try_register(self.statement());
 
             if statement.is_none() {
@@ -1146,7 +1150,7 @@ impl Parser {
                 parse_result.register_advancement();
                 self.advance();
 
-                if self.current_token_ref().token_type != TokenType::TT_LPAREN {
+                if self.current_token_ref().token_type != TokenType::TT_IDENTIFIER {
                     return parse_result.failure(Some(StandardError::new(
                         "expected identifier".to_string(),
                         self.current_pos_start(),
@@ -1202,8 +1206,6 @@ impl Parser {
                 ),
             ))));
         }
-
-        self.skip_newlines(&mut parse_result);
 
         if self.current_token_ref().token_type != TokenType::TT_LBRACKET {
             return parse_result.failure(Some(StandardError::new(

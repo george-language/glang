@@ -6,23 +6,23 @@ obj false = 0;
 obj null = 0;
 
 func push(list, value) {
-    list * value;
+    give list * value;
 }
 
 func append(list_a, list_b) {
-    list_a + list_b;
+    give list_a + list_b;
 }
 
 func remove(list, index) {
-    list - index;
+    give list - index;
 }
 
 func retrieve(list, index) {
-    list ^ index;
+    give list ^ index;
 }
 
-func reverse(list) {
-    list ^ -1;
+func reversed(list) {
+    give list ^ -1;
 }
 
 func islist(value) {
