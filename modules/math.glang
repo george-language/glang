@@ -10,12 +10,16 @@ func math_degrees(radians) {
 }
 
 func math_abs(x) {
-    give if x >= 0 then x otherwise -x;
+    if x >= 0 {
+        give x;
+    } otherwise {
+        give -x;
+    };
 }
 
 func math_sqrt(x) {
     if x < 0 {
-        throw("Cannot compute square root of negative number");
+        uhoh("cannot compute square root of negative number");
     }
 
     give x ^ 0.5;
