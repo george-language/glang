@@ -24,6 +24,10 @@ impl List {
         }
     }
 
+    pub fn from(elements: Vec<Option<Box<Value>>>) -> Box<Value> {
+        Box::new(Value::ListValue(List::new(elements)))
+    }
+
     pub fn perform_operation(
         &mut self,
         operator: &'static str,

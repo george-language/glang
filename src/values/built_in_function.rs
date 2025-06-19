@@ -8,7 +8,7 @@ use crate::{
     },
     lexing::{lexer::Lexer, position::Position},
     parsing::parser::Parser,
-    values::{number::Number, string::StringObj, value::Value},
+    values::{list::List, number::Number, string::StringObj, value::Value},
 };
 
 #[derive(Debug, Clone)]
@@ -21,9 +21,9 @@ pub struct BuiltInFunction {
 }
 
 impl BuiltInFunction {
-    pub fn new(name: String, global_symbol_table: Rc<RefCell<SymbolTable>>) -> Self {
+    pub fn new(name: &str, global_symbol_table: Rc<RefCell<SymbolTable>>) -> Self {
         BuiltInFunction {
-            name: name,
+            name: name.to_string(),
             global_symbol_table: global_symbol_table,
             context: None,
             pos_start: None,
@@ -118,8 +118,9 @@ impl BuiltInFunction {
 
         match self.name.as_str() {
             "bark" => return self.execute_print(args, &mut exec_context),
-            "tonumber" => return self.execute_tonumber(args, &mut exec_context),
             "tostring" => return self.execute_tostring(args, &mut exec_context),
+            "tonumber" => return self.execute_tonumber(args, &mut exec_context),
+            "clear" => return self.execute_clear(args, &mut exec_context),
             "uhoh" => return self.execute_error(args, &mut exec_context),
             "type" => return self.execute_type(args, &mut exec_context),
             "fetch" => return self.execute_import(args, &mut exec_context),
@@ -195,6 +196,32 @@ impl BuiltInFunction {
         };
 
         result.success(Some(Number::from(value)))
+    }
+
+    pub fn execute_clear(&self, args: &Vec<Box<Value>>, exec_ctx: &mut Context) -> RuntimeResult {
+        let mut result = RuntimeResult::new();
+        result.register(self.check_and_populate_args(&vec!["value".to_string()], args, exec_ctx));
+
+        if result.should_return() {
+            return result;
+        }
+
+        let obj_to_clear = args[0].clone();
+
+        let cleared_value: Box<Value> = match obj_to_clear.as_ref() {
+            Value::StringValue(_) => StringObj::from(""),
+            Value::ListValue(_) => List::from(vec![]),
+            _ => {
+                return result.failure(Some(StandardError::new(
+                    "expected type string or list".to_string(),
+                    obj_to_clear.position_start().unwrap().clone(),
+                    obj_to_clear.position_end().unwrap().clone(),
+                    None,
+                )));
+            }
+        };
+
+        result.success(Some(cleared_value))
     }
 
     pub fn execute_error(&self, args: &Vec<Box<Value>>, exec_ctx: &mut Context) -> RuntimeResult {

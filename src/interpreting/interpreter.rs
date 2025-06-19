@@ -31,42 +31,49 @@ impl Interpreter {
         interpreter.global_symbol_table.borrow_mut().set(
             "bark".to_string(),
             Some(Box::new(Value::BuiltInFunction(BuiltInFunction::new(
-                "bark".to_string(),
-                interpreter.global_symbol_table.clone(),
-            )))),
-        );
-        interpreter.global_symbol_table.borrow_mut().set(
-            "uhoh".to_string(),
-            Some(Box::new(Value::BuiltInFunction(BuiltInFunction::new(
-                "uhoh".to_string(),
-                interpreter.global_symbol_table.clone(),
-            )))),
-        );
-        interpreter.global_symbol_table.borrow_mut().set(
-            "tonumber".to_string(),
-            Some(Box::new(Value::BuiltInFunction(BuiltInFunction::new(
-                "tonumber".to_string(),
+                "bark",
                 interpreter.global_symbol_table.clone(),
             )))),
         );
         interpreter.global_symbol_table.borrow_mut().set(
             "tostring".to_string(),
             Some(Box::new(Value::BuiltInFunction(BuiltInFunction::new(
-                "tostring".to_string(),
+                "tostring",
+                interpreter.global_symbol_table.clone(),
+            )))),
+        );
+        interpreter.global_symbol_table.borrow_mut().set(
+            "tonumber".to_string(),
+            Some(Box::new(Value::BuiltInFunction(BuiltInFunction::new(
+                "tonumber",
+                interpreter.global_symbol_table.clone(),
+            )))),
+        );
+        interpreter.global_symbol_table.borrow_mut().set(
+            "clear".to_string(),
+            Some(Box::new(Value::BuiltInFunction(BuiltInFunction::new(
+                "clear",
+                interpreter.global_symbol_table.clone(),
+            )))),
+        );
+        interpreter.global_symbol_table.borrow_mut().set(
+            "uhoh".to_string(),
+            Some(Box::new(Value::BuiltInFunction(BuiltInFunction::new(
+                "uhoh",
                 interpreter.global_symbol_table.clone(),
             )))),
         );
         interpreter.global_symbol_table.borrow_mut().set(
             "type".to_string(),
             Some(Box::new(Value::BuiltInFunction(BuiltInFunction::new(
-                "type".to_string(),
+                "type",
                 interpreter.global_symbol_table.clone(),
             )))),
         );
         interpreter.global_symbol_table.borrow_mut().set(
             "fetch".to_string(),
             Some(Box::new(Value::BuiltInFunction(BuiltInFunction::new(
-                "fetch".to_string(),
+                "fetch",
                 interpreter.global_symbol_table.clone(),
             )))),
         );

@@ -921,7 +921,7 @@ impl Parser {
                 parse_result.register_advancement();
                 self.advance();
             } else {
-                arg_nodes.push(parse_result.register(self.expr()).unwrap());
+                let expr = parse_result.register(self.expr());
 
                 if parse_result.error.is_some() {
                     return parse_result.failure(Some(StandardError::new(
@@ -931,6 +931,8 @@ impl Parser {
                         None,
                     )));
                 }
+
+                arg_nodes.push(expr.unwrap());
 
                 while self.current_token_ref().token_type == TokenType::TT_COMMA {
                     parse_result.register_advancement();
