@@ -126,6 +126,7 @@ impl BuiltInFunction {
             "uhoh" => return self.execute_error(args, &mut exec_context),
             "type" => return self.execute_type(args, &mut exec_context),
             "fetch" => return self.execute_import(args, &mut exec_context),
+            "run" => return self.execute_exec(args, &mut exec_context),
             _ => panic!("CRITICAL ERROR: BUILT IN NAME IS NOT DEFINED"),
         };
     }
@@ -500,6 +501,54 @@ impl BuiltInFunction {
                         .set_position(self.pos_start.clone(), self.pos_end.clone()),
                 ),
             );
+        }
+
+        result.success(Some(Number::null_value()))
+    }
+
+    pub fn execute_exec(&self, args: &Vec<Box<Value>>, exec_ctx: &mut Context) -> RuntimeResult {
+        let mut result = RuntimeResult::new();
+        result.register(self.check_and_populate_args(&vec!["code".to_string()], args, exec_ctx));
+
+        if result.should_return() {
+            return result;
+        }
+
+        let code_arg = args[0].clone();
+
+        let code = match code_arg.as_ref() {
+            Value::StringValue(glang) => glang.as_string(),
+            _ => {
+                return result.failure(Some(StandardError::new(
+                    "expected type string",
+                    code_arg.position_start().unwrap().clone(),
+                    code_arg.position_end().unwrap().clone(),
+                    Some("add the glang code you would like to execute"),
+                )));
+            }
+        };
+
+        let mut lexer = Lexer::new(code_arg.position_start().unwrap().filename, code.clone());
+        let (tokens, error) = lexer.make_tokens();
+
+        if error.is_some() {
+            return result.failure(error);
+        }
+
+        let mut parser = Parser::new(tokens);
+        let ast = parser.parse();
+
+        if ast.error.is_some() {
+            return result.failure(ast.error);
+        }
+
+        let mut interpreter = Interpreter::new();
+        let mut external_context = Context::new("<exec>".to_string(), None, None);
+        external_context.symbol_table = Some(self.global_symbol_table.clone());
+        let external_result = interpreter.visit(ast.node.unwrap(), &mut external_context);
+
+        if external_result.error.is_some() {
+            return result.failure(external_result.error);
         }
 
         result.success(Some(Number::null_value()))

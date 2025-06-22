@@ -16,7 +16,11 @@ impl StandardError {
             text: text.to_string(),
             pos_start: pos_start,
             pos_end: pos_end,
-            help: Some(help.unwrap().to_string()),
+            help: if help.is_some() {
+                Some(help.unwrap().to_string())
+            } else {
+                None
+            },
         }
     }
 
