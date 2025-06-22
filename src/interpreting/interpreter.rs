@@ -24,101 +24,24 @@ pub struct Interpreter {
 
 impl Interpreter {
     pub fn new() -> Self {
-        let mut interpreter = Interpreter {
+        let interpreter = Interpreter {
             global_symbol_table: Rc::new(RefCell::new(SymbolTable::new(None))),
         };
 
-        interpreter.global_symbol_table.borrow_mut().set(
-            "bark".to_string(),
-            Some(Box::new(Value::BuiltInFunction(BuiltInFunction::new(
-                "bark",
-                interpreter.global_symbol_table.clone(),
-            )))),
-        );
-        interpreter.global_symbol_table.borrow_mut().set(
-            "chew".to_string(),
-            Some(Box::new(Value::BuiltInFunction(BuiltInFunction::new(
-                "chew",
-                interpreter.global_symbol_table.clone(),
-            )))),
-        );
-        interpreter.global_symbol_table.borrow_mut().set(
-            "dig".to_string(),
-            Some(Box::new(Value::BuiltInFunction(BuiltInFunction::new(
-                "dig",
-                interpreter.global_symbol_table.clone(),
-            )))),
-        );
-        interpreter.global_symbol_table.borrow_mut().set(
-            "bury".to_string(),
-            Some(Box::new(Value::BuiltInFunction(BuiltInFunction::new(
-                "bury",
-                interpreter.global_symbol_table.clone(),
-            )))),
-        );
-        interpreter.global_symbol_table.borrow_mut().set(
-            "tostring".to_string(),
-            Some(Box::new(Value::BuiltInFunction(BuiltInFunction::new(
-                "tostring",
-                interpreter.global_symbol_table.clone(),
-            )))),
-        );
-        interpreter.global_symbol_table.borrow_mut().set(
-            "tonumber".to_string(),
-            Some(Box::new(Value::BuiltInFunction(BuiltInFunction::new(
-                "tonumber",
-                interpreter.global_symbol_table.clone(),
-            )))),
-        );
-        interpreter.global_symbol_table.borrow_mut().set(
-            "length".to_string(),
-            Some(Box::new(Value::BuiltInFunction(BuiltInFunction::new(
-                "length",
-                interpreter.global_symbol_table.clone(),
-            )))),
-        );
-        interpreter.global_symbol_table.borrow_mut().set(
-            "clear".to_string(),
-            Some(Box::new(Value::BuiltInFunction(BuiltInFunction::new(
-                "clear",
-                interpreter.global_symbol_table.clone(),
-            )))),
-        );
-        interpreter.global_symbol_table.borrow_mut().set(
-            "uhoh".to_string(),
-            Some(Box::new(Value::BuiltInFunction(BuiltInFunction::new(
-                "uhoh",
-                interpreter.global_symbol_table.clone(),
-            )))),
-        );
-        interpreter.global_symbol_table.borrow_mut().set(
-            "type".to_string(),
-            Some(Box::new(Value::BuiltInFunction(BuiltInFunction::new(
-                "type",
-                interpreter.global_symbol_table.clone(),
-            )))),
-        );
-        interpreter.global_symbol_table.borrow_mut().set(
-            "fetch".to_string(),
-            Some(Box::new(Value::BuiltInFunction(BuiltInFunction::new(
-                "fetch",
-                interpreter.global_symbol_table.clone(),
-            )))),
-        );
-        interpreter.global_symbol_table.borrow_mut().set(
-            "run".to_string(),
-            Some(Box::new(Value::BuiltInFunction(BuiltInFunction::new(
-                "run",
-                interpreter.global_symbol_table.clone(),
-            )))),
-        );
-        interpreter.global_symbol_table.borrow_mut().set(
-            "docs".to_string(),
-            Some(Box::new(Value::BuiltInFunction(BuiltInFunction::new(
-                "docs",
-                interpreter.global_symbol_table.clone(),
-            )))),
-        );
+        let builtins = [
+            "bark", "chew", "dig", "bury", "tostring", "tonumber", "length", "clear", "uhoh",
+            "type", "fetch", "docs", "run",
+        ];
+
+        for builtin in &builtins {
+            interpreter.global_symbol_table.borrow_mut().set(
+                builtin.to_string(),
+                Some(Box::new(Value::BuiltInFunction(BuiltInFunction::new(
+                    builtin,
+                    interpreter.global_symbol_table.clone(),
+                )))),
+            );
+        }
 
         interpreter
     }
