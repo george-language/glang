@@ -845,17 +845,18 @@ impl Parser {
                 break;
             }
 
+            if self.current_token_ref().token_type == TokenType::TT_EOF {
+                break;
+            }
+
             if self.current_token_ref().token_type == TokenType::TT_RBRACKET {
                 break;
             }
 
-            let statement = parse_result.try_register(self.statement());
+            let statement = parse_result.register(self.statement());
 
-            if statement.is_none() {
-                self.reverse(parse_result.to_reverse_count);
-                more_statements = false;
-
-                continue;
+            if parse_result.error.is_some() {
+                return parse_result;
             }
 
             statements.push(statement);
