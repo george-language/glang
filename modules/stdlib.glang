@@ -45,6 +45,14 @@ func reversed(list) {
     give list ^ -1;
 }
 
+# Join two strings together
+# arg <string_a>: the first string
+# arg <string_b>: the second string
+# returns: the two strings combined as a new string
+func join(string_a, string_b) {
+    give string_a + string_b;
+}
+
 # Check if an object is a list
 # arg <value>: the object to type check
 # returns: true if the the value is a list otherwise false
