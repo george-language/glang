@@ -64,7 +64,16 @@ impl Lexer {
                 } else if LETTERS.contains(current_char) {
                     tokens.push(self.make_identifier());
                 } else if current_char == '"' {
-                    tokens.push(self.make_string());
+                    let result = self.make_string();
+
+                    match result {
+                        Ok(token) => {
+                            tokens.push(token);
+                        }
+                        Err(error) => {
+                            return (Vec::new(), error);
+                        }
+                    }
                 } else if current_char == '+' {
                     tokens.push(Token::new(
                         TokenType::TT_PLUS,
@@ -151,11 +160,11 @@ impl Lexer {
                     let result = self.make_not_equals();
 
                     match result {
-                        Err(error) => {
-                            return (Vec::new(), error);
-                        }
                         Ok(token) => {
                             tokens.push(token);
+                        }
+                        Err(error) => {
+                            return (Vec::new(), error);
                         }
                     }
                 } else if current_char == '=' {
@@ -261,10 +270,11 @@ impl Lexer {
         )
     }
 
-    pub fn make_string(&mut self) -> Token {
+    pub fn make_string(&mut self) -> Result<Token, Option<StandardError>> {
         let mut string = String::new();
         let pos_start = self.position.clone();
         let mut escape_char = false;
+
         self.advance();
 
         let mut escape_chars = HashMap::new();
@@ -272,36 +282,46 @@ impl Lexer {
         escape_chars.insert('t', '\t');
 
         while let Some(character) = self.current_char {
-            if character != '"' || escape_char {
-                if escape_char {
-                    string.push(
-                        escape_chars
-                            .get(&character)
-                            .expect("Not a valid escape sequence")
-                            .clone(),
-                    );
-                } else {
-                    if character == '\\' {
-                        escape_char = true;
-                    } else {
-                        string.push(character);
-                    }
-                }
-                self.advance();
-                escape_char = false;
-            } else {
+            if character == '"' && !escape_char {
                 break;
             }
+
+            if escape_char {
+                string.push(*escape_chars.get(&character).ok_or_else(|| {
+                    Some(StandardError::new(
+                        "invalid escape character",
+                        pos_start.clone(),
+                        self.position.clone(),
+                        None,
+                    ))
+                })?);
+                escape_char = false;
+            } else if character == '\\' {
+                escape_char = true;
+            } else {
+                string.push(character);
+            }
+
+            self.advance();
+        }
+
+        if self.current_char != Some('"') {
+            return Err(Some(StandardError::new(
+                "unterminated string literal",
+                pos_start,
+                self.position.clone(),
+                Some("add a '\"' at the end of the string to close it"),
+            )));
         }
 
         self.advance();
 
-        Token::new(
+        Ok(Token::new(
             TokenType::TT_STR,
             Some(string),
             Some(pos_start),
             Some(self.position.clone()),
-        )
+        ))
     }
 
     pub fn make_minus_or_arrow(&mut self) -> Token {
