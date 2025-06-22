@@ -22,38 +22,74 @@ func append(list_a, list_b) {
     give list_a + list_b;
 }
 
+# Remove a value from a list
+# arg <list>: the list to remove the value from
+# arg <index>: index to remove from the list
+# returns: a new version of the list with the removed value
 func remove(list, index) {
     give list - index;
 }
 
+# Retrieve a value from a list
+# arg <list>: the list to retrieve the value from
+# arg <index>: index to retrieve from the list
+# returns: a copy of the value at the retrieved index
 func retrieve(list, index) {
     give list ^ index;
 }
 
+# Reverse a list
+# arg <list>: the list to reverse
+# returns: a new version of the list with it's values reversed
 func reversed(list) {
     give list ^ -1;
 }
 
+# Check if an object is a list
+# arg <value>: the object to type check
+# returns: true if the the value is a list otherwise false
 func islist(value) {
     give type(value) == "list";
 }
 
+# Check if an object is a number
+# arg <value>: the object to type check
+# returns: true if the the value is a number otherwise false
 func isnumber(value) {
     give type(value) == "number";
 }
 
+# Check if an object is a string
+# arg <value>: the object to type check
+# returns: true if the the value is a string otherwise false
 func isstring(value) {
     give type(value) == "string";
 }
 
+# Check if an object is a function
+# arg <value>: the object to type check
+# returns: true if the the value is a function otherwise false
 func isfunction(value) {
     give type(value) == "function";
 }
 
-func isbool(value) {
-    give value == 1 or 0;
+# Check if an object is a built-in function
+# arg <value>: the object to type check
+# returns: true if the the value is a built-in function otherwise false
+func isbuiltin(value) {
+    give type(value) == "built-in-function";
 }
 
+# Check if an object is a boolean
+# arg <value>: the object to type check
+# returns: true if the the value is 'true' or 'false' otherwise false
+func isbool(value) {
+    give value == 1 or value == 0;
+}
+
+# Check if an object is a null value
+# arg <value>: the object to type check
+# returns: true if the the value is 'null' otherwise false
 func isnull(value) {
     give value == 0;
 }
@@ -65,7 +101,7 @@ func sigh() {
 }
 
 # Display helpful info about a value
-# arg <value>: the value to display info about
+# arg <value>: the object to display info about
 # returns: null
 func debug(value) {
     bark("object type: '" + type(value) + "'");
