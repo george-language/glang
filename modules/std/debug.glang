@@ -1,0 +1,10 @@
+# file debug.glang: tools for debugging objects
+
+# Display helpful info about a value
+# arg <value>: the object to display info about
+# returns: null
+func debug(value) {
+    bark("object type: '" + type(value) + "'");
+    bark("display value (stdout): '" + tostring(value) + "'");
+    bark("documentation: " + docs(value));
+}

@@ -1,0 +1,6 @@
+# file objects.glang: various objects in glang
+
+# Types and objects
+obj true = 1;
+obj false = 0;
+obj null = 0;

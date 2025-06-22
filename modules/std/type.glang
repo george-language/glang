@@ -1,0 +1,50 @@
+# file type.glang: check various object types
+
+# Check if an object is a list
+# arg <value>: the object to type check
+# returns: true if the the value is a list otherwise false
+func islist(value) {
+    give type(value) == "list";
+}
+
+# Check if an object is a number
+# arg <value>: the object to type check
+# returns: true if the the value is a number otherwise false
+func isnumber(value) {
+    give type(value) == "number";
+}
+
+# Check if an object is a string
+# arg <value>: the object to type check
+# returns: true if the the value is a string otherwise false
+func isstring(value) {
+    give type(value) == "string";
+}
+
+# Check if an object is a function
+# arg <value>: the object to type check
+# returns: true if the the value is a function otherwise false
+func isfunction(value) {
+    give type(value) == "function";
+}
+
+# Check if an object is a built-in function
+# arg <value>: the object to type check
+# returns: true if the the value is a built-in function otherwise false
+func isbuiltin(value) {
+    give type(value) == "built-in-function";
+}
+
+# Check if an object is a boolean
+# arg <value>: the object to type check
+# returns: true if the the value is 'true' or 'false' otherwise false
+func isbool(value) {
+    give value == 1 or value == 0;
+}
+
+# Check if an object is a null value
+# arg <value>: the object to type check
+# returns: true if the the value is 'null' otherwise false
+func isnull(value) {
+    give value == 0;
+}

@@ -1,0 +1,13 @@
+# file stdlib.glang: default library loaded automatically above every glang program
+
+fetch("modules/std/objects.glang");
+fetch("modules/std/type.glang");
+fetch("modules/std/list.glang");
+fetch("modules/std/string.glang");
+fetch("modules/std/debug.glang");
+
+# Empty function representing unimplemented code
+# returns: null
+func sigh() {
+    give 0;
+}
