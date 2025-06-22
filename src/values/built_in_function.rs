@@ -1,5 +1,3 @@
-use std::{cell::RefCell, fs, rc::Rc};
-
 use crate::{
     errors::standard_error::StandardError,
     interpreting::{
@@ -10,6 +8,8 @@ use crate::{
     parsing::parser::Parser,
     values::{list::List, number::Number, string::StringObj, value::Value},
 };
+use std::io::{Write, stdin, stdout};
+use std::{cell::RefCell, fs, rc::Rc};
 
 #[derive(Debug, Clone)]
 pub struct BuiltInFunction {
@@ -118,6 +118,7 @@ impl BuiltInFunction {
 
         match self.name.as_str() {
             "bark" => return self.execute_print(args, &mut exec_context),
+            "chew" => return self.execute_input(args, &mut exec_context),
             "tostring" => return self.execute_tostring(args, &mut exec_context),
             "tonumber" => return self.execute_tonumber(args, &mut exec_context),
             "clear" => return self.execute_clear(args, &mut exec_context),
@@ -139,6 +140,41 @@ impl BuiltInFunction {
         println!("{}", args[0].as_string());
 
         result.success(Some(Number::null_value()))
+    }
+
+    pub fn execute_input(&self, args: &Vec<Box<Value>>, exec_ctx: &mut Context) -> RuntimeResult {
+        let mut result = RuntimeResult::new();
+        result.register(self.check_and_populate_args(&vec!["msg".to_string()], args, exec_ctx));
+
+        if result.should_return() {
+            return result;
+        }
+
+        let message_arg = args[0].clone();
+
+        let message = match message_arg.as_ref() {
+            Value::StringValue(string) => string.as_string(),
+            _ => {
+                return result.failure(Some(StandardError::new(
+                    "expected type string".to_string(),
+                    message_arg.position_start().unwrap().clone(),
+                    message_arg.position_end().unwrap().clone(),
+                    Some("add a message like 'Enter a number:' to get user input".to_string()),
+                )));
+            }
+        };
+
+        print!("{}", message);
+
+        let mut input = String::new();
+
+        let _ = stdout().flush();
+
+        stdin()
+            .read_line(&mut input)
+            .expect("did not enter a valid string");
+
+        result.success(Some(StringObj::from(input.trim())))
     }
 
     pub fn execute_tostring(
