@@ -43,6 +43,20 @@ impl Interpreter {
             )))),
         );
         interpreter.global_symbol_table.borrow_mut().set(
+            "dig".to_string(),
+            Some(Box::new(Value::BuiltInFunction(BuiltInFunction::new(
+                "dig",
+                interpreter.global_symbol_table.clone(),
+            )))),
+        );
+        interpreter.global_symbol_table.borrow_mut().set(
+            "bury".to_string(),
+            Some(Box::new(Value::BuiltInFunction(BuiltInFunction::new(
+                "bury",
+                interpreter.global_symbol_table.clone(),
+            )))),
+        );
+        interpreter.global_symbol_table.borrow_mut().set(
             "tostring".to_string(),
             Some(Box::new(Value::BuiltInFunction(BuiltInFunction::new(
                 "tostring",
