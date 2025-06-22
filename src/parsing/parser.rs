@@ -256,6 +256,8 @@ impl Parser {
             parse_result.register_advancement();
             self.advance();
 
+            self.skip_newlines(&mut parse_result);
+
             if self.current_token_ref().token_type != TokenType::TT_LBRACKET {
                 return (
                     parse_result.failure(Some(StandardError::new(
@@ -271,26 +273,13 @@ impl Parser {
             parse_result.register_advancement();
             self.advance();
 
-            let body = if self.current_token_ref().token_type == TokenType::TT_NEWLINE {
-                parse_result.register_advancement();
-                self.advance();
+            let statements = parse_result.register(self.statements());
 
-                let stmts = parse_result.register(self.statements());
+            if parse_result.error.is_some() {
+                return (parse_result, None);
+            }
 
-                if parse_result.error.is_some() {
-                    return (parse_result, None);
-                }
-
-                (stmts.unwrap(), true)
-            } else {
-                let expr = parse_result.register(self.expr());
-
-                if parse_result.error.is_some() {
-                    return (parse_result, None);
-                }
-
-                (expr.unwrap(), false)
-            };
+            let body = (statements.unwrap(), true);
 
             else_case = Some(body);
 
@@ -389,6 +378,8 @@ impl Parser {
             return (parse_result, Vec::new(), None);
         }
 
+        self.skip_newlines(&mut parse_result);
+
         if self.current_token_ref().token_type != TokenType::TT_LBRACKET {
             return (
                 parse_result.failure(Some(StandardError::new(
@@ -405,42 +396,29 @@ impl Parser {
         parse_result.register_advancement();
         self.advance();
 
-        if self.current_token_ref().token_type == TokenType::TT_NEWLINE {
-            parse_result.register_advancement();
-            self.advance();
+        let statements = parse_result.register(self.statements());
 
-            let statements = parse_result.register(self.statements());
+        if parse_result.error.is_some() {
+            return (parse_result, Vec::new(), None);
+        }
 
-            if parse_result.error.is_some() {
-                return (parse_result, Vec::new(), None);
-            }
+        cases.push((
+            condition.unwrap().clone(),
+            statements.unwrap().clone(),
+            true,
+        ));
 
-            cases.push((
-                condition.unwrap().clone(),
-                statements.unwrap().clone(),
-                true,
-            ));
-
-            if self.current_token_ref().token_type != TokenType::TT_RBRACKET {
-                return (
-                    parse_result.failure(Some(StandardError::new(
-                        "expected '}'".to_string(),
-                        self.current_pos_start(),
-                        self.current_pos_end(),
-                        Some("add a '}' to close the body".to_string()),
-                    ))),
-                    Vec::new(),
-                    None,
-                );
-            }
-        } else {
-            let expr = parse_result.register(self.expr());
-
-            if parse_result.error.is_some() {
-                return (parse_result, Vec::new(), None);
-            }
-
-            cases.push((condition.unwrap().clone(), expr.unwrap().clone(), false));
+        if self.current_token_ref().token_type != TokenType::TT_RBRACKET {
+            return (
+                parse_result.failure(Some(StandardError::new(
+                    "expected '}'".to_string(),
+                    self.current_pos_start(),
+                    self.current_pos_end(),
+                    Some("add a '}' to close the body".to_string()),
+                ))),
+                Vec::new(),
+                None,
+            );
         }
 
         parse_result.register_advancement();
@@ -564,6 +542,8 @@ impl Parser {
             step_value = None;
         }
 
+        self.skip_newlines(&mut parse_result);
+
         if self.current_token_ref().token_type != TokenType::TT_LBRACKET {
             return parse_result.failure(Some(StandardError::new(
                 "expected '{'".to_string(),
@@ -648,6 +628,8 @@ impl Parser {
             return parse_result;
         }
 
+        self.skip_newlines(&mut parse_result);
+
         if self.current_token_ref().token_type != TokenType::TT_LBRACKET {
             return parse_result.failure(Some(StandardError::new(
                 "expected '{'".to_string(),
@@ -660,46 +642,29 @@ impl Parser {
         parse_result.register_advancement();
         self.advance();
 
-        if self.current_token_ref().token_type == TokenType::TT_NEWLINE {
-            parse_result.register_advancement();
-            self.advance();
-
-            let body = parse_result.register(self.statements());
-
-            if parse_result.error.is_some() {
-                return parse_result;
-            }
-
-            if self.current_token_ref().token_type != TokenType::TT_RBRACKET {
-                return parse_result.failure(Some(StandardError::new(
-                    "expected '}'".to_string(),
-                    self.current_pos_start(),
-                    self.current_pos_end(),
-                    Some("add a '}' to close the body".to_string()),
-                )));
-            }
-
-            parse_result.register_advancement();
-            self.advance();
-
-            return parse_result.success(Some(Box::new(AstNode::While(WhileNode::new(
-                condition.unwrap(),
-                body.unwrap(),
-                true,
-            )))));
-        }
-
-        let body = parse_result.register(self.statement());
+        let body = parse_result.register(self.statements());
 
         if parse_result.error.is_some() {
             return parse_result;
         }
 
-        parse_result.success(Some(Box::new(AstNode::While(WhileNode::new(
+        if self.current_token_ref().token_type != TokenType::TT_RBRACKET {
+            return parse_result.failure(Some(StandardError::new(
+                "expected '}'".to_string(),
+                self.current_pos_start(),
+                self.current_pos_end(),
+                Some("add a '}' to close the body".to_string()),
+            )));
+        }
+
+        parse_result.register_advancement();
+        self.advance();
+
+        return parse_result.success(Some(Box::new(AstNode::While(WhileNode::new(
             condition.unwrap(),
             body.unwrap(),
             true,
-        )))))
+        )))));
     }
 
     pub fn expr(&mut self) -> ParseResult {
