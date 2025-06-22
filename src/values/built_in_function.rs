@@ -122,6 +122,7 @@ impl BuiltInFunction {
             "bury" => return self.execute_write(args, &mut exec_context),
             "tostring" => return self.execute_tostring(args, &mut exec_context),
             "tonumber" => return self.execute_tonumber(args, &mut exec_context),
+            "length" => return self.execute_length(args, &mut exec_context),
             "clear" => return self.execute_clear(args, &mut exec_context),
             "uhoh" => return self.execute_error(args, &mut exec_context),
             "type" => return self.execute_type(args, &mut exec_context),
@@ -334,6 +335,32 @@ impl BuiltInFunction {
         };
 
         result.success(Some(Number::from(value)))
+    }
+
+    pub fn execute_length(&self, args: &Vec<Box<Value>>, exec_ctx: &mut Context) -> RuntimeResult {
+        let mut result = RuntimeResult::new();
+        result.register(self.check_and_populate_args(&vec!["value".to_string()], args, exec_ctx));
+
+        if result.should_return() {
+            return result;
+        }
+
+        let object_arg = args[0].clone();
+
+        let length: f64 = match object_arg.as_ref() {
+            Value::StringValue(value) => value.value.len() as f64,
+            Value::ListValue(value) => value.elements.len() as f64,
+            _ => {
+                return result.failure(Some(StandardError::new(
+                    "expected type string or list",
+                    object_arg.position_start().unwrap().clone(),
+                    object_arg.position_end().unwrap().clone(),
+                    None,
+                )));
+            }
+        };
+
+        result.success(Some(Number::from(length)))
     }
 
     pub fn execute_clear(&self, args: &Vec<Box<Value>>, exec_ctx: &mut Context) -> RuntimeResult {

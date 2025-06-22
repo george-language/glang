@@ -71,6 +71,13 @@ impl Interpreter {
             )))),
         );
         interpreter.global_symbol_table.borrow_mut().set(
+            "length".to_string(),
+            Some(Box::new(Value::BuiltInFunction(BuiltInFunction::new(
+                "length",
+                interpreter.global_symbol_table.clone(),
+            )))),
+        );
+        interpreter.global_symbol_table.borrow_mut().set(
             "clear".to_string(),
             Some(Box::new(Value::BuiltInFunction(BuiltInFunction::new(
                 "clear",
