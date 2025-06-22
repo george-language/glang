@@ -235,7 +235,7 @@ impl Interpreter {
 
         if value.is_none() {
             return result.failure(Some(StandardError::new(
-                format!("variable name '{}' is undefined", var_name).to_string(),
+                format!("variable name '{}' is undefined", var_name).as_str(),
                 node.pos_start.as_ref().unwrap().clone(),
                 node.pos_end.as_ref().unwrap().clone(),
                 None,
@@ -310,7 +310,7 @@ impl Interpreter {
             Value::NumberValue(value) => Number::new(value.value),
             _ => {
                 return result.failure(Some(StandardError::new(
-                    "expected start value as number".to_string(),
+                    "expected start value as number",
                     node.pos_start.as_ref().unwrap().clone(),
                     node.pos_end.as_ref().unwrap().clone(),
                     None,
@@ -330,7 +330,7 @@ impl Interpreter {
             Value::NumberValue(value) => Number::new(value.value),
             _ => {
                 return result.failure(Some(StandardError::new(
-                    "expected end value as number".to_string(),
+                    "expected end value as number",
                     node.pos_start.as_ref().unwrap().clone(),
                     node.pos_end.as_ref().unwrap().clone(),
                     None,
@@ -353,7 +353,7 @@ impl Interpreter {
                 Value::NumberValue(value) => Number::new(value.value),
                 _ => {
                     return result.failure(Some(StandardError::new(
-                        "expected step value as number".to_string(),
+                        "expected step value as number",
                         node.pos_start.as_ref().unwrap().clone(),
                         node.pos_end.as_ref().unwrap().clone(),
                         None,
@@ -568,7 +568,7 @@ impl Interpreter {
             Value::BuiltInFunction(value) => value.execute(&args),
             _ => {
                 return result.failure(Some(StandardError::new(
-                    "expected function as call".to_string(),
+                    "expected function as call",
                     node.pos_start.as_ref().unwrap().clone(),
                     node.pos_end.as_ref().unwrap().clone(),
                     None,

@@ -66,7 +66,7 @@ impl Function {
 
         if args.len() > arg_names.len() || args.len() < arg_names.len() {
             return result.failure(Some(StandardError::new(
-                "invalid function call".to_string(),
+                "invalid function call",
                 self.pos_start.as_ref().unwrap().clone(),
                 self.pos_end.as_ref().unwrap().clone(),
                 Some(
@@ -76,7 +76,7 @@ impl Function {
                         arg_names.len(),
                         args.len()
                     )
-                    .to_string(),
+                    .as_str(),
                 ),
             )));
         }

@@ -130,10 +130,10 @@ impl List {
                         return (
                             None,
                             Some(StandardError::new(
-                                "cannot access a negative index".to_string(),
+                                "cannot access a negative index",
                                 right.pos_start.clone().unwrap(),
                                 right.pos_end.clone().unwrap(),
-                                Some("use an index greater than or equal to 0".to_string()),
+                                Some("use an index greater than or equal to 0"),
                             )),
                         );
                     }
@@ -146,7 +146,7 @@ impl List {
                         return (
                             None,
                             Some(StandardError::new(
-                                "index is out of bounds".to_string(),
+                                "index is out of bounds",
                                 right.pos_start.clone().unwrap(),
                                 right.pos_end.clone().unwrap(),
                                 None,
@@ -161,10 +161,10 @@ impl List {
                         return (
                             None,
                             Some(StandardError::new(
-                                "cannot access a negative index".to_string(),
+                                "cannot access a negative index",
                                 right.pos_start.clone().unwrap(),
                                 right.pos_end.clone().unwrap(),
-                                Some("use an index greater than or equal to 0".to_string()),
+                                Some("use an index greater than or equal to 0"),
                             )),
                         );
                     }
@@ -173,7 +173,7 @@ impl List {
                         return (
                             None,
                             Some(StandardError::new(
-                                "index is out of bounds".to_string(),
+                                "index is out of bounds",
                                 right.pos_start.clone().unwrap(),
                                 right.pos_end.clone().unwrap(),
                                 None,
@@ -197,7 +197,7 @@ impl List {
 
     pub fn illegal_operation(&self, other: Option<Box<Value>>) -> StandardError {
         StandardError::new(
-            "operation not supported by type".to_string(),
+            "operation not supported by type",
             self.pos_start.as_ref().unwrap().clone(),
             if other.is_some() {
                 other.unwrap().position_end().unwrap()

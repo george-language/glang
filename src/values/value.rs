@@ -93,7 +93,7 @@ impl Value {
             _ => (
                 None,
                 Some(StandardError::new(
-                    format!("type doesn't support the '{}' operator", operator).to_string(),
+                    format!("type doesn't support the '{}' operator", operator).as_str(),
                     self.position_start().unwrap(),
                     self.position_end().unwrap(),
                     None,

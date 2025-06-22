@@ -56,7 +56,7 @@ impl Number {
                             return (
                                 None,
                                 Some(StandardError::new(
-                                    "division by zero".to_string(),
+                                    "division by zero",
                                     right.pos_start.clone().unwrap(),
                                     right.pos_end.clone().unwrap(),
                                     None,
@@ -70,7 +70,7 @@ impl Number {
                             return (
                                 None,
                                 Some(StandardError::new(
-                                    "powered by operator less than or equal to 0".to_string(),
+                                    "powered by operator less than or equal to 0",
                                     right.pos_start.clone().unwrap(),
                                     right.pos_end.clone().unwrap(),
                                     None,
@@ -105,7 +105,7 @@ impl Number {
 
     pub fn illegal_operation(&self, other: Option<Box<Value>>) -> StandardError {
         StandardError::new(
-            "operation not supported by type".to_string(),
+            "operation not supported by type",
             self.pos_start.as_ref().unwrap().clone(),
             if other.is_some() {
                 other.unwrap().position_end().unwrap()

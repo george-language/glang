@@ -99,7 +99,7 @@ impl StringObj {
                         return (
                             None,
                             Some(StandardError::new(
-                                "cannot multiply string by a negative value".to_string(),
+                                "cannot multiply string by a negative value",
                                 other.position_start().unwrap(),
                                 other.position_end().unwrap(),
                                 None,
@@ -120,7 +120,7 @@ impl StringObj {
 
     pub fn illegal_operation(&self, other: Option<Box<Value>>) -> StandardError {
         StandardError::new(
-            "operation not supported by type".to_string(),
+            "operation not supported by type",
             self.pos_start.as_ref().unwrap().clone(),
             if other.is_some() {
                 other.unwrap().position_end().unwrap()

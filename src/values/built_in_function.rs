@@ -56,7 +56,7 @@ impl BuiltInFunction {
 
         if args.len() > arg_names.len() || args.len() < arg_names.len() {
             return result.failure(Some(StandardError::new(
-                "invalid function call".to_string(),
+                "invalid function call",
                 self.pos_start.as_ref().unwrap().clone(),
                 self.pos_end.as_ref().unwrap().clone(),
                 Some(
@@ -66,7 +66,7 @@ impl BuiltInFunction {
                         arg_names.len(),
                         args.len()
                     )
-                    .to_string(),
+                    .as_str(),
                 ),
             )));
         }
@@ -157,10 +157,10 @@ impl BuiltInFunction {
             Value::StringValue(string) => string.as_string(),
             _ => {
                 return result.failure(Some(StandardError::new(
-                    "expected type string".to_string(),
+                    "expected type string",
                     message_arg.position_start().unwrap().clone(),
                     message_arg.position_end().unwrap().clone(),
-                    Some("add a message like 'Enter a number:' to get user input".to_string()),
+                    Some("add a message like 'Enter a number:' to get user input"),
                 )));
             }
         };
@@ -192,20 +192,20 @@ impl BuiltInFunction {
             Value::StringValue(string) => string.as_string(),
             _ => {
                 return result.failure(Some(StandardError::new(
-                    "expected type string".to_string(),
+                    "expected type string",
                     file_arg.position_start().unwrap().clone(),
                     file_arg.position_end().unwrap().clone(),
-                    Some("add a filename to read like 'test.txt'".to_string()),
+                    Some("add a filename to read like 'test.txt'"),
                 )));
             }
         };
 
         if !fs::exists(&filename).is_ok() {
             return result.failure(Some(StandardError::new(
-                "file doesn't exist".to_string(),
+                "file doesn't exist",
                 file_arg.position_start().unwrap().clone(),
                 file_arg.position_end().unwrap().clone(),
-                Some("add a filename to read like 'test.txt'".to_string()),
+                Some("add a filename to read like 'test.txt'"),
             )));
         }
 
@@ -215,10 +215,10 @@ impl BuiltInFunction {
             Ok(extra) => contents.push_str(&extra),
             Err(_) => {
                 return result.failure(Some(StandardError::new(
-                    "file contents couldn't be read properly".to_string(),
+                    "file contents couldn't be read properly",
                     file_arg.position_start().unwrap().clone(),
                     file_arg.position_end().unwrap().clone(),
-                    Some("add a UTF-8 encoded file you would like to read".to_string()),
+                    Some("add a UTF-8 encoded file you would like to read"),
                 )));
             }
         }
@@ -245,10 +245,10 @@ impl BuiltInFunction {
             Value::StringValue(string) => string.as_string(),
             _ => {
                 return result.failure(Some(StandardError::new(
-                    "expected type string".to_string(),
+                    "expected type string",
                     file_arg.position_start().unwrap().clone(),
                     file_arg.position_end().unwrap().clone(),
-                    Some("add a filename to write to like 'test.txt'".to_string()),
+                    Some("add a filename to write to like 'test.txt'"),
                 )));
             }
         };
@@ -257,10 +257,10 @@ impl BuiltInFunction {
             Value::StringValue(string) => string.as_string(),
             _ => {
                 return result.failure(Some(StandardError::new(
-                    "expected type string".to_string(),
+                    "expected type string",
                     file_arg.position_start().unwrap().clone(),
                     file_arg.position_end().unwrap().clone(),
-                    Some("add the file contents to write into the file".to_string()),
+                    Some("add the file contents to write into the file"),
                 )));
             }
         };
@@ -269,7 +269,7 @@ impl BuiltInFunction {
             Ok(_) => {}
             Err(_) => {
                 return result.failure(Some(StandardError::new(
-                    "file contents couldn't be written properly".to_string(),
+                    "file contents couldn't be written properly",
                     file_arg.position_start().unwrap().clone(),
                     file_arg.position_end().unwrap().clone(),
                     None,
@@ -314,22 +314,19 @@ impl BuiltInFunction {
                 Ok(number) => number,
                 Err(e) => {
                     return result.failure(Some(StandardError::new(
-                        format!("string couldn't be converted to number {}", e).to_string(),
+                        format!("string couldn't be converted to number {}", e).as_str(),
                         string_to_convert.position_start().unwrap().clone(),
                         string_to_convert.position_end().unwrap().clone(),
-                        Some(
-                            "make sure the string is represented as a valid number like '1.0'"
-                                .to_string(),
-                        ),
+                        Some("make sure the string is represented as a valid number like '1.0'"),
                     )));
                 }
             },
             _ => {
                 return result.failure(Some(StandardError::new(
-                    "expected type string".to_string(),
+                    "expected type string",
                     string_to_convert.position_start().unwrap().clone(),
                     string_to_convert.position_end().unwrap().clone(),
-                    Some("add a string like '1.0' to convert to a number object".to_string()),
+                    Some("add a string like '1.0' to convert to a number object"),
                 )));
             }
         };
@@ -352,7 +349,7 @@ impl BuiltInFunction {
             Value::ListValue(_) => List::from(vec![]),
             _ => {
                 return result.failure(Some(StandardError::new(
-                    "expected type string or list".to_string(),
+                    "expected type string or list",
                     obj_to_clear.position_start().unwrap().clone(),
                     obj_to_clear.position_end().unwrap().clone(),
                     None,
@@ -377,16 +374,16 @@ impl BuiltInFunction {
             Value::StringValue(_) => error,
             _ => {
                 return result.failure(Some(StandardError::new(
-                    "expected type string".to_string(),
+                    "expected type string",
                     error.position_start().unwrap().clone(),
                     error.position_end().unwrap().clone(),
-                    Some("add an error message".to_string()),
+                    Some("add an error message"),
                 )));
             }
         };
 
         result.failure(Some(StandardError::new(
-            message.as_string(),
+            message.as_string().as_str(),
             message.position_start().unwrap().clone(),
             message.position_end().unwrap().clone(),
             None,
@@ -420,26 +417,26 @@ impl BuiltInFunction {
             Value::StringValue(file) => file.as_string(),
             _ => {
                 return result.failure(Some(StandardError::new(
-                    "expected type string".to_string(),
+                    "expected type string",
                     import.position_start().unwrap().clone(),
                     import.position_end().unwrap().clone(),
-                    Some("add the '.glang' file you would like to import".to_string()),
+                    Some("add the '.glang' file you would like to import"),
                 )));
             }
         };
 
         if !fs::exists(&file_to_import).is_ok() || !&file_to_import.ends_with(".glang") {
             return result.failure(Some(StandardError::new(
-                "file doesn't exist or isn't valid".to_string(),
+                "file doesn't exist or isn't valid",
                 import.position_start().unwrap().clone(),
                 import.position_end().unwrap().clone(),
-                Some("add the '.glang' file you would like to import".to_string()),
+                Some("add the '.glang' file you would like to import"),
             )));
         }
 
         if &file_to_import == &import.position_start().unwrap().filename {
             return result.failure(Some(StandardError::new(
-                "circular import".to_string(),
+                "circular import",
                 import.position_start().unwrap().clone(),
                 import.position_end().unwrap().clone(),
                 None,
@@ -452,10 +449,10 @@ impl BuiltInFunction {
             Ok(extra) => contents.push_str(&extra),
             Err(_) => {
                 return result.failure(Some(StandardError::new(
-                    "file contents couldn't be read properly".to_string(),
+                    "file contents couldn't be read properly",
                     import.position_start().unwrap().clone(),
                     import.position_end().unwrap().clone(),
-                    Some("add a UTF-8 encoded '.glang' file you would like to import".to_string()),
+                    Some("add a UTF-8 encoded '.glang' file you would like to import"),
                 )));
             }
         }

@@ -11,12 +11,12 @@ pub struct StandardError {
 }
 
 impl StandardError {
-    pub fn new(text: String, pos_start: Position, pos_end: Position, help: Option<String>) -> Self {
+    pub fn new(text: &str, pos_start: Position, pos_end: Position, help: Option<&str>) -> Self {
         StandardError {
-            text: text,
+            text: text.to_string(),
             pos_start: pos_start,
             pos_end: pos_end,
-            help: help,
+            help: Some(help.unwrap().to_string()),
         }
     }
 
@@ -26,10 +26,6 @@ impl StandardError {
         pos_start: Position,
         pos_end: Position,
     ) -> String {
-        let mut result = String::new();
-
-        let text_len = text.len();
-
         let lines: Vec<&str> = text.lines().collect();
         let mut result = String::new();
 
