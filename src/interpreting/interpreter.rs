@@ -105,6 +105,13 @@ impl Interpreter {
                 interpreter.global_symbol_table.clone(),
             )))),
         );
+        interpreter.global_symbol_table.borrow_mut().set(
+            "docs".to_string(),
+            Some(Box::new(Value::BuiltInFunction(BuiltInFunction::new(
+                "docs",
+                interpreter.global_symbol_table.clone(),
+            )))),
+        );
 
         interpreter
     }

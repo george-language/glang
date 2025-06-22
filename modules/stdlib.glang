@@ -106,5 +106,5 @@ func sigh() {
 func debug(value) {
     bark("object type: '" + type(value) + "'");
     bark("display value (stdout): '" + tostring(value) + "'");
-    # unimplemented: bark("documentation: " docs(value))
+    bark("documentation: " + docs(value));
 }
