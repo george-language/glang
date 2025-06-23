@@ -41,6 +41,8 @@ fn main() {
                     &dir_name.join("README.md"),
                     "# Welcome to GLang!\nTo get started, see our documentation [here](https://sites.google.com/view/george-lang/documentation).",
                 );
+            } else if first_arg == "--version" || first_arg == "-v" {
+                println!("glang version: {}", VERSION);
             } else if first_arg.ends_with(".glang") {
                 let error = run(first_arg.as_str(), None);
 
