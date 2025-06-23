@@ -1,7 +1,3 @@
-> [!NOTE]
-> This is GLang's rust-based branch, and is under active development. We plan to rewrite everything to Rust and
-merge into the `main` branch by mid 2025.
-
 <div align="center">
   <picture>
     <img
