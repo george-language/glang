@@ -1,61 +1,66 @@
-<img src="resources/icons/george_language_icon.svg" width="125">
+<div align="center">
+  <picture>
+    <img
+         src="resources/icons/george_language_icon.svg"
+         width="25%">
+  </picture>
 
-# George Language
-George Language (GLang for short) is a dynamically-typed, interpreted programming language where program syntax is 
-represented as a dog doing day-to-day activities.
+[Website][GLang] | [Download] | [Learn] | [Documentation]
+</div>
 
+This is the main source code repository for GeorgeLanguage ([GLang]). It contains the interpreter,
+standard library, and built-in modules.
+
+[GLang]: https://sites.google.com/view/george-lang/home/
+[Download]: https://sites.google.com/view/george-lang/install/
+[Learn]: https://sites.google.com/view/george-lang/documentation/guide-book/
+[Documentation]: https://sites.google.com/view/george-lang/documentation/standard-docs/
+
+## Showcase
 ```
-gettoy(["math_pi"], "modules/math.glang")
+# import the math module
+fetch("modules/math.glang");
 
-object x = 0
+obj x = 0;
 
-# Lets go for a walk!
-walk i = 0 through 10 then
-    object x = x + 1
+# let's go for a walk!
+walk i = 0 through 10 {
+    obj x = x + 1;
 
-    if x == 5 then
-        leave
-    endbody
-endbody
+    if x == 5 {
+        leave;
+    }
+}
 
-bark(x)
+# print the value of 'x'
+bark(x);
 
-# Greet someone!
-func greet(name)
-    bark("Hello, " + name + "!")
-endbody
+# greet someone
+func greet(name) {
+    bark("Hello, " + name + "!");
+}
 
-greet("George")
+greet("John Doe");
 
-bark("Pi is equal to: " + tostring(math_pi))
-bark("We have reached the end of our program. I hope you enjoyed!")
+bark("Pi is equal to: " + tostring(math_pi));
+bark("We have reached the end of our program. I hope you enjoyed!");
 ```
 
 ## Why Make George Language?
-Well, it all started as a joke. You see, one of our team members has a cute pug named George. One day we said 
-_"Why not make a language named after George that's funny and cute?"_ And that's when it was born.
+It all starts from a joke😆
 
-GLang makes programming more expressive and easier to read, using a mix of humor and fun to define the syntax.
+You see, one of our team members has a cute pug named George. One day we said
+_"Why not make a language named after George that's funny, cute, and easy to learn?"_ And that's when it was born.
 
-To a beginner programmer, they have to spend a lot of time learning and remembering keywords, built-ins, and 
-values in the language. GLang instead uses _easy-to-remember_ language, for example the `print` statement 
-is actually `bark`!
+We made GLang because we believe there needs to be a more modern language for beginners. Not only is it easy to learn, it teaches users common programming concepts (and it's fun to use!)
 
-```
-bark("Hello, World!")
-```
+- **If you want to print something**, just use the `bark` function.
 
-This is just one of the many examples that makes GLang easier to learn and work with.
+- **If you want to get user input**, just use the `chew` function.
 
-## Is It fast?
-GLang gets performance matching languages like Python (as it is implemented in Python.) 
-It uses a very light type checker, but nothing large that creates a major overhead. It also 
-doesn't require a garbage collector, as that is already managed by Python. This makes GLang
-**FAST** for many applications.
+- **If you want to panic a program**, just use the `uhoh` function.
 
-## In The Terminal?
-GLang works in the terminal by itself as well. Use the `;` character to define multi-line programs
-on one line.
+It's names like these that bring humor to programming. Beginners remember "Hey, I want to see this variable, let's make the computer bark!"
 
-
-_More info on this project is available on our [website](https://sites.google.com/view/george-lang/home)._
+## License
+GLang is licensed entirely under the GPL-v3. This means GLang is open source forever, and free until the end of time.

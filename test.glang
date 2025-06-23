@@ -1,4 +1,24 @@
-gettoy(["*all"], "modules/math.glang") # access the whole math library
+fetch("modules/math.glang");
 
-bark(math_pi)
-bark(math_sqrt(25))
+obj x = 0;
+
+# Lets go for a walk!
+walk i = 0 through 10 {
+    obj x = x + 1;
+
+    if x == 5 {
+        leave;
+    }
+}
+
+bark(x);
+
+# Greet someone!
+func greet(name) {
+    bark("Hello, " + name + "!");
+}
+
+greet("George");
+
+bark("Pi is equal to: " + tostring(math_pi));
+bark("We have reached the end of our program. I hope you enjoyed!");

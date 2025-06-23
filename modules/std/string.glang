@@ -1,0 +1,9 @@
+# file string.glang: various string operations in glang
+
+# Join two strings together
+# arg <string_a>: the first string
+# arg <string_b>: the second string
+# returns: the two strings combined as a new string
+func join(string_a, string_b) {
+    give string_a + string_b;
+}
