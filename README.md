@@ -58,9 +58,11 @@ _"Why not make a language named after George that's funny, cute, and easy to lea
 
 We made GLang because we believe there needs to be a more modern language for beginners. Not only is it easy to learn, it teaches users common programming concepts (and it's fun to use!)
 
-If you want to print something, just use the `bark` function.
-If you want to get user input, just use the `chew` function.
-If you want to panic a program, just use the `uhoh` function.
+- If you want to print something, just use the `bark` function.
+
+- If you want to get user input, just use the `chew` function.
+
+- If you want to panic a program, just use the `uhoh` function.
 
 It's names like these that bring humor to programming. Beginners remember "Hey, I want to see this variable, let's make the computer bark!"
 
