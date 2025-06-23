@@ -8,6 +8,7 @@ merge into the `main` branch by mid 2025.
          src="resources/icons/george_language_icon.svg"
          width="50%">
   </picture>
+
 [Website][GLang] | [Download] | [Learn] | [Documentation]
 </div>
 
