@@ -6,7 +6,7 @@ merge into the `main` branch by mid 2025.
   <picture>
     <img
          src="resources/icons/george_language_icon.svg"
-         width="50%">
+         width="25%">
   </picture>
 
 [Website][GLang] | [Download] | [Learn] | [Documentation]
