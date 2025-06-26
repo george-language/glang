@@ -5,9 +5,3 @@ fetch("core/std/type.glang");
 fetch("core/std/list.glang");
 fetch("core/std/string.glang");
 fetch("core/std/debug.glang");
-
-# Empty function representing unimplemented code
-# returns: null
-func sigh() {
-    give 0;
-}
