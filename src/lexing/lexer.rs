@@ -279,7 +279,9 @@ impl Lexer {
 
         let mut escape_chars = HashMap::new();
         escape_chars.insert('n', '\n');
+        escape_chars.insert('r', '\r');
         escape_chars.insert('t', '\t');
+        escape_chars.insert('"', '\"');
 
         while let Some(character) = self.current_char {
             if character == '"' && !escape_char {

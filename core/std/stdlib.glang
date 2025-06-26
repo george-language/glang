@@ -1,10 +1,10 @@
 # file stdlib.glang: default library loaded automatically above every glang program
 
-fetch("modules/std/objects.glang");
-fetch("modules/std/type.glang");
-fetch("modules/std/list.glang");
-fetch("modules/std/string.glang");
-fetch("modules/std/debug.glang");
+fetch("core/std/objects.glang");
+fetch("core/std/type.glang");
+fetch("core/std/list.glang");
+fetch("core/std/string.glang");
+fetch("core/std/debug.glang");
 
 # Empty function representing unimplemented code
 # returns: null
