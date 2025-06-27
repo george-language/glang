@@ -1,6 +1,8 @@
 [package]
 name = "glang"
-version = "0.1.0"
+repository = "https://github.com/mpsoftwarefoundation/GeorgeLanguage.git"
+description = "The George Programming Language"
+version = "0.0.0"
 edition = "2024"
 
 [dependencies]
