@@ -5,16 +5,10 @@
          width="25%">
   </picture>
 
-[Website][GLang] | [Download] | [Learn] | [Documentation]
+[Website](https://sites.google.com/view/george-lang/home/) | [Download](https://sites.google.com/view/george-lang/install/) | [Learn](https://sites.google.com/view/george-lang/documentation/guide-book/) | [Documentation](https://sites.google.com/view/george-lang/documentation/standard-docs/)
 </div>
 
-This is the main source code repository for GeorgeLanguage ([GLang]). It contains the interpreter,
-standard library, and built-in modules.
-
-[GLang]: https://sites.google.com/view/george-lang/home/
-[Download]: https://sites.google.com/view/george-lang/install/
-[Learn]: https://sites.google.com/view/george-lang/documentation/guide-book/
-[Documentation]: https://sites.google.com/view/george-lang/documentation/standard-docs/
+_A dog-themed, interpreted programming language for beginners._
 
 ## Showcase
 ```
