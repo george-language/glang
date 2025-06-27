@@ -19,7 +19,7 @@ standard library, and built-in modules.
 ## Showcase
 ```
 # import the math module
-fetch("modules/math.glang");
+fetch(std_math);
 
 obj x = 0;
 

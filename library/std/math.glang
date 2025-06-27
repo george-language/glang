@@ -1,3 +1,5 @@
+# file math.glang: math functions and objects
+
 obj math_pi = 3.141592653589793;
 obj math_e = 2.718281828459045;
 

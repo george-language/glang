@@ -1,4 +1,4 @@
-fetch("modules/math.glang");
+fetch(std_math);
 
 obj x = 0;
 

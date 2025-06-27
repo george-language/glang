@@ -1,7 +1,0 @@
-# file stdlib.glang: default library loaded automatically above every glang program
-
-fetch("core/std/objects.glang");
-fetch("core/std/type.glang");
-fetch("core/std/list.glang");
-fetch("core/std/string.glang");
-fetch("core/std/debug.glang");

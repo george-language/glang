@@ -1,0 +1,3 @@
+# file imports.glang: easy access imports for retrieving modules
+
+obj std_math = "library/std/math.glang";

@@ -15,7 +15,7 @@ use std::fs;
 
 pub fn run(filename: &str, code: Option<String>) -> Option<StandardError> {
     let mut contents = String::new();
-    contents.push_str("fetch(\"core/std/stdlib.glang\");\n\n");
+    contents.push_str("fetch(\"library/default/lib.glang\");\n\n");
 
     if filename == "<stdin>" {
         contents.push_str(code.unwrap_or_else(|| "".to_string()).as_str());
@@ -23,7 +23,7 @@ pub fn run(filename: &str, code: Option<String>) -> Option<StandardError> {
         let result = fs::read_to_string(filename);
 
         if !result.is_ok() {
-            println!("failed to read provided '.glang' file");
+            println!("Failed to read provided '.glang' file");
 
             return None;
         } else {
