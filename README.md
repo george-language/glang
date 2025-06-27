@@ -1,14 +1,8 @@
 <div align="center">
-  <picture>
-    <img
-         src="resources/icons/george_language_icon.svg"
-         width="25%">
-  </picture>
-
+    <img src="resources/icons/george_language_icon.svg" width="25%">
 [Website](https://sites.google.com/view/george-lang/home/) | [Download](https://sites.google.com/view/george-lang/install/) | [Learn](https://sites.google.com/view/george-lang/documentation/guide-book/) | [Documentation](https://sites.google.com/view/george-lang/documentation/standard-docs/)
-</div>
-
 _A dog-themed, interpreted programming language for beginners._
+</div>
 
 ## Showcase
 ```
