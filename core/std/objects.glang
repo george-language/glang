@@ -4,7 +4,7 @@ obj true = 1;
 obj false = 0;
 
 # null/none values are just 0, which technically allows boolean operations on them:
-# oppositeof null (true)
+# not null (true)
 obj null = 0;
 
 # use on any unimplemented code:

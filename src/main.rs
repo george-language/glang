@@ -42,7 +42,7 @@ fn main() {
                     "# Welcome to GLang!\nTo get started, see our documentation [here](https://sites.google.com/view/george-lang/documentation).",
                 );
             } else if first_arg == "--version" || first_arg == "-v" {
-                println!("glang version: {}", VERSION);
+                println!("George Language {VERSION}");
             } else if first_arg.ends_with(".glang") {
                 let error = run(first_arg.as_str(), None);
 
@@ -50,14 +50,12 @@ fn main() {
                     println!("{}", error.unwrap());
                 }
             } else {
-                println!("Not a recognized GLang command")
+                println!("Unrecognized command '{}'", first_arg);
             }
         }
     } else {
         println!(
-            "George Language {VERSION}: Platform {}-{}",
-            env::consts::OS,
-            env::consts::ARCH
+            "George Language {VERSION}"
         );
         println!("Type '/exit' to exit");
 

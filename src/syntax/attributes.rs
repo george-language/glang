@@ -5,7 +5,7 @@ pub const KEYWORDS: &[&str] = &[
     "obj",
     "and",
     "or",
-    "oppositeof",
+    "not",
     "if",
     "alsoif",
     "otherwise",

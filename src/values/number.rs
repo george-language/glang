@@ -87,7 +87,7 @@ impl Number {
                     ">=" => Some((left_val >= right_val) as u8 as f64),
                     "and" => Some(((left_val != 0.0) && (right_val != 0.0)) as u8 as f64),
                     "or" => Some(((left_val != 0.0) || (right_val != 0.0)) as u8 as f64),
-                    "oppositeof" => Some(if self.value == 0.0 { 1.0 } else { 0.0 }),
+                    "not" => Some(if self.value == 0.0 { 1.0 } else { 0.0 }),
                     _ => return (None, Some(self.illegal_operation(Some(other)))),
                 };
 

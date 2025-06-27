@@ -102,7 +102,7 @@ impl Parser {
 
         if self
             .current_token_copy()
-            .matches(TokenType::TT_KEYWORD, Some("oppositeof"))
+            .matches(TokenType::TT_KEYWORD, Some("not"))
         {
             let op_token = self.current_token_copy();
             parse_result.register_advancement();
@@ -140,7 +140,7 @@ impl Parser {
                 "expected an object or operator",
                 self.current_pos_start(),
                 self.current_pos_end(),
-                Some("add one of the following: integer, float, identifier, 'oppositeof', '+', '-', '(', or '['"),
+                Some("add one of the following: integer, float, identifier, 'not', '+', '-', '(', or '['"),
             )));
         }
 

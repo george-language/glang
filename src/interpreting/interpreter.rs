@@ -607,13 +607,14 @@ impl Interpreter {
         context: &mut Context,
     ) -> RuntimeResult {
         let mut result = RuntimeResult::new();
-        let mut value = result
-            .register(self.visit(node.node.clone(), context))
-            .unwrap();
+        let value = result
+            .register(self.visit(node.node.clone(), context));
 
         if result.should_return() {
             return result;
         }
+
+        let mut value = value.unwrap();
 
         let (mut number, mut error): (Option<Box<Value>>, Option<StandardError>) = (None, None);
 
@@ -622,10 +623,10 @@ impl Interpreter {
                 value.perform_operation("*", Box::new(Value::NumberValue(Number::new(-1.0))));
         } else if node
             .op_token
-            .matches(TokenType::TT_KEYWORD, Some("oppositeof"))
+            .matches(TokenType::TT_KEYWORD, Some("not"))
         {
             (number, error) = value
-                .perform_operation("oppositeof", Box::new(Value::NumberValue(Number::new(0.0))))
+                .perform_operation("not", Box::new(Value::NumberValue(Number::new(0.0))))
         }
 
         if error.is_some() {
