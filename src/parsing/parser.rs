@@ -311,7 +311,7 @@ impl Parser {
             .current_token_ref()
             .matches(TokenType::TT_KEYWORD, Some("alsoif"))
         {
-            let (if_parse_result, mut new_cases, new_else_case) = self.if_expr_cases("alsoif");
+            let (if_parse_result, mut new_cases, new_else_case) = self.if_expr_b();
 
             if if_parse_result.error.is_some() {
                 return (if_parse_result, Vec::new(), None);
