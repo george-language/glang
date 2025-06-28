@@ -1,0 +1,85 @@
+# file hashmap.glang: implementation of the hashmap data type
+
+# Create a new hashmap
+# returns: a list representing a hashmap
+func hashmap() {
+    give [];
+}
+
+# Set the key & value pairs of a hashmap
+# arg <hashmap_obj>: the hashmap object
+# arg <key>: the key object
+# arg <value>: the value object
+# returns: a new hashmap with the key & value pair added to it
+func hashmap_set(hashmap_obj, key, value) {
+    walk i = 0 through length(hashmap_obj) {
+        obj pair = retrieve(hashmap_obj, i);
+
+        # the key exists, so remove it
+        if retrieve(pair, 0) == key {
+            obj hashmap_obj = remove(hashmap_obj, i);
+        }
+    }
+
+    give push(hashmap_obj, [key, value]);
+}
+
+# Get a value based on the key in a hashmap
+# arg <hashmap_obj>: the hashmap object
+# arg <key>: the key to search for
+# returns: the found value (if any) otherwise tosses an error
+func hashmap_get(hashmap_obj, key) {
+    walk i = 0 through length(hashmap_obj) {
+        obj pair = retrieve(hashmap_obj, i);
+
+        if retrieve(pair, 0) == key {
+            give retrieve(pair, 1);
+        }
+    }
+
+    uhoh("key doesn't exist in hashmap");
+}
+
+# Remove a value based on the key in a hashmap
+# arg <hashmap_obj>: the hashmap object
+# arg <key>: the key to search for
+# returns: a new hashmap with the key & value pair removed (if any) otherwise tosses an error
+func hashmap_remove(hashmap_obj, key) {
+    walk i = 0 through length(hashmap_obj) {
+        obj pair = retrieve(hashmap_obj, i);
+
+        if retrieve(pair, 0) == key {
+            give remove(hashmap_obj, i);
+        }
+    }
+
+    uhoh("key doesn't exist in hashmap");
+}
+
+# Get the keys in a hashmap
+# arg <hashmap_obj>: the hashmap object
+# returns: a list of all keys in the hashmap
+func hashmap_keys(hashmap_obj) {
+    obj keys = [];
+
+    walk i = 0 through length(hashmap_obj) {
+        obj pair = retrieve(hashmap_obj, i);
+        obj keys = push(keys, retrieve(pair, 0));
+    }
+
+    give keys;
+}
+
+# Get the values in a hashmap
+# arg <hashmap_obj>: the hashmap object
+# returns: a list of all values in the hashmap
+func hashmap_values(hashmap_obj) {
+    obj values = [];
+
+    walk i = 0 through length(hashmap_obj) {
+        obj pair = retrieve(hashmap_obj, i);
+        obj values = push(values, retrieve(pair, 1));
+    }
+
+    give values;
+}
