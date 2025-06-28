@@ -307,29 +307,38 @@ impl Parser {
         let mut cases: Vec<(Box<AstNode>, Box<AstNode>, bool)> = Vec::new();
         let mut else_case: Option<(Box<AstNode>, bool)> = None;
 
-        if self
+        while self
             .current_token_ref()
             .matches(TokenType::TT_KEYWORD, Some("alsoif"))
         {
-            parse_result.register_advancement();
-            self.advance();
-
-            let (if_parse_result, all_cases, else_clause) = self.if_expr_b();
+            let (if_parse_result, mut new_cases, new_else_case) = self.if_expr_cases("alsoif");
 
             if if_parse_result.error.is_some() {
                 return (if_parse_result, Vec::new(), None);
             }
 
-            else_case = else_clause;
-            cases = all_cases.clone();
-        } else {
-            let (if_parse_result, else_clause) = self.if_expr_c();
+            parse_result.register(if_parse_result);
 
-            if if_parse_result.error.is_some() {
-                return (if_parse_result, Vec::new(), None);
+            cases.append(&mut new_cases);
+
+            if new_else_case.is_some() {
+                else_case = new_else_case;
+                break;
+            }
+        }
+
+        if self
+            .current_token_ref()
+            .matches(TokenType::TT_KEYWORD, Some("otherwise"))
+        {
+            let (else_parse_result, new_else_case) = self.if_expr_c();
+
+            if else_parse_result.error.is_some() {
+                return (else_parse_result, Vec::new(), None);
             }
 
-            else_case = else_clause;
+            parse_result.register(else_parse_result);
+            else_case = new_else_case;
         }
 
         (parse_result, cases, else_case)
