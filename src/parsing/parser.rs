@@ -1057,7 +1057,11 @@ impl Parser {
     pub fn term(&mut self) -> ParseResult {
         self.binary_operator(
             "factor",
-            vec![(TokenType::TT_MUL, ""), (TokenType::TT_DIV, "")],
+            vec![
+                (TokenType::TT_MUL, ""),
+                (TokenType::TT_DIV, ""),
+                (TokenType::TT_MOD, ""),
+            ],
             None,
         )
     }

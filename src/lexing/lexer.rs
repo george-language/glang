@@ -108,6 +108,14 @@ impl Lexer {
                         None,
                     ));
                     self.advance();
+                } else if current_char == '%' {
+                    tokens.push(Token::new(
+                        TokenType::TT_MOD,
+                        None,
+                        Some(self.position.clone()),
+                        None,
+                    ));
+                    self.advance();
                 } else if current_char == '(' {
                     tokens.push(Token::new(
                         TokenType::TT_LPAREN,

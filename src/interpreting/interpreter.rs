@@ -566,6 +566,8 @@ impl Interpreter {
             (number, error) = left.perform_operation("/", right);
         } else if node.op_token.token_type == TokenType::TT_POW {
             (number, error) = left.perform_operation("^", right);
+        } else if node.op_token.token_type == TokenType::TT_MOD {
+            (number, error) = left.perform_operation("%", right);
         } else if node.op_token.token_type == TokenType::TT_GT {
             (number, error) = left.perform_operation(">", right);
         } else if node.op_token.token_type == TokenType::TT_LT {
@@ -607,8 +609,7 @@ impl Interpreter {
         context: &mut Context,
     ) -> RuntimeResult {
         let mut result = RuntimeResult::new();
-        let value = result
-            .register(self.visit(node.node.clone(), context));
+        let value = result.register(self.visit(node.node.clone(), context));
 
         if result.should_return() {
             return result;
@@ -619,14 +620,9 @@ impl Interpreter {
         let (mut number, mut error): (Option<Box<Value>>, Option<StandardError>) = (None, None);
 
         if node.op_token.token_type == TokenType::TT_MINUS {
-            (number, error) =
-                value.perform_operation("*", Box::new(Value::NumberValue(Number::new(-1.0))));
-        } else if node
-            .op_token
-            .matches(TokenType::TT_KEYWORD, Some("not"))
-        {
-            (number, error) = value
-                .perform_operation("not", Box::new(Value::NumberValue(Number::new(0.0))))
+            (number, error) = value.perform_operation("*", Number::from(-1.0));
+        } else if node.op_token.matches(TokenType::TT_KEYWORD, Some("not")) {
+            (number, error) = value.perform_operation("not", Number::false_value());
         }
 
         if error.is_some() {

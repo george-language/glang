@@ -77,7 +77,23 @@ impl Number {
                                 )),
                             );
                         }
+
                         Some(left_val.powf(right_val))
+                    }
+                    "%" => {
+                        if right_val <= 0.0 {
+                            return (
+                                None,
+                                Some(StandardError::new(
+                                    "modded by operator less than or equal to 0",
+                                    right.pos_start.clone().unwrap(),
+                                    right.pos_end.clone().unwrap(),
+                                    None,
+                                )),
+                            );
+                        }
+
+                        Some(left_val.rem_euclid(right_val))
                     }
                     "==" => Some((left_val == right_val) as u8 as f64),
                     "!=" => Some((left_val != right_val) as u8 as f64),
