@@ -1,4 +1,4 @@
-# file string.glang: various string operations in glang
+# file string.glang: string operations in glang
 
 # Join two strings together
 # arg <string_a>: the first string

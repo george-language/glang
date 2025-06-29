@@ -1,0 +1,11 @@
+# file number.glang: number operations in glang
+
+# Check if a number is a decimal value (float)
+# arg <num>: a number object
+# returns: true if decimal otherwise false
+func isdecimal(num) {
+    # this will only work if the object has a decimal place
+    # 1.0 => returns false
+    # 1.1 => returns true
+    give num % 1 != 0;
+}

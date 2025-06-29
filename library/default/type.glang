@@ -1,4 +1,4 @@
-# file type.glang: check various object types
+# file type.glang: check object types
 
 # Check if an object is a list
 # arg <value>: the object to type check

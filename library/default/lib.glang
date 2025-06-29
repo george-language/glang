@@ -5,4 +5,5 @@ fetch("library/default/type.glang");
 fetch("library/default/imports.glang");
 fetch("library/default/list.glang");
 fetch("library/default/string.glang");
+fetch("library/default/number.glang");
 fetch("library/default/debug.glang");
