@@ -124,7 +124,7 @@ impl Parser {
 
         let node = parse_result.register(self.binary_operator(
             "arithmetic_expr",
-            vec![
+            &[
                 (TokenType::TT_EE, ""),
                 (TokenType::TT_NE, ""),
                 (TokenType::TT_LT, ""),
@@ -723,7 +723,7 @@ impl Parser {
 
         let node = parse_result.register(self.binary_operator(
             "comparison_expr",
-            vec![
+            &[
                 (TokenType::TT_KEYWORD, "and"),
                 (TokenType::TT_KEYWORD, "or"),
             ],
@@ -1030,7 +1030,7 @@ impl Parser {
     }
 
     pub fn power(&mut self) -> ParseResult {
-        self.binary_operator("call", vec![(TokenType::TT_POW, "")], Some("factor"))
+        self.binary_operator("call", &[(TokenType::TT_POW, "")], Some("factor"))
     }
 
     pub fn factor(&mut self) -> ParseResult {
@@ -1057,7 +1057,7 @@ impl Parser {
     pub fn term(&mut self) -> ParseResult {
         self.binary_operator(
             "factor",
-            vec![
+            &[
                 (TokenType::TT_MUL, ""),
                 (TokenType::TT_DIV, ""),
                 (TokenType::TT_MOD, ""),
@@ -1204,7 +1204,7 @@ impl Parser {
     pub fn binary_operator(
         &mut self,
         func_a: &'static str,
-        ops: Vec<(TokenType, &'static str)>,
+        ops: &[(TokenType, &'static str)],
         func_b: Option<&'static str>,
     ) -> ParseResult {
         let func_b = func_b.unwrap_or_else(|| func_a);
