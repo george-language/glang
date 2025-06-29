@@ -17,13 +17,13 @@ fn main() {
                     let dir_name = Path::new(second_arg.as_str());
 
                     fs::create_dir(&dir_name).expect("Cannot create directory (invalid name)");
-                    fs::create_dir(&dir_name.join("src"));
+                    let _ = fs::create_dir(&dir_name.join("src"));
 
-                    fs::write(
+                    let _ = fs::write(
                         &dir_name.join("main.glang"),
-                        "func main() {\n    bark(\"Hello world!\");\n}",
+                        "func main() {\n    bark(\"Hello world!\");\n}\n\nmain();",
                     );
-                    fs::write(
+                    let _ = fs::write(
                         &dir_name.join("README.md"),
                         "# Welcome to GLang!\nTo get started, see our documentation [here](https://sites.google.com/view/george-lang/documentation).",
                     );
@@ -31,13 +31,13 @@ fn main() {
             } else if first_arg == "init" {
                 let dir_name = Path::new(".");
 
-                fs::create_dir(&dir_name.join("src"));
+                let _ = fs::create_dir(&dir_name.join("src"));
 
-                fs::write(
+                let _ = fs::write(
                     &dir_name.join("main.glang"),
-                    "func main() {\n    bark(\"Hello world!\");\n}",
+                    "func main() {\n    bark(\"Hello world!\");\n}\n\nmain();",
                 );
-                fs::write(
+                let _ = fs::write(
                     &dir_name.join("README.md"),
                     "# Welcome to GLang!\nTo get started, see our documentation [here](https://sites.google.com/view/george-lang/documentation).",
                 );
@@ -54,9 +54,7 @@ fn main() {
             }
         }
     } else {
-        println!(
-            "George Language {VERSION}"
-        );
+        println!("George Language {VERSION}");
         println!("Type '/exit' to exit");
 
         loop {
