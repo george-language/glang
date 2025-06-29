@@ -150,7 +150,7 @@ impl Parser {
     pub fn arithmetic_expr(&mut self) -> ParseResult {
         self.binary_operator(
             "term",
-            vec![(TokenType::TT_PLUS, ""), (TokenType::TT_MINUS, "")],
+            &[(TokenType::TT_PLUS, ""), (TokenType::TT_MINUS, "")],
             None,
         )
     }
