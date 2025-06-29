@@ -128,7 +128,6 @@ impl BuiltInFunction {
             "type" => return self.execute_type(args, &mut exec_context),
             "fetch" => return self.execute_import(args, &mut exec_context),
             "run" => return self.execute_exec(args, &mut exec_context),
-            "docs" => return self.execute_docs(args, &mut exec_context),
             _ => panic!("CRITICAL ERROR: BUILT IN NAME IS NOT DEFINED"),
         };
     }
@@ -580,36 +579,6 @@ impl BuiltInFunction {
         }
 
         result.success(Some(Number::null_value()))
-    }
-
-    pub fn execute_docs(&self, args: &Vec<Box<Value>>, exec_ctx: &mut Context) -> RuntimeResult {
-        let mut result = RuntimeResult::new();
-        result.register(self.check_and_populate_args(&vec!["value".to_string()], args, exec_ctx));
-
-        if result.should_return() {
-            return result;
-        }
-
-        let object_arg = args[0].clone();
-
-        let object_link = match object_arg.object_type() {
-            "number" => {
-                "https://sites.google.com/view/george-lang/documentation/standard-docs/numbers"
-            }
-            "list" => "https://sites.google.com/view/george-lang/documentation/standard-docs/lists",
-            "string" => {
-                "https://sites.google.com/view/george-lang/documentation/standard-docs/strings"
-            }
-            "function" => {
-                "https://sites.google.com/view/george-lang/documentation/standard-docs/functions"
-            }
-            "built-in-function" => {
-                "https://sites.google.com/view/george-lang/documentation/standard-docs/built-ins"
-            }
-            _ => "https://sites.google.com/view/george-lang/home",
-        };
-
-        result.success(Some(StringObj::from(object_link)))
     }
 
     pub fn as_string(&self) -> String {

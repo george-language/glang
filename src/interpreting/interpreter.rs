@@ -30,7 +30,7 @@ impl Interpreter {
 
         let builtins = [
             "bark", "chew", "dig", "bury", "tostring", "tonumber", "length", "clear", "uhoh",
-            "type", "fetch", "docs", "run",
+            "type", "fetch", "run",
         ];
 
         for builtin in &builtins {

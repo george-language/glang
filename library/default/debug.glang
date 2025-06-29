@@ -1,10 +1,30 @@
 # file debug.glang: tools for debugging objects
 
+# TODO: Add all urls
+# Get object documentation based on it's type
+# arg <value>: the object to get documentation based on
+# returns: a string representation of the documentation url
+func docs(value) {
+    if type(value) == "number" {
+        give ""
+    } alsoif type(value) == "string" {
+        give ""
+    } alsoif type(value) == "list" {
+        give ""
+    } alsoif type(value) == "function" {
+        give ""
+    } alsoif type(value) == "built-in-function" {
+        give ""
+    } otherwise {
+        give "https://sites.google.com/view/george-lang/home"
+    }
+}
+
 # Display helpful info about a value
 # arg <value>: the object to display info about
 # returns: null
 func debug(value) {
     bark("object type: '" + type(value) + "'");
-    bark("display value (stdout): '" + tostring(value) + "'");
+    bark("display value: '" + tostring(value) + "'");
     bark("documentation: " + docs(value));
 }
