@@ -112,6 +112,54 @@ impl StringObj {
 
                     return (Some(Box::new(Value::StringValue(copy))), None);
                 }
+                "^" => {
+                    if value.value < -1.0 {
+                        return (
+                            None,
+                            Some(StandardError::new(
+                                "cannot access a negative index",
+                                value.pos_start.clone().unwrap(),
+                                value.pos_end.clone().unwrap(),
+                                Some(
+                                    "use an index greater than or equal to 0 or use -1 to reverse the string",
+                                ),
+                            )),
+                        );
+                    }
+
+                    if value.value == -1.0 {
+                        return (
+                            Some(StringObj::from(
+                                self.value.chars().rev().collect::<String>().as_str(),
+                            )),
+                            None,
+                        );
+                    }
+
+                    if (value.value as usize) >= self.value.len() {
+                        return (
+                            None,
+                            Some(StandardError::new(
+                                "index is out of bounds",
+                                value.pos_start.clone().unwrap(),
+                                value.pos_end.clone().unwrap(),
+                                None,
+                            )),
+                        );
+                    }
+
+                    return (
+                        Some(StringObj::from(
+                            self.value
+                                .chars()
+                                .nth(value.value as usize)
+                                .unwrap()
+                                .to_string()
+                                .as_str(),
+                        )),
+                        None,
+                    );
+                }
                 _ => (None, Some(self.illegal_operation(Some(other)))),
             },
             _ => (None, Some(self.illegal_operation(Some(other)))),

@@ -133,7 +133,9 @@ impl List {
                                 "cannot access a negative index",
                                 right.pos_start.clone().unwrap(),
                                 right.pos_end.clone().unwrap(),
-                                Some("use an index greater than or equal to 0"),
+                                Some(
+                                    "use an index greater than or equal to 0 or use -1 to reverse the list",
+                                ),
                             )),
                         );
                     }
@@ -142,7 +144,7 @@ impl List {
                         return (Some(self.reverse()), None);
                     }
 
-                    if (right.value as usize) > self.elements.len() {
+                    if (right.value as usize) >= self.elements.len() {
                         return (
                             None,
                             Some(StandardError::new(
@@ -169,7 +171,7 @@ impl List {
                         );
                     }
 
-                    if (right.value as usize) > self.elements.len() {
+                    if (right.value as usize) >= self.elements.len() {
                         return (
                             None,
                             Some(StandardError::new(

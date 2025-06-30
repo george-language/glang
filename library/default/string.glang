@@ -1,5 +1,13 @@
 # file string.glang: string operations in glang
 
+# Get char at index in string
+# arg <str>: the string to index
+# arg <index>: the second string
+# returns: the char at the specified index
+func charat(str, index) {
+    give str ^ index;
+}
+
 # Join two strings together
 # arg <string_a>: the first string
 # arg <string_b>: the second string
