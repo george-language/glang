@@ -5,7 +5,58 @@
 # arg <index>: the second string
 # returns: the char at the specified index
 func charat(str, index) {
+    if index < 0 {
+        uhoh("cannot index a strings chars at a value less than 0");
+    }
+
     give str ^ index;
+}
+
+# Reverse a string
+# arg <str>: the string to reverse
+# returns: new string with the chars reversed
+func reverse_str(str) {
+    give str ^ -1;
+}
+
+# Check if a string starts with the specified chars
+# arg <str>: the string to check
+# arg <chars>: the starting chars
+# returns: true if starts with chars otherwise false
+func startswith(str, chars) {
+    if length(chars) > length(str) {
+        give false;
+    }
+
+    walk i = 0 through length(chars) {
+        if charat(str, i) != charat(chars, i) {
+            give false;
+        }
+    }
+
+    give true;
+}
+
+# Check if a string ends with the specified chars
+# arg <str>: the string to check
+# arg <chars>: the ending chars
+# returns: true if ends with chars otherwise false
+func endswith(str, chars) {
+    if length(chars) > length(str) {
+        give false;
+    }
+
+    # we have to reverse each string because we can't iterate backwards through a string
+    obj str = reverse_str(str);
+    obj chars = reverse_str(chars);
+
+    walk i = 0 through length(chars) {
+        if charat(str, i) != charat(chars, i) {
+            give false;
+        }
+    }
+
+    give true;
 }
 
 # Join two strings together
