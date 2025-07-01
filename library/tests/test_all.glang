@@ -1,0 +1,29 @@
+# file test_all.glang: test all glang features in one go
+
+fetch(std_math); # imports
+bark(math_pi); # built in functions
+obj x = 0; # object creation
+
+# looping
+walk i = 0 through 10 {
+    bark("'i' is equal to: " + tostring(i));
+
+    if i == 5 {
+        leave;
+    }
+}
+
+while 1 == 1 {
+    bark("Inside a while loop");
+
+    leave;
+}
+
+# function definitions
+func greet(name) {
+    bark("Hello, " + name + "!");
+
+    give null;
+}
+
+greet("George");
