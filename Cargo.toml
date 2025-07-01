@@ -7,3 +7,7 @@ edition = "2024"
 
 [dependencies]
 simply_colored = "0.1.0"
+
+[features]
+default = []
+benchmark = []

@@ -12,6 +12,7 @@ use crate::{
     parsing::parser::Parser,
 };
 use std::fs;
+use std::time::Instant;
 
 pub fn run(filename: &str, code: Option<String>) -> Option<StandardError> {
     let mut contents = String::new();
@@ -30,6 +31,8 @@ pub fn run(filename: &str, code: Option<String>) -> Option<StandardError> {
             contents.push_str(result.unwrap().as_str());
         }
     }
+
+    let start = Instant::now();
 
     let mut lexer = Lexer::new(filename.to_string(), contents.clone());
     let (tokens, error) = lexer.make_tokens();
@@ -50,6 +53,12 @@ pub fn run(filename: &str, code: Option<String>) -> Option<StandardError> {
     let mut context = Context::new("<program>".to_string(), None, None);
     context.symbol_table = Some(interpreter.global_symbol_table.clone());
     let result = interpreter.visit(ast.node.unwrap(), &mut context);
+
+    let duration = start.elapsed();
+
+    if cfg!(feature = "benchmark") {
+        println!("Time elapsed in ms: {:?}", &duration);
+    }
 
     result.error
 }
