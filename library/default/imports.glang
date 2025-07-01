@@ -1,4 +1,5 @@
 # file imports.glang: easy access imports for retrieving modules
 
 obj std_hashmap = "library/std/hashmap.glang";
+obj std_format = "library/std/format.glang";
 obj std_math = "library/std/math.glang";

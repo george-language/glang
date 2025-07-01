@@ -1,0 +1,37 @@
+# file format.glang: basic implementation of string formatting
+
+# Format a string with the specified argument
+# arg <str>: the string object
+# arg <value>: the value to format the string with (any)
+# returns: a new string with the formatted argument inside
+func format(str, value) {
+    if type(str) != "string" {
+        uhoh("expected type string in 'format'");
+    }
+
+    obj result = "";
+
+    walk i = 0 through length(str) {
+        obj char = charat(str, i);
+
+        if char == "{" {
+            if i < length(str) { # not at end of string
+                obj closing = charat(str, i + 1);
+
+                if closing == "}" {
+                    obj result = join(result, tostring(value));
+                } otherwise {
+                    uhoh("'format' expects string with closing brackets '{}'");
+                }
+            }
+        } otherwise {
+            if char == "}" {
+                next;
+            }
+
+            obj result = join(result, char);
+        }
+    }
+
+    give result;
+}

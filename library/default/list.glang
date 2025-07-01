@@ -5,6 +5,10 @@
 # arg <value>: the value to add into the list
 # returns: a copy of the list with the new value inside
 func push(list, value) {
+    if type(list) != "list" {
+        uhoh("expected type list in 'push'");
+    }
+
     give list * value;
 }
 
@@ -13,6 +17,14 @@ func push(list, value) {
 # arg <list_b>: second list to add
 # returns: a new version of the two lists combined
 func append(list_a, list_b) {
+    if type(list_a) != "list" {
+        uhoh("argument 'list_a' must be type list in 'append'");
+    }
+
+    if type(list_a) != "list" {
+        uhoh("argument 'list_b' must be type list in 'append'");
+    }
+
     give list_a + list_b;
 }
 
@@ -21,6 +33,14 @@ func append(list_a, list_b) {
 # arg <index>: index to remove from the list
 # returns: a new version of the list with the removed value
 func remove(list, index) {
+    if type(list) != "list" {
+        uhoh("expected type list in 'remove'");
+    }
+
+    if type(index) != "number" {
+        uhoh("argument 'index' must be type number in 'remove'");
+    }
+
     give list - index;
 }
 
@@ -29,12 +49,24 @@ func remove(list, index) {
 # arg <index>: index to retrieve from the list
 # returns: a copy of the value at the retrieved index
 func retrieve(list, index) {
+    if type(list) != "list" {
+        uhoh("expected type list in 'retrieve'");
+    }
+
+    if type(index) != "number" {
+        uhoh("argument 'index' must be type number in 'retrieve'");
+    }
+
     give list ^ index;
 }
 
 # Reverse a list
 # arg <list>: the list to reverse
 # returns: a new version of the list with it's values reversed
-func reversed(list) {
+func reverse(list) {
+    if type(list) != "list" {
+        uhoh("expected type list in 'reverse'");
+    }
+
     give list ^ -1;
 }

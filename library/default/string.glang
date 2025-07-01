@@ -5,8 +5,16 @@
 # arg <index>: the second string
 # returns: the char at the specified index
 func charat(str, index) {
+    if type(str) != "string" {
+        uhoh("expected type string in 'charat'");
+    }
+
+    if type(index) != "number" {
+        uhoh("argument 'index' must be type number in 'charat'");
+    }
+
     if index < 0 {
-        uhoh("cannot index a strings chars at a value less than 0");
+        uhoh("cannot index a strings characters at a value less than 0 in 'charat'");
     }
 
     give str ^ index;
@@ -16,6 +24,10 @@ func charat(str, index) {
 # arg <str>: the string to reverse
 # returns: new string with the chars reversed
 func reverse_str(str) {
+    if type(str) != "string" {
+        uhoh("expected type string in 'reverse_str'");
+    }
+
     give str ^ -1;
 }
 
@@ -24,6 +36,14 @@ func reverse_str(str) {
 # arg <chars>: the starting chars
 # returns: true if starts with chars otherwise false
 func startswith(str, chars) {
+    if type(str) != "string" {
+        uhoh("expected type string in 'startswith'");
+    }
+
+    if type(chars) != "string" {
+        uhoh("argument 'chars' must be type string in 'startswith'");
+    }
+
     if length(chars) > length(str) {
         give false;
     }
@@ -42,6 +62,14 @@ func startswith(str, chars) {
 # arg <chars>: the ending chars
 # returns: true if ends with chars otherwise false
 func endswith(str, chars) {
+    if type(str) != "string" {
+        uhoh("expected type string in 'endswith'");
+    }
+
+    if type(chars) != "string" {
+        uhoh("argument 'chars' must be type string in 'endswith'");
+    }
+
     if length(chars) > length(str) {
         give false;
     }
@@ -64,5 +92,13 @@ func endswith(str, chars) {
 # arg <string_b>: the second string
 # returns: the two strings combined as a new string
 func join(string_a, string_b) {
+    if type(string_a) != "string" {
+        uhoh("argument 'string_a' must be type string in 'join'");
+    }
+
+    if type(string_b) != "string" {
+        uhoh("argument 'string_b' must be type string in 'join'");
+    }
+
     give string_a + string_b;
 }
