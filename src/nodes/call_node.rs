@@ -11,7 +11,7 @@ pub struct CallNode {
 
 impl CallNode {
     pub fn new(node_to_call: Box<AstNode>, arg_nodes: Vec<Box<AstNode>>) -> Self {
-        CallNode {
+        Self {
             node_to_call: node_to_call.clone(),
             arg_nodes: arg_nodes.clone(),
             pos_start: node_to_call.position_start(),

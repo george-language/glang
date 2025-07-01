@@ -14,7 +14,7 @@ impl IfNode {
         cases: Vec<(Box<AstNode>, Box<AstNode>, bool)>,
         else_case: Option<(Box<AstNode>, bool)>,
     ) -> Self {
-        IfNode {
+        Self {
             cases: cases.clone(),
             else_case: else_case.clone(),
             pos_start: Some(cases[0].0.position_start().unwrap()),

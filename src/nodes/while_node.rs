@@ -16,7 +16,7 @@ impl WhileNode {
         body_node: Box<AstNode>,
         should_return_null: bool,
     ) -> Self {
-        WhileNode {
+        Self {
             condition_node: condition_node.clone(),
             body_node: body_node.clone(),
             should_return_null: should_return_null,

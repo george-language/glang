@@ -10,7 +10,7 @@ pub struct StringNode {
 
 impl StringNode {
     pub fn new(token: Token) -> Self {
-        StringNode {
+        Self {
             token: token.clone(),
             pos_start: token.clone().pos_start.clone(),
             pos_end: token.clone().pos_end.clone(),

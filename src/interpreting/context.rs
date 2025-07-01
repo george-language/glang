@@ -15,7 +15,7 @@ impl Context {
         parent: Option<Box<Context>>,
         parent_entry_pos: Option<Position>,
     ) -> Self {
-        Context {
+        Self {
             display_name: display_name,
             parent: parent,
             parent_entry_pos: parent_entry_pos,

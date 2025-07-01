@@ -27,7 +27,7 @@ impl ForNode {
     ) -> Self {
         let var_name_token = var_name_token.clone();
 
-        ForNode {
+        Self {
             var_name_token: var_name_token.clone(),
             start_value_node: start_value_node,
             end_value_node: end_value_node,

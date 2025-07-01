@@ -16,7 +16,7 @@ impl UnaryOperatorNode {
     pub fn new(op_token: Token, node: Box<AstNode>) -> Self {
         let pos_end = node.position_end();
 
-        UnaryOperatorNode {
+        Self {
             op_token: op_token.clone(),
             node: node,
             pos_start: op_token.pos_start.clone(),

@@ -34,7 +34,7 @@ pub fn run(filename: &str, code: Option<String>) -> Option<StandardError> {
 
     let start = Instant::now();
 
-    let mut lexer = Lexer::new(filename.to_string(), contents.clone());
+    let mut lexer = Lexer::new(filename, contents.clone());
     let (tokens, error) = lexer.make_tokens();
 
     if error.is_some() {

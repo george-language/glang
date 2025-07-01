@@ -9,7 +9,7 @@ pub struct SymbolTable {
 
 impl SymbolTable {
     pub fn new(parent: Option<Box<SymbolTable>>) -> Self {
-        SymbolTable {
+        Self {
             symbols: HashMap::new(),
             parent: parent,
         }

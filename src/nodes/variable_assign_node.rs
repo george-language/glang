@@ -14,7 +14,7 @@ pub struct VariableAssignNode {
 
 impl VariableAssignNode {
     pub fn new(var_name_token: Token, value_node: Box<AstNode>) -> Self {
-        VariableAssignNode {
+        Self {
             var_name_token: var_name_token.clone(),
             value_node: value_node,
             pos_start: var_name_token.clone().pos_start.clone(),

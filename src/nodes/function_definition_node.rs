@@ -21,7 +21,7 @@ impl FunctionDefinitionNode {
         body_node: Box<AstNode>,
         should_auto_return: bool,
     ) -> Self {
-        FunctionDefinitionNode {
+        Self {
             var_name_token: var_name_token.clone(),
             arg_name_tokens: arg_name_tokens.clone(),
             body_node: body_node.clone(),

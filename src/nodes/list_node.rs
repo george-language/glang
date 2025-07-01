@@ -14,7 +14,7 @@ impl ListNode {
         pos_start: Option<Position>,
         pos_end: Option<Position>,
     ) -> Self {
-        ListNode {
+        Self {
             element_nodes: element_nodes,
             pos_start: pos_start,
             pos_end: pos_end,

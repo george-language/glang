@@ -14,7 +14,7 @@ use crate::{
     },
     values::{
         built_in_function::BuiltInFunction, function::Function, list::List, number::Number,
-        string::StringObj, value::Value,
+        string::Str, value::Value,
     },
 };
 
@@ -24,7 +24,7 @@ pub struct Interpreter {
 
 impl Interpreter {
     pub fn new() -> Self {
-        let interpreter = Interpreter {
+        let interpreter = Self {
             global_symbol_table: Rc::new(RefCell::new(SymbolTable::new(None))),
         };
 
@@ -133,7 +133,7 @@ impl Interpreter {
 
     pub fn visit_string_node(&mut self, node: &StringNode, context: &mut Context) -> RuntimeResult {
         RuntimeResult::new().success(Some(
-            Value::StringValue(StringObj::new(node.token.value.as_ref().unwrap().clone()))
+            Value::StringValue(Str::new(node.token.value.as_ref().unwrap().clone()))
                 .set_context(Some(context.clone()))
                 .set_position(node.pos_start.clone(), node.pos_end.clone()),
         ))

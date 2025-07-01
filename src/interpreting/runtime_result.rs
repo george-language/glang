@@ -11,7 +11,7 @@ pub struct RuntimeResult {
 
 impl RuntimeResult {
     pub fn new() -> Self {
-        RuntimeResult {
+        Self {
             value: None,
             error: None,
             func_return_value: None,

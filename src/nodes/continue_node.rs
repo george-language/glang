@@ -9,7 +9,7 @@ pub struct ContinueNode {
 
 impl ContinueNode {
     pub fn new(pos_start: Option<Position>, pos_end: Option<Position>) -> Self {
-        ContinueNode {
+        Self {
             pos_start: pos_start.clone(),
             pos_end: pos_end.clone(),
         }

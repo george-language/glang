@@ -12,15 +12,15 @@ impl Position {
         index: isize,
         line_num: isize,
         column_num: isize,
-        filename: String,
-        file_contents: String,
+        filename: &str,
+        file_contents: &str,
     ) -> Self {
-        Position {
+        Self {
             index: index,
             line_num: line_num,
             column_num: column_num,
-            filename: filename,
-            file_contents: file_contents,
+            filename: filename.to_string(),
+            file_contents: file_contents.to_string(),
         }
     }
 

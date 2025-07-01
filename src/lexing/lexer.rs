@@ -13,13 +13,13 @@ pub struct Lexer {
 }
 
 impl Lexer {
-    pub fn new(filename: String, text: String) -> Self {
+    pub fn new(filename: &str, text: String) -> Self {
         let contents = text.replace("\r\n", "\n");
 
-        let mut lexer = Lexer {
-            filename: filename.clone(),
-            text: contents.clone(),
-            position: Position::new(-1, 0, -1, filename, contents.clone()),
+        let mut lexer = Self {
+            filename: filename.to_string(),
+            text: contents.to_string(),
+            position: Position::new(-1, 0, -1, filename, &contents.clone()),
             current_char: None,
         };
         lexer.advance();

@@ -6,16 +6,16 @@ use crate::{
 };
 
 #[derive(Debug, Clone)]
-pub struct StringObj {
+pub struct Str {
     pub value: String,
     pub context: Option<Context>,
     pub pos_start: Option<Position>,
     pub pos_end: Option<Position>,
 }
 
-impl StringObj {
+impl Str {
     pub fn new(value: String) -> Self {
-        StringObj {
+        Str {
             value: value,
             context: None,
             pos_start: None,
@@ -24,7 +24,7 @@ impl StringObj {
     }
 
     pub fn from(string: &str) -> Box<Value> {
-        Box::new(Value::StringValue(StringObj::new(string.to_string())))
+        Box::new(Value::StringValue(Str::new(string.to_string())))
     }
 
     pub fn perform_operation(
@@ -129,7 +129,7 @@ impl StringObj {
 
                     if value.value == -1.0 {
                         return (
-                            Some(StringObj::from(
+                            Some(Str::from(
                                 self.value.chars().rev().collect::<String>().as_str(),
                             )),
                             None,
@@ -149,7 +149,7 @@ impl StringObj {
                     }
 
                     return (
-                        Some(StringObj::from(
+                        Some(Str::from(
                             self.value
                                 .chars()
                                 .nth(value.value as usize)

@@ -4,7 +4,7 @@ use crate::{
     lexing::position::Position,
     values::{
         built_in_function::BuiltInFunction, function::Function, list::List, number::Number,
-        string::StringObj,
+        string::Str,
     },
 };
 
@@ -12,7 +12,7 @@ use crate::{
 pub enum Value {
     NumberValue(Number),
     ListValue(List),
-    StringValue(StringObj),
+    StringValue(Str),
     FunctionValue(Function),
     BuiltInFunction(BuiltInFunction),
 }

@@ -12,7 +12,7 @@ pub struct StandardError {
 
 impl StandardError {
     pub fn new(text: &str, pos_start: Position, pos_end: Position, help: Option<&str>) -> Self {
-        StandardError {
+        Self {
             text: text.to_string(),
             pos_start: pos_start,
             pos_end: pos_end,

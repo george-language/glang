@@ -16,7 +16,7 @@ pub struct List {
 
 impl List {
     pub fn new(elements: Vec<Option<Box<Value>>>) -> Self {
-        List {
+        Self {
             elements: elements,
             context: None,
             pos_start: None,

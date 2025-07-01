@@ -20,7 +20,7 @@ pub struct Parser {
 
 impl Parser {
     pub fn new(tokens: Vec<Token>) -> Self {
-        let mut parser = Parser {
+        let mut parser = Self {
             tokens: tokens,
             token_index: -1,
             current_token: None,

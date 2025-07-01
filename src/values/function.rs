@@ -29,7 +29,7 @@ impl Function {
         arg_names: Vec<String>,
         should_auto_return: bool,
     ) -> Self {
-        Function {
+        Self {
             name: name,
             body_node: body_node,
             arg_names: arg_names,

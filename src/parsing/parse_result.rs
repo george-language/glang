@@ -11,7 +11,7 @@ pub struct ParseResult {
 
 impl ParseResult {
     pub fn new() -> Self {
-        ParseResult {
+        Self {
             error: None,
             node: None,
             last_registered_advance_count: 0,

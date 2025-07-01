@@ -14,7 +14,7 @@ impl ReturnNode {
         pos_start: Option<Position>,
         pos_end: Option<Position>,
     ) -> Self {
-        ReturnNode {
+        Self {
             node_to_return: node,
             pos_start: pos_start,
             pos_end: pos_end,

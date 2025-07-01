@@ -9,7 +9,7 @@ pub struct BreakNode {
 
 impl BreakNode {
     pub fn new(pos_start: Option<Position>, pos_end: Option<Position>) -> Self {
-        BreakNode {
+        Self {
             pos_start: pos_start.clone(),
             pos_end: pos_end.clone(),
         }

@@ -26,7 +26,7 @@ impl Token {
             end = Some(advanced);
         }
 
-        Token {
+        Self {
             token_type: token_type,
             value: value,
             pos_start: start,

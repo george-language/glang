@@ -6,7 +6,7 @@ use crate::{
     },
     lexing::{lexer::Lexer, position::Position},
     parsing::parser::Parser,
-    values::{list::List, number::Number, string::StringObj, value::Value},
+    values::{list::List, number::Number, string::Str, value::Value},
 };
 use std::{cell::RefCell, fs, io::Write, io::stdin, io::stdout, rc::Rc};
 
@@ -177,7 +177,7 @@ impl BuiltInFunction {
             .read_line(&mut input)
             .expect("did not enter a valid string");
 
-        result.success(Some(StringObj::from(input.trim())))
+        result.success(Some(Str::from(input.trim())))
     }
 
     pub fn execute_read(&self, args: &Vec<Box<Value>>, exec_ctx: &mut Context) -> RuntimeResult {
@@ -225,7 +225,7 @@ impl BuiltInFunction {
             }
         }
 
-        result.success(Some(StringObj::from(contents.as_str())))
+        result.success(Some(Str::from(contents.as_str())))
     }
 
     pub fn execute_write(&self, args: &Vec<Box<Value>>, exec_ctx: &mut Context) -> RuntimeResult {
@@ -294,7 +294,7 @@ impl BuiltInFunction {
             return result;
         }
 
-        result.success(Some(StringObj::from(args[0].as_string().as_str())))
+        result.success(Some(Str::from(args[0].as_string().as_str())))
     }
 
     pub fn execute_tonumber(
@@ -373,7 +373,7 @@ impl BuiltInFunction {
         let obj_to_clear = args[0].clone();
 
         let cleared_value: Box<Value> = match obj_to_clear.as_ref() {
-            Value::StringValue(_) => StringObj::from(""),
+            Value::StringValue(_) => Str::from(""),
             Value::ListValue(_) => List::from(vec![]),
             _ => {
                 return result.failure(Some(StandardError::new(
@@ -426,7 +426,7 @@ impl BuiltInFunction {
             return result;
         }
 
-        result.success(Some(StringObj::from(
+        result.success(Some(Str::from(
             format!("{}", args[0].object_type()).as_str(),
         )))
     }
@@ -485,7 +485,7 @@ impl BuiltInFunction {
             }
         }
 
-        let mut lexer = Lexer::new(import.position_start().unwrap().filename, contents.clone());
+        let mut lexer = Lexer::new(&import.position_start().unwrap().filename, contents.clone());
         let (tokens, error) = lexer.make_tokens();
 
         if error.is_some() {
@@ -555,7 +555,7 @@ impl BuiltInFunction {
             }
         };
 
-        let mut lexer = Lexer::new(code_arg.position_start().unwrap().filename, code.clone());
+        let mut lexer = Lexer::new(&code_arg.position_start().unwrap().filename, code.clone());
         let (tokens, error) = lexer.make_tokens();
 
         if error.is_some() {
