@@ -526,18 +526,12 @@ impl Interpreter {
             .collect();
 
         for (name, value) in symbols {
-            context.symbol_table.as_ref().unwrap().borrow_mut().set(
-                name.clone(),
-                Some(
-                    value
-                        .unwrap()
-                        .set_context(Some(context.clone()))
-                        .set_position(
-                            import.position_start().clone(),
-                            import.position_end().clone(),
-                        ),
-                ),
-            );
+            context
+                .symbol_table
+                .as_ref()
+                .unwrap()
+                .borrow_mut()
+                .set(name, value);
         }
 
         result.success(Some(Number::null_value()))
