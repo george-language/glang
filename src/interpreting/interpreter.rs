@@ -499,7 +499,7 @@ impl Interpreter {
             return result.failure(error);
         }
 
-        let mut parser = Parser::new(tokens);
+        let mut parser = Parser::new(&tokens);
         let ast = parser.parse();
 
         if ast.error.is_some() {

@@ -42,7 +42,7 @@ pub fn run(filename: &str, code: Option<String>) -> Option<StandardError> {
         return error;
     }
 
-    let mut parser = Parser::new(tokens);
+    let mut parser = Parser::new(&tokens);
     let ast = parser.parse();
 
     if ast.error.is_some() {

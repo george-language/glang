@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use crate::{
     errors::standard_error::StandardError,
     lexing::{position::Position, token::Token, token_type::TokenType},
@@ -14,15 +16,15 @@ use crate::{
 };
 
 pub struct Parser {
-    pub tokens: Vec<Token>,
+    pub tokens: Arc<[Token]>,
     pub token_index: isize,
     pub current_token: Option<Token>,
 }
 
 impl Parser {
-    pub fn new(tokens: Vec<Token>) -> Self {
+    pub fn new(tokens: &[Token]) -> Self {
         let mut parser = Self {
-            tokens: tokens,
+            tokens: Arc::from(tokens),
             token_index: -1,
             current_token: None,
         };
