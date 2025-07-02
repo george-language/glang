@@ -1,9 +1,9 @@
 use crate::{lexing::position::Position, nodes::ast_node::AstNode};
-use std::fmt::Display;
+use std::{fmt::Display, sync::Arc};
 
 #[derive(Debug, Clone)]
 pub struct IfNode {
-    pub cases: Vec<(Box<AstNode>, Box<AstNode>, bool)>,
+    pub cases: Arc<[(Box<AstNode>, Box<AstNode>, bool)]>,
     pub else_case: Option<(Box<AstNode>, bool)>,
     pub pos_start: Option<Position>,
     pub pos_end: Option<Position>,
@@ -11,11 +11,11 @@ pub struct IfNode {
 
 impl IfNode {
     pub fn new(
-        cases: Vec<(Box<AstNode>, Box<AstNode>, bool)>,
+        cases: &[(Box<AstNode>, Box<AstNode>, bool)],
         else_case: Option<(Box<AstNode>, bool)>,
     ) -> Self {
         Self {
-            cases: cases.clone(),
+            cases: Arc::from(cases),
             else_case: else_case.clone(),
             pos_start: Some(cases[0].0.position_start().unwrap()),
             pos_end: if else_case.is_none() {

@@ -204,7 +204,7 @@ impl Interpreter {
     pub fn visit_if_node(&mut self, node: &IfNode, context: &mut Context) -> RuntimeResult {
         let mut result = RuntimeResult::new();
 
-        for (condition, expr, should_return_null) in &node.cases {
+        for (condition, expr, should_return_null) in node.cases.iter() {
             let condition_value = result.register(self.visit(condition.clone(), context));
 
             if result.should_return() {

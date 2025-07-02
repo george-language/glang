@@ -227,7 +227,7 @@ impl Parser {
             return if_parse_result;
         }
 
-        parse_result.success(Some(Box::new(AstNode::If(IfNode::new(cases, else_case)))))
+        parse_result.success(Some(Box::new(AstNode::If(IfNode::new(&cases, else_case)))))
     }
 
     pub fn if_expr_b(
