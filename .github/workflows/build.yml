@@ -1,4 +1,4 @@
-name: GLang MacOS Build
+name: GLang macOS CLI Build
 
 on:
   push:
@@ -8,49 +8,51 @@ on:
 jobs:
   build:
     runs-on: macos-latest
+    strategy:
+      matrix:
+        arch: [x86_64-apple-darwin, aarch64-apple-darwin]
+
+    env:
+      CARGO_BUILD_TARGET: ${{ matrix.arch }}
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install Rust targets
-        run: |
-          rustup target add aarch64-apple-darwin x86_64-apple-darwin
-
-      - name: Build for x86_64
-        run: cargo build --release --target x86_64-apple-darwin
-
-      - name: Build for aarch64
-        run: cargo build --release --target aarch64-apple-darwin
-
-      - name: Create universal binary
-        run: |
-          mkdir -p universal
-          lipo -create \
-            target/x86_64-apple-darwin/release/glang \
-            target/aarch64-apple-darwin/release/glang \
-            -output universal/glang
-          chmod +x universal/glang
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-apple-darwin,aarch64-apple-darwin
 
       - name: Install create-dmg
         run: brew install create-dmg
 
+      - name: Build CLI binary
+        run: cargo build --release --target=${{ matrix.arch }}
+
+      - name: Prepare files for DMG
+        run: |
+          mkdir dmg_content
+          cp target/${{ matrix.arch }}/release/glang dmg_content/
+          cp utils/README.txt dmg_content/
+          chmod +x dmg_content/glang
+
       - name: Create DMG
         run: |
-          mkdir dmg-staging
-          cp universal/glang dmg-staging/
           create-dmg \
             --volname "George Language Installer" \
             --background "utils/dmg_installer_background.png" \
             --window-pos 200 120 \
             --window-size 500 300 \
             --icon-size 100 \
-            --icon "glang" 125 125 \
-            --app-drop-link 375 125 \
-            "dmg-staging/"
+            --icon "glang" 100 150 \
+            --icon "README.txt" 300 150 \
+            --app-drop-link 420 150 \
+            "GeorgeLanguage_${{ matrix.arch }}.dmg" \
+            dmg_content/
 
-      - name: Upload DMG as artifact
+      - name: Upload DMG
         uses: actions/upload-artifact@v4
         with:
-          name: GeorgeLanguage_macOS_setup.dmg
-          path: GeorgeLanguage_macOS_setup.dmg
+          name: GeorgeLanguage_${{ matrix.arch }}.dmg
+          path: GeorgeLanguage_${{ matrix.arch }}.dmg
