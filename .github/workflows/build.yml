@@ -1,0 +1,58 @@
+name: GLang MacOS Build
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Rust targets
+        run: |
+          rustup target add aarch64-apple-darwin x86_64-apple-darwin
+
+      - name: Build for x86_64
+        run: cargo build --release --target x86_64-apple-darwin
+
+      - name: Build for aarch64
+        run: cargo build --release --target aarch64-apple-darwin
+
+      - name: Create universal binary
+        run: |
+          mkdir -p universal
+          lipo -create \
+            target/x86_64-apple-darwin/release/glang \
+            target/aarch64-apple-darwin/release/glang \
+            -output universal/glang
+          chmod +x universal/glang
+
+      - name: Install create-dmg
+        run: brew install create-dmg
+
+      - name: Create DMG
+        run: |
+          mkdir dmg-staging
+          cp universal/glang dmg-staging/
+          create-dmg \
+            --volname "George Language Installer" \
+            --background "utils/dmg_installer_background.png" \
+            --window-pos 200 120 \
+            --window-size 500 300 \
+            --icon-size 100 \
+            --icon "glang" 125 125 \
+            --app-drop-link 375 125 \
+            --overwrite \
+            "GeorgeLanguage_macOS_setup.dmg" \
+            "dmg-staging/"
+
+      - name: Upload DMG as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: GeorgeLanguage_macOS_setup.dmg
+          path: GeorgeLanguage_macOS_setup.dmg
