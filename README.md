@@ -13,7 +13,7 @@ _A dog-themed, interpreted programming language for beginners._
 ## Showcase
 ```
 # import the math module
-fetch(std_math);
+fetch std_math;
 
 obj x = 0;
 
