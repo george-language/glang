@@ -1,11 +1,14 @@
 [
   {
-    // this will rebuild glang and run the test.glang file included with this repository
-    "label": "Run GLang Test",
-    "command": "cargo build; target/debug/glang.exe test.glang"
+    "label": "Run GLang Test All",
+    "command": "cargo build --release --features benchmark; target/release/glang.exe library/tests/test_all.glang"
   },
   {
-    "label": "Run GLang",
+    "label": "Run GLang Test Loop",
+    "command": "cargo build --release --features benchmark; target/release/glang.exe library/tests/test_loop.glang"
+  },
+  {
+    "label": "Run GLang REPL",
     "command": "cargo run"
   }
 ]
