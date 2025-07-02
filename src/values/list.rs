@@ -30,7 +30,7 @@ impl List {
 
     pub fn perform_operation(
         &mut self,
-        operator: &'static str,
+        operator: &str,
         other: Box<Value>,
     ) -> (Option<Box<Value>>, Option<StandardError>) {
         match other.as_ref() {

@@ -349,7 +349,7 @@ impl Parser {
 
     pub fn if_expr_cases(
         &mut self,
-        keyword: &'static str,
+        keyword: &str,
     ) -> (
         ParseResult,
         Vec<(Box<AstNode>, Box<AstNode>, bool)>,

@@ -83,7 +83,7 @@ impl Value {
 
     pub fn perform_operation(
         &mut self,
-        operator: &'static str,
+        operator: &str,
         other: Box<Value>,
     ) -> (Option<Box<Value>>, Option<StandardError>) {
         match self {
@@ -102,7 +102,7 @@ impl Value {
         }
     }
 
-    pub fn object_type(&self) -> &'static str {
+    pub fn object_type(&self) -> &str {
         match self {
             Value::NumberValue(_) => "number",
             Value::ListValue(_) => "list",
