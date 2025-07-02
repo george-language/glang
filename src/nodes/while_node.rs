@@ -5,21 +5,15 @@ use std::fmt::Display;
 pub struct WhileNode {
     pub condition_node: Box<AstNode>,
     pub body_node: Box<AstNode>,
-    pub should_return_null: bool,
     pub pos_start: Option<Position>,
     pub pos_end: Option<Position>,
 }
 
 impl WhileNode {
-    pub fn new(
-        condition_node: Box<AstNode>,
-        body_node: Box<AstNode>,
-        should_return_null: bool,
-    ) -> Self {
+    pub fn new(condition_node: Box<AstNode>, body_node: Box<AstNode>) -> Self {
         Self {
             condition_node: condition_node.clone(),
             body_node: body_node.clone(),
-            should_return_null: should_return_null,
             pos_start: condition_node.position_start(),
             pos_end: body_node.position_end(),
         }

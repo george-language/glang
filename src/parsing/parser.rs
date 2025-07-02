@@ -105,7 +105,7 @@ impl Parser {
 
         if self
             .current_token_copy()
-            .matches(TokenType::TT_KEYWORD, Some("not"))
+            .matches(TokenType::TT_KEYWORD, "not")
         {
             let op_token = self.current_token_copy();
             parse_result.register_advancement();
@@ -248,7 +248,7 @@ impl Parser {
 
         if self
             .current_token_ref()
-            .matches(TokenType::TT_KEYWORD, Some("otherwise"))
+            .matches(TokenType::TT_KEYWORD, "otherwise")
         {
             parse_result.register_advancement();
             self.advance();
@@ -312,7 +312,7 @@ impl Parser {
 
         while self
             .current_token_ref()
-            .matches(TokenType::TT_KEYWORD, Some("alsoif"))
+            .matches(TokenType::TT_KEYWORD, "alsoif")
         {
             let (if_parse_result, mut new_cases, new_else_case) = self.if_expr_b();
 
@@ -332,7 +332,7 @@ impl Parser {
 
         if self
             .current_token_ref()
-            .matches(TokenType::TT_KEYWORD, Some("otherwise"))
+            .matches(TokenType::TT_KEYWORD, "otherwise")
         {
             let (else_parse_result, new_else_case) = self.if_expr_c();
 
@@ -361,7 +361,7 @@ impl Parser {
 
         if !self
             .current_token_ref()
-            .matches(TokenType::TT_KEYWORD, Some(keyword))
+            .matches(TokenType::TT_KEYWORD, keyword)
         {
             return (
                 parse_result.failure(Some(StandardError::new(
@@ -447,7 +447,7 @@ impl Parser {
 
         if !self
             .current_token_ref()
-            .matches(TokenType::TT_KEYWORD, Some("walk"))
+            .matches(TokenType::TT_KEYWORD, "walk")
         {
             return parse_result.failure(Some(StandardError::new(
                 "expected keyword",
@@ -499,7 +499,7 @@ impl Parser {
 
         if !self
             .current_token_ref()
-            .matches(TokenType::TT_KEYWORD, Some("through"))
+            .matches(TokenType::TT_KEYWORD, "through")
         {
             return parse_result.failure(Some(StandardError::new(
                 "expected 'through'",
@@ -522,7 +522,7 @@ impl Parser {
 
         if self
             .current_token_ref()
-            .matches(TokenType::TT_KEYWORD, Some("step"))
+            .matches(TokenType::TT_KEYWORD, "step")
         {
             parse_result.register_advancement();
             self.advance();
@@ -590,7 +590,6 @@ impl Parser {
                 end_value.unwrap(),
                 step_value,
                 body.unwrap(),
-                true,
             )))));
         }
 
@@ -606,7 +605,6 @@ impl Parser {
             end_value.unwrap(),
             step_value,
             body.unwrap(),
-            false,
         )))))
     }
 
@@ -615,7 +613,7 @@ impl Parser {
 
         if !self
             .current_token_ref()
-            .matches(TokenType::TT_KEYWORD, Some("while"))
+            .matches(TokenType::TT_KEYWORD, "while")
         {
             return parse_result.failure(Some(StandardError::new(
                 "expected keyword",
@@ -669,7 +667,6 @@ impl Parser {
         return parse_result.success(Some(Box::new(AstNode::While(WhileNode::new(
             condition.unwrap(),
             body.unwrap(),
-            true,
         )))));
     }
 
@@ -678,7 +675,7 @@ impl Parser {
 
         if !self
             .current_token_ref()
-            .matches(TokenType::TT_KEYWORD, Some("fetch"))
+            .matches(TokenType::TT_KEYWORD, "fetch")
         {
             return parse_result.failure(Some(StandardError::new(
                 "expected keyword",
@@ -710,7 +707,7 @@ impl Parser {
 
         if self
             .current_token_ref()
-            .matches(TokenType::TT_KEYWORD, Some("obj"))
+            .matches(TokenType::TT_KEYWORD, "obj")
         {
             parse_result.register_advancement();
             self.advance();
@@ -783,7 +780,7 @@ impl Parser {
 
         if self
             .current_token_ref()
-            .matches(TokenType::TT_KEYWORD, Some("give"))
+            .matches(TokenType::TT_KEYWORD, "give")
         {
             parse_result.register_advancement();
             self.advance();
@@ -801,7 +798,7 @@ impl Parser {
             )))));
         } else if self
             .current_token_ref()
-            .matches(TokenType::TT_KEYWORD, Some("next"))
+            .matches(TokenType::TT_KEYWORD, "next")
         {
             parse_result.register_advancement();
             self.advance();
@@ -812,7 +809,7 @@ impl Parser {
             )))));
         } else if self
             .current_token_ref()
-            .matches(TokenType::TT_KEYWORD, Some("leave"))
+            .matches(TokenType::TT_KEYWORD, "leave")
         {
             parse_result.register_advancement();
             self.advance();
@@ -1022,7 +1019,7 @@ impl Parser {
             }
 
             return parse_result.success(expr);
-        } else if token.matches(TokenType::TT_KEYWORD, Some("if")) {
+        } else if token.matches(TokenType::TT_KEYWORD, "if") {
             let expr = parse_result.register(self.if_expr());
 
             if parse_result.error.is_some() {
@@ -1030,7 +1027,7 @@ impl Parser {
             }
 
             return parse_result.success(expr);
-        } else if token.matches(TokenType::TT_KEYWORD, Some("walk")) {
+        } else if token.matches(TokenType::TT_KEYWORD, "walk") {
             let expr = parse_result.register(self.for_expr());
 
             if parse_result.error.is_some() {
@@ -1038,7 +1035,7 @@ impl Parser {
             }
 
             return parse_result.success(expr);
-        } else if token.matches(TokenType::TT_KEYWORD, Some("while")) {
+        } else if token.matches(TokenType::TT_KEYWORD, "while") {
             let expr = parse_result.register(self.while_expr());
 
             if parse_result.error.is_some() {
@@ -1046,7 +1043,7 @@ impl Parser {
             }
 
             return parse_result.success(expr);
-        } else if token.matches(TokenType::TT_KEYWORD, Some("func")) {
+        } else if token.matches(TokenType::TT_KEYWORD, "func") {
             let func_def = parse_result.register(self.func_definition());
 
             if parse_result.error.is_some() {
@@ -1054,7 +1051,7 @@ impl Parser {
             }
 
             return parse_result.success(func_def);
-        } else if token.matches(TokenType::TT_KEYWORD, Some("fetch")) {
+        } else if token.matches(TokenType::TT_KEYWORD, "fetch") {
             let import_expr = parse_result.register(self.import_expr());
 
             if parse_result.error.is_some() {
@@ -1114,7 +1111,7 @@ impl Parser {
 
         if !self
             .current_token_ref()
-            .matches(TokenType::TT_KEYWORD, Some("func"))
+            .matches(TokenType::TT_KEYWORD, "func")
         {
             return parse_result.failure(Some(StandardError::new(
                 "expected keyword",
@@ -1246,9 +1243,9 @@ impl Parser {
 
     pub fn binary_operator(
         &mut self,
-        func_a: &'static str,
-        ops: &[(TokenType, &'static str)],
-        func_b: Option<&'static str>,
+        func_a: &str,
+        ops: &[(TokenType, &str)],
+        func_b: Option<&str>,
     ) -> ParseResult {
         let func_b = func_b.unwrap_or_else(|| func_a);
 

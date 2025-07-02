@@ -11,7 +11,6 @@ pub struct ForNode {
     pub end_value_node: Box<AstNode>,
     pub step_value_node: Option<Box<AstNode>>,
     pub body_node: Box<AstNode>,
-    pub should_return_null: bool,
     pub pos_start: Option<Position>,
     pub pos_end: Option<Position>,
 }
@@ -23,7 +22,6 @@ impl ForNode {
         end_value_node: Box<AstNode>,
         step_value_node: Option<Box<AstNode>>,
         body_node: Box<AstNode>,
-        should_return_null: bool,
     ) -> Self {
         let var_name_token = var_name_token.clone();
 
@@ -33,7 +31,6 @@ impl ForNode {
             end_value_node: end_value_node,
             step_value_node: step_value_node,
             body_node: body_node,
-            should_return_null: should_return_null,
             pos_start: var_name_token.pos_start,
             pos_end: var_name_token.pos_end,
         }

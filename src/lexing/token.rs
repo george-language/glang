@@ -34,8 +34,12 @@ impl Token {
         }
     }
 
-    pub fn matches(&self, token_type: TokenType, value: Option<&'static str>) -> bool {
-        self.token_type == token_type && self.value.as_deref() == value
+    pub fn matches(&self, token_type: TokenType, value: &str) -> bool {
+        if self.value.is_some() {
+            self.token_type == token_type && self.value.as_ref().unwrap() == value
+        } else {
+            false
+        }
     }
 }
 

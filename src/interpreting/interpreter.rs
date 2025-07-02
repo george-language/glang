@@ -246,7 +246,6 @@ impl Interpreter {
 
     pub fn visit_for_node(&mut self, node: &ForNode, context: &mut Context) -> RuntimeResult {
         let mut result = RuntimeResult::new();
-        let mut elements: Vec<Option<Box<Value>>> = Vec::new();
 
         let start_value = match result
             .register(self.visit(node.start_value_node.clone(), context))
@@ -324,7 +323,7 @@ impl Interpreter {
                 );
                 i += step_value.value;
 
-                let value = result.register(self.visit(node.body_node.clone(), context));
+                let _ = result.register(self.visit(node.body_node.clone(), context));
 
                 if result.should_return()
                     && result.loop_should_continue == false
@@ -340,10 +339,6 @@ impl Interpreter {
                 if result.loop_should_break {
                     break;
                 }
-
-                let value = value.unwrap();
-
-                elements.push(Some(value));
             }
         } else {
             while i > end_value.value {
@@ -353,7 +348,7 @@ impl Interpreter {
                 );
                 i += step_value.value;
 
-                let value = result.register(self.visit(node.body_node.clone(), context));
+                let _ = result.register(self.visit(node.body_node.clone(), context));
 
                 if result.should_return()
                     && result.loop_should_continue == false
@@ -369,27 +364,14 @@ impl Interpreter {
                 if result.loop_should_break {
                     break;
                 }
-
-                let value = value.unwrap();
-
-                elements.push(Some(value));
             }
         }
 
-        result.success(if node.should_return_null {
-            Some(Number::null_value())
-        } else {
-            Some(
-                Value::ListValue(List::new(elements))
-                    .set_context(Some(context.clone()))
-                    .set_position(node.pos_start.clone(), node.pos_end.clone()),
-            )
-        })
+        result.success(Some(Number::null_value()))
     }
 
     pub fn visit_while_node(&mut self, node: &WhileNode, context: &mut Context) -> RuntimeResult {
         let mut result = RuntimeResult::new();
-        let mut elements: Vec<Option<Box<Value>>> = Vec::new();
 
         loop {
             let condition = result.register(self.visit(node.condition_node.clone(), context));
@@ -404,7 +386,7 @@ impl Interpreter {
                 break;
             }
 
-            let value = result.register(self.visit(node.body_node.clone(), context));
+            let _ = result.register(self.visit(node.body_node.clone(), context));
 
             if result.should_return()
                 && result.loop_should_continue == false
@@ -420,21 +402,9 @@ impl Interpreter {
             if result.loop_should_break {
                 break;
             }
-
-            let value = value.unwrap();
-
-            elements.push(Some(value))
         }
 
-        result.success(if node.should_return_null {
-            Some(Number::null_value())
-        } else {
-            Some(
-                Value::ListValue(List::new(elements))
-                    .set_context(Some(context.clone()))
-                    .set_position(node.pos_start.clone(), node.pos_end.clone()),
-            )
-        })
+        result.success(Some(Number::null_value()))
     }
 
     pub fn visit_import_node(&mut self, node: &ImportNode, context: &mut Context) -> RuntimeResult {
@@ -680,9 +650,9 @@ impl Interpreter {
             (number, error) = left.perform_operation("<=", right);
         } else if node.op_token.token_type == TokenType::TT_GTE {
             (number, error) = left.perform_operation(">=", right);
-        } else if node.op_token.matches(TokenType::TT_KEYWORD, Some("and")) {
+        } else if node.op_token.matches(TokenType::TT_KEYWORD, "and") {
             (number, error) = left.perform_operation("and", right);
-        } else if node.op_token.matches(TokenType::TT_KEYWORD, Some("or")) {
+        } else if node.op_token.matches(TokenType::TT_KEYWORD, "or") {
             (number, error) = left.perform_operation("or", right);
         } else {
             (number, error) = left.perform_operation("", right);
@@ -721,7 +691,7 @@ impl Interpreter {
 
         if node.op_token.token_type == TokenType::TT_MINUS {
             (number, error) = value.perform_operation("*", Number::from(-1.0));
-        } else if node.op_token.matches(TokenType::TT_KEYWORD, Some("not")) {
+        } else if node.op_token.matches(TokenType::TT_KEYWORD, "not") {
             (number, error) = value.perform_operation("not", Number::false_value());
         }
 
