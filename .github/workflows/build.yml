@@ -47,8 +47,6 @@ jobs:
             --icon-size 100 \
             --icon "glang" 125 125 \
             --app-drop-link 375 125 \
-            --overwrite \
-            "GeorgeLanguage_macOS_setup.dmg" \
             "dmg-staging/"
 
       - name: Upload DMG as artifact
