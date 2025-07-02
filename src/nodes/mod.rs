@@ -6,6 +6,7 @@ pub mod continue_node;
 pub mod for_node;
 pub mod function_definition_node;
 pub mod if_node;
+pub mod import_node;
 pub mod list_node;
 pub mod number_node;
 pub mod return_node;

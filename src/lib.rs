@@ -16,7 +16,7 @@ use std::time::Instant;
 
 pub fn run(filename: &str, code: Option<String>) -> Option<StandardError> {
     let mut contents = String::new();
-    contents.push_str("fetch(\"library/default/lib.glang\");\n\n");
+    contents.push_str("fetch \"library/default/lib.glang\";\n\n");
 
     if filename == "<stdin>" {
         contents.push_str(code.unwrap_or_else(|| "".to_string()).as_str());

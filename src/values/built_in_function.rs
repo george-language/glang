@@ -126,7 +126,6 @@ impl BuiltInFunction {
             "clear" => return self.execute_clear(args, &mut exec_context),
             "uhoh" => return self.execute_error(args, &mut exec_context),
             "type" => return self.execute_type(args, &mut exec_context),
-            "fetch" => return self.execute_import(args, &mut exec_context),
             "run" => return self.execute_exec(args, &mut exec_context),
             _ => panic!("CRITICAL ERROR: BUILT IN NAME IS NOT DEFINED"),
         };
@@ -429,108 +428,6 @@ impl BuiltInFunction {
         result.success(Some(Str::from(
             format!("{}", args[0].object_type()).as_str(),
         )))
-    }
-
-    pub fn execute_import(&self, args: &Vec<Box<Value>>, exec_ctx: &mut Context) -> RuntimeResult {
-        let mut result = RuntimeResult::new();
-        result.register(self.check_and_populate_args(&vec!["file".to_string()], args, exec_ctx));
-
-        if result.should_return() {
-            return result;
-        }
-
-        let import = args[0].clone();
-
-        let file_to_import = match import.as_ref() {
-            Value::StringValue(file) => file.as_string(),
-            _ => {
-                return result.failure(Some(StandardError::new(
-                    "expected type string",
-                    import.position_start().unwrap().clone(),
-                    import.position_end().unwrap().clone(),
-                    Some("add the '.glang' file you would like to import"),
-                )));
-            }
-        };
-
-        if !fs::exists(&file_to_import).is_ok() || !&file_to_import.ends_with(".glang") {
-            return result.failure(Some(StandardError::new(
-                "file doesn't exist or isn't valid",
-                import.position_start().unwrap().clone(),
-                import.position_end().unwrap().clone(),
-                Some("add the '.glang' file you would like to import"),
-            )));
-        }
-
-        if &file_to_import == &import.position_start().unwrap().filename {
-            return result.failure(Some(StandardError::new(
-                "circular import",
-                import.position_start().unwrap().clone(),
-                import.position_end().unwrap().clone(),
-                None,
-            )));
-        }
-
-        let mut contents = String::new();
-
-        match fs::read_to_string(&file_to_import) {
-            Ok(extra) => contents.push_str(&extra),
-            Err(_) => {
-                return result.failure(Some(StandardError::new(
-                    "file contents couldn't be read properly",
-                    import.position_start().unwrap().clone(),
-                    import.position_end().unwrap().clone(),
-                    Some("add a UTF-8 encoded '.glang' file you would like to import"),
-                )));
-            }
-        }
-
-        let mut lexer = Lexer::new(&import.position_start().unwrap().filename, contents.clone());
-        let (tokens, error) = lexer.make_tokens();
-
-        if error.is_some() {
-            return result.failure(error);
-        }
-
-        let mut parser = Parser::new(tokens);
-        let ast = parser.parse();
-
-        if ast.error.is_some() {
-            return result.failure(ast.error);
-        }
-
-        let mut interpreter = Interpreter::new();
-        let mut module_context = Context::new("<module>".to_string(), None, None);
-        module_context.symbol_table = Some(self.global_symbol_table.clone());
-        let module_result = interpreter.visit(ast.node.unwrap(), &mut module_context);
-
-        if module_result.error.is_some() {
-            return result.failure(module_result.error);
-        }
-
-        let symbols: Vec<(String, Option<Box<Value>>)> = module_context
-            .symbol_table
-            .as_ref()
-            .unwrap()
-            .borrow()
-            .symbols
-            .iter()
-            .map(|(k, v)| (k.clone(), v.clone()))
-            .collect();
-
-        for (name, value) in symbols {
-            self.global_symbol_table.borrow_mut().set(
-                name.clone(),
-                Some(
-                    value
-                        .unwrap()
-                        .set_context(Some(exec_ctx.clone()))
-                        .set_position(self.pos_start.clone(), self.pos_end.clone()),
-                ),
-            );
-        }
-
-        result.success(Some(Number::null_value()))
     }
 
     pub fn execute_exec(&self, args: &Vec<Box<Value>>, exec_ctx: &mut Context) -> RuntimeResult {

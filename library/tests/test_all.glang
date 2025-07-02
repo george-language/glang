@@ -1,6 +1,6 @@
 # file test_all.glang: test all glang features in one go
 
-fetch(std_math); # imports
+fetch std_math; # imports
 bark(math_pi); # built in functions
 obj x = 0; # object creation
 

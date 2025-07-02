@@ -14,6 +14,7 @@ pub const KEYWORDS: &[&str] = &[
     "step",
     "while",
     "func",
+    "fetch",
     "give",
     "next",
     "leave",

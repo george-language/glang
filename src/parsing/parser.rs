@@ -4,10 +4,11 @@ use crate::{
     nodes::{
         ast_node::AstNode, binary_operator_node::BinaryOperatorNode, break_node::BreakNode,
         call_node::CallNode, continue_node::ContinueNode, for_node::ForNode,
-        function_definition_node::FunctionDefinitionNode, if_node::IfNode, list_node::ListNode,
-        number_node::NumberNode, return_node::ReturnNode, string_node::StringNode,
-        unary_operator_node::UnaryOperatorNode, variable_access_node::VariableAccessNode,
-        variable_assign_node::VariableAssignNode, while_node::WhileNode,
+        function_definition_node::FunctionDefinitionNode, if_node::IfNode, import_node::ImportNode,
+        list_node::ListNode, number_node::NumberNode, return_node::ReturnNode,
+        string_node::StringNode, unary_operator_node::UnaryOperatorNode,
+        variable_access_node::VariableAccessNode, variable_assign_node::VariableAssignNode,
+        while_node::WhileNode,
     },
     parsing::parse_result::ParseResult,
 };
@@ -670,6 +671,38 @@ impl Parser {
         )))));
     }
 
+    pub fn import_expr(&mut self) -> ParseResult {
+        let mut parse_result = ParseResult::new();
+
+        if !self
+            .current_token_ref()
+            .matches(TokenType::TT_KEYWORD, Some("fetch"))
+        {
+            return parse_result.failure(Some(StandardError::new(
+                "expected keyword",
+                self.current_pos_start(),
+                self.current_pos_end(),
+                Some("add the 'fetch' keyword to import other '.glang' files"),
+            )));
+        }
+
+        parse_result.register_advancement();
+        self.advance();
+
+        let import = parse_result.register(self.expr());
+
+        if parse_result.error.is_some() {
+            return parse_result;
+        }
+
+        parse_result.register_advancement();
+        self.advance();
+
+        return parse_result.success(Some(Box::new(AstNode::Import(ImportNode::new(
+            import.unwrap(),
+        )))));
+    }
+
     pub fn expr(&mut self) -> ParseResult {
         let mut parse_result = ParseResult::new();
 
@@ -1019,6 +1052,14 @@ impl Parser {
             }
 
             return parse_result.success(func_def);
+        } else if token.matches(TokenType::TT_KEYWORD, Some("fetch")) {
+            let import_expr = parse_result.register(self.import_expr());
+
+            if parse_result.error.is_some() {
+                return parse_result;
+            }
+
+            return parse_result.success(import_expr);
         }
 
         parse_result.failure(Some(StandardError::new(

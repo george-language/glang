@@ -1,22 +1,23 @@
-use std::{cell::RefCell, rc::Rc};
-
 use crate::{
     errors::standard_error::StandardError,
     interpreting::{context::Context, runtime_result::RuntimeResult, symbol_table::SymbolTable},
-    lexing::token_type::TokenType,
+    lexing::{lexer::Lexer, token_type::TokenType},
     nodes::{
         ast_node::AstNode, binary_operator_node::BinaryOperatorNode, break_node::BreakNode,
         call_node::CallNode, continue_node::ContinueNode, for_node::ForNode,
-        function_definition_node::FunctionDefinitionNode, if_node::IfNode, list_node::ListNode,
-        number_node::NumberNode, return_node::ReturnNode, string_node::StringNode,
-        unary_operator_node::UnaryOperatorNode, variable_access_node::VariableAccessNode,
-        variable_assign_node::VariableAssignNode, while_node::WhileNode,
+        function_definition_node::FunctionDefinitionNode, if_node::IfNode, import_node::ImportNode,
+        list_node::ListNode, number_node::NumberNode, return_node::ReturnNode,
+        string_node::StringNode, unary_operator_node::UnaryOperatorNode,
+        variable_access_node::VariableAccessNode, variable_assign_node::VariableAssignNode,
+        while_node::WhileNode,
     },
+    parsing::parser::Parser,
     values::{
         built_in_function::BuiltInFunction, function::Function, list::List, number::Number,
         string::Str, value::Value,
     },
 };
+use std::{cell::RefCell, fs, rc::Rc};
 
 pub struct Interpreter {
     pub global_symbol_table: Rc<RefCell<SymbolTable>>,
@@ -30,7 +31,7 @@ impl Interpreter {
 
         let builtins = [
             "bark", "chew", "dig", "bury", "tostring", "tonumber", "length", "clear", "uhoh",
-            "type", "fetch", "run",
+            "type", "run",
         ];
 
         for builtin in &builtins {
@@ -65,6 +66,9 @@ impl Interpreter {
             }
             AstNode::If(node) => {
                 return self.visit_if_node(&node, context);
+            }
+            AstNode::Import(node) => {
+                return self.visit_import_node(&node, context);
             }
             AstNode::For(node) => {
                 return self.visit_for_node(&node, context);
@@ -433,6 +437,110 @@ impl Interpreter {
                     .set_position(node.pos_start.clone(), node.pos_end.clone()),
             )
         })
+    }
+
+    pub fn visit_import_node(&mut self, node: &ImportNode, context: &mut Context) -> RuntimeResult {
+        let mut result = RuntimeResult::new();
+        let import = result.register(self.visit(node.node_to_import.to_owned(), context));
+
+        if result.should_return() {
+            return result;
+        }
+
+        let import = import.unwrap();
+        let file_to_import = match import.as_ref() {
+            Value::StringValue(string) => string.as_string(),
+            _ => {
+                return result.failure(Some(StandardError::new(
+                    "expected type string",
+                    import.position_start().unwrap(),
+                    import.position_end().unwrap(),
+                    Some("add the '.glang' file you would like to import"),
+                )));
+            }
+        };
+
+        if !fs::exists(&file_to_import).is_ok() || !&file_to_import.ends_with(".glang") {
+            return result.failure(Some(StandardError::new(
+                "file doesn't exist or isn't valid",
+                import.position_start().unwrap(),
+                import.position_end().unwrap(),
+                Some("add the '.glang' file you would like to import"),
+            )));
+        }
+
+        if &file_to_import == &import.position_start().unwrap().filename {
+            return result.failure(Some(StandardError::new(
+                "circular import",
+                import.position_start().unwrap(),
+                import.position_end().unwrap(),
+                None,
+            )));
+        }
+
+        let mut contents = String::new();
+
+        match fs::read_to_string(&file_to_import) {
+            Ok(extra) => contents.push_str(&extra),
+            Err(_) => {
+                return result.failure(Some(StandardError::new(
+                    "file contents couldn't be read properly",
+                    import.position_start().unwrap(),
+                    import.position_end().unwrap(),
+                    Some("add a UTF-8 encoded '.glang' file you would like to import"),
+                )));
+            }
+        }
+
+        let mut lexer = Lexer::new(&import.position_start().unwrap().filename, contents);
+        let (tokens, error) = lexer.make_tokens();
+
+        if error.is_some() {
+            return result.failure(error);
+        }
+
+        let mut parser = Parser::new(tokens);
+        let ast = parser.parse();
+
+        if ast.error.is_some() {
+            return result.failure(ast.error);
+        }
+
+        let mut interpreter = Interpreter::new();
+        let mut module_context = Context::new("<module>".to_string(), None, None);
+        module_context.symbol_table = Some(self.global_symbol_table.clone());
+        let module_result = interpreter.visit(ast.node.unwrap(), &mut module_context);
+
+        if module_result.error.is_some() {
+            return result.failure(module_result.error);
+        }
+
+        let symbols: Vec<(String, Option<Box<Value>>)> = module_context
+            .symbol_table
+            .as_ref()
+            .unwrap()
+            .borrow()
+            .symbols
+            .iter()
+            .map(|(k, v)| (k.clone(), v.clone()))
+            .collect();
+
+        for (name, value) in symbols {
+            context.symbol_table.as_ref().unwrap().borrow_mut().set(
+                name.clone(),
+                Some(
+                    value
+                        .unwrap()
+                        .set_context(Some(context.clone()))
+                        .set_position(
+                            import.position_start().clone(),
+                            import.position_end().clone(),
+                        ),
+                ),
+            );
+        }
+
+        result.success(Some(Number::null_value()))
     }
 
     pub fn visit_function_definition_node(
