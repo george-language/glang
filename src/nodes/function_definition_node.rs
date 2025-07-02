@@ -2,12 +2,12 @@ use crate::{
     lexing::{position::Position, token::Token},
     nodes::ast_node::AstNode,
 };
-use std::fmt::Display;
+use std::{fmt::Display, sync::Arc};
 
 #[derive(Debug, Clone)]
 pub struct FunctionDefinitionNode {
     pub var_name_token: Option<Token>,
-    pub arg_name_tokens: Vec<Token>,
+    pub arg_name_tokens: Arc<[Token]>,
     pub body_node: Box<AstNode>,
     pub should_auto_return: bool,
     pub pos_start: Option<Position>,
@@ -17,13 +17,13 @@ pub struct FunctionDefinitionNode {
 impl FunctionDefinitionNode {
     pub fn new(
         var_name_token: Option<Token>,
-        arg_name_tokens: Vec<Token>,
+        arg_name_tokens: &[Token],
         body_node: Box<AstNode>,
         should_auto_return: bool,
     ) -> Self {
         Self {
             var_name_token: var_name_token.clone(),
-            arg_name_tokens: arg_name_tokens.clone(),
+            arg_name_tokens: Arc::from(arg_name_tokens),
             body_node: body_node.clone(),
             should_auto_return: should_auto_return,
             pos_start: if var_name_token.is_some() {

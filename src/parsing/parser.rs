@@ -1238,7 +1238,7 @@ impl Parser {
         self.advance();
 
         parse_result.success(Some(Box::new(AstNode::FunctionDefinition(
-            FunctionDefinitionNode::new(var_name_token, arg_name_tokens, body.unwrap(), false),
+            FunctionDefinitionNode::new(var_name_token, &arg_name_tokens, body.unwrap(), false),
         ))))
     }
 

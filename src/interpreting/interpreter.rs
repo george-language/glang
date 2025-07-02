@@ -558,7 +558,7 @@ impl Interpreter {
         let body_node = node.body_node.clone();
         let mut arg_names: Vec<String> = Vec::new();
 
-        for arg_name in &node.arg_name_tokens {
+        for arg_name in node.arg_name_tokens.iter() {
             arg_names.push(arg_name.value.as_ref().unwrap().clone());
         }
 
