@@ -1,0 +1,5 @@
+# file test_imports.glang: test glang's import system with the `fetch` keyword
+
+fetch std_math;
+
+bark(math_pi); # object defined in math module
