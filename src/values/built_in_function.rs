@@ -18,17 +18,15 @@ use std::{
 #[derive(Debug, Clone)]
 pub struct BuiltInFunction {
     pub name: String,
-    pub global_symbol_table: Rc<RefCell<SymbolTable>>,
     pub context: Option<Context>,
     pub pos_start: Option<Position>,
     pub pos_end: Option<Position>,
 }
 
 impl BuiltInFunction {
-    pub fn new(name: &str, global_symbol_table: Rc<RefCell<SymbolTable>>) -> Self {
+    pub fn new(name: &str) -> Self {
         BuiltInFunction {
             name: name.to_string(),
-            global_symbol_table: global_symbol_table,
             context: None,
             pos_start: None,
             pos_end: None,
@@ -460,7 +458,7 @@ impl BuiltInFunction {
 
         let mut interpreter = Interpreter::new();
         let mut external_context = Context::new("<exec>".to_string(), None, None);
-        external_context.symbol_table = Some(self.global_symbol_table.clone());
+        external_context.symbol_table = Some(interpreter.global_symbol_table.clone());
         let external_result = interpreter.visit(ast.node.unwrap(), &mut external_context);
 
         if external_result.error.is_some() {

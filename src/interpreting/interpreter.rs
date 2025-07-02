@@ -39,7 +39,6 @@ impl Interpreter {
                 builtin.to_string(),
                 Some(Box::new(Value::BuiltInFunction(BuiltInFunction::new(
                     builtin,
-                    interpreter.global_symbol_table.clone(),
                 )))),
             );
         }
