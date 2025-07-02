@@ -15,7 +15,7 @@ func format(str, value) {
         obj char = charat(str, i);
 
         if char == "{" {
-            if i < length(str) { # not at end of string
+            if i + 1 < length(str) { # not at end of string
                 obj closing = charat(str, i + 1);
 
                 if closing == "}" {
@@ -23,6 +23,8 @@ func format(str, value) {
                 } otherwise {
                     uhoh("'format' expects string with closing brackets '{}'");
                 }
+            } otherwise {
+                uhoh("'format' expects string with closing brackets '{}'");
             }
         } otherwise {
             if char == "}" {
