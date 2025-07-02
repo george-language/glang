@@ -121,7 +121,6 @@ impl BuiltInFunction {
             "tostring" => return self.execute_tostring(args, &mut exec_context),
             "tonumber" => return self.execute_tonumber(args, &mut exec_context),
             "length" => return self.execute_length(args, &mut exec_context),
-            "clear" => return self.execute_clear(args, &mut exec_context),
             "uhoh" => return self.execute_error(args, &mut exec_context),
             "type" => return self.execute_type(args, &mut exec_context),
             "run" => return self.execute_exec(args, &mut exec_context),
@@ -349,32 +348,6 @@ impl BuiltInFunction {
         };
 
         result.success(Some(Number::from(length)))
-    }
-
-    pub fn execute_clear(&self, args: &[Box<Value>], exec_ctx: &mut Context) -> RuntimeResult {
-        let mut result = RuntimeResult::new();
-        result.register(self.check_and_populate_args(&["value".to_string()], args, exec_ctx));
-
-        if result.should_return() {
-            return result;
-        }
-
-        let obj_to_clear = args[0].clone();
-
-        let cleared_value: Box<Value> = match obj_to_clear.as_ref() {
-            Value::StringValue(_) => Str::from(""),
-            Value::ListValue(_) => List::from(vec![]),
-            _ => {
-                return result.failure(Some(StandardError::new(
-                    "expected type string or list",
-                    obj_to_clear.position_start().unwrap().clone(),
-                    obj_to_clear.position_end().unwrap().clone(),
-                    None,
-                )));
-            }
-        };
-
-        result.success(Some(cleared_value))
     }
 
     pub fn execute_error(&self, args: &[Box<Value>], exec_ctx: &mut Context) -> RuntimeResult {

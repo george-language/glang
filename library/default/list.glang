@@ -70,3 +70,16 @@ func reverse(list) {
 
     give list ^ -1;
 }
+
+# Clear a list (supports the string type as well)
+# arg <value>: the value to clear
+# returns: a new empty version of the value
+func clear(value) {
+    if type(value) == "list" {
+        give [];
+    } alsoif type(value) == "string" {
+        give "";
+    } otherwise {
+        uhoh("expected type list or string in 'clear'");
+    }
+}
