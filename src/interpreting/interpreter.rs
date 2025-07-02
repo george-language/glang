@@ -565,7 +565,7 @@ impl Interpreter {
         let func_value = Value::FunctionValue(Function::new(
             func_name.clone(),
             body_node,
-            arg_names,
+            &arg_names,
             node.should_auto_return,
         ))
         .set_context(Some(context.clone()))

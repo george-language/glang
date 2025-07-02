@@ -8,7 +8,12 @@ use crate::{
     parsing::parser::Parser,
     values::{list::List, number::Number, string::Str, value::Value},
 };
-use std::{cell::RefCell, fs, io::Write, io::stdin, io::stdout, rc::Rc};
+use std::{
+    cell::RefCell,
+    fs,
+    io::{Write, stdin, stdout},
+    rc::Rc,
+};
 
 #[derive(Debug, Clone)]
 pub struct BuiltInFunction {
@@ -51,7 +56,7 @@ impl BuiltInFunction {
         new_context
     }
 
-    pub fn check_args(&self, arg_names: &Vec<String>, args: &Vec<Box<Value>>) -> RuntimeResult {
+    pub fn check_args(&self, arg_names: &[String], args: &[Box<Value>]) -> RuntimeResult {
         let mut result = RuntimeResult::new();
 
         if args.len() > arg_names.len() || args.len() < arg_names.len() {
@@ -74,12 +79,7 @@ impl BuiltInFunction {
         result.success(None)
     }
 
-    pub fn populate_args(
-        &self,
-        arg_names: &Vec<String>,
-        args: &Vec<Box<Value>>,
-        exec_ctx: &mut Context,
-    ) {
+    pub fn populate_args(&self, arg_names: &[String], args: &[Box<Value>], exec_ctx: &mut Context) {
         for i in 0..args.len() {
             let arg_name = arg_names[i].clone();
             let mut arg_value = args[i].clone();
@@ -96,8 +96,8 @@ impl BuiltInFunction {
 
     pub fn check_and_populate_args(
         &self,
-        arg_names: &Vec<String>,
-        args: &Vec<Box<Value>>,
+        arg_names: &[String],
+        args: &[Box<Value>],
         exec_ctx: &mut Context,
     ) -> RuntimeResult {
         let mut result = RuntimeResult::new();
@@ -112,7 +112,7 @@ impl BuiltInFunction {
         result.success(None)
     }
 
-    pub fn execute(&self, args: &Vec<Box<Value>>) -> RuntimeResult {
+    pub fn execute(&self, args: &[Box<Value>]) -> RuntimeResult {
         let mut exec_context = self.generate_new_context();
 
         match self.name.as_str() {
@@ -131,9 +131,9 @@ impl BuiltInFunction {
         };
     }
 
-    pub fn execute_print(&self, args: &Vec<Box<Value>>, exec_ctx: &mut Context) -> RuntimeResult {
+    pub fn execute_print(&self, args: &[Box<Value>], exec_ctx: &mut Context) -> RuntimeResult {
         let mut result = RuntimeResult::new();
-        result.register(self.check_and_populate_args(&vec!["value".to_string()], args, exec_ctx));
+        result.register(self.check_and_populate_args(&["value".to_string()], args, exec_ctx));
 
         if result.should_return() {
             return result;
@@ -144,9 +144,9 @@ impl BuiltInFunction {
         result.success(Some(Number::null_value()))
     }
 
-    pub fn execute_input(&self, args: &Vec<Box<Value>>, exec_ctx: &mut Context) -> RuntimeResult {
+    pub fn execute_input(&self, args: &[Box<Value>], exec_ctx: &mut Context) -> RuntimeResult {
         let mut result = RuntimeResult::new();
-        result.register(self.check_and_populate_args(&vec!["msg".to_string()], args, exec_ctx));
+        result.register(self.check_and_populate_args(&["msg".to_string()], args, exec_ctx));
 
         if result.should_return() {
             return result;
@@ -179,9 +179,9 @@ impl BuiltInFunction {
         result.success(Some(Str::from(input.trim())))
     }
 
-    pub fn execute_read(&self, args: &Vec<Box<Value>>, exec_ctx: &mut Context) -> RuntimeResult {
+    pub fn execute_read(&self, args: &[Box<Value>], exec_ctx: &mut Context) -> RuntimeResult {
         let mut result = RuntimeResult::new();
-        result.register(self.check_and_populate_args(&vec!["file".to_string()], args, exec_ctx));
+        result.register(self.check_and_populate_args(&["file".to_string()], args, exec_ctx));
 
         if result.should_return() {
             return result;
@@ -227,10 +227,10 @@ impl BuiltInFunction {
         result.success(Some(Str::from(contents.as_str())))
     }
 
-    pub fn execute_write(&self, args: &Vec<Box<Value>>, exec_ctx: &mut Context) -> RuntimeResult {
+    pub fn execute_write(&self, args: &[Box<Value>], exec_ctx: &mut Context) -> RuntimeResult {
         let mut result = RuntimeResult::new();
         result.register(self.check_and_populate_args(
-            &vec!["file".to_string(), "contents".to_string()],
+            &["file".to_string(), "contents".to_string()],
             args,
             exec_ctx,
         ));
@@ -281,13 +281,9 @@ impl BuiltInFunction {
         result.success(Some(Number::null_value()))
     }
 
-    pub fn execute_tostring(
-        &self,
-        args: &Vec<Box<Value>>,
-        exec_ctx: &mut Context,
-    ) -> RuntimeResult {
+    pub fn execute_tostring(&self, args: &[Box<Value>], exec_ctx: &mut Context) -> RuntimeResult {
         let mut result = RuntimeResult::new();
-        result.register(self.check_and_populate_args(&vec!["value".to_string()], args, exec_ctx));
+        result.register(self.check_and_populate_args(&["value".to_string()], args, exec_ctx));
 
         if result.should_return() {
             return result;
@@ -296,13 +292,9 @@ impl BuiltInFunction {
         result.success(Some(Str::from(args[0].as_string().as_str())))
     }
 
-    pub fn execute_tonumber(
-        &self,
-        args: &Vec<Box<Value>>,
-        exec_ctx: &mut Context,
-    ) -> RuntimeResult {
+    pub fn execute_tonumber(&self, args: &[Box<Value>], exec_ctx: &mut Context) -> RuntimeResult {
         let mut result = RuntimeResult::new();
-        result.register(self.check_and_populate_args(&vec!["value".to_string()], args, exec_ctx));
+        result.register(self.check_and_populate_args(&["value".to_string()], args, exec_ctx));
 
         if result.should_return() {
             return result;
@@ -335,9 +327,9 @@ impl BuiltInFunction {
         result.success(Some(Number::from(value)))
     }
 
-    pub fn execute_length(&self, args: &Vec<Box<Value>>, exec_ctx: &mut Context) -> RuntimeResult {
+    pub fn execute_length(&self, args: &[Box<Value>], exec_ctx: &mut Context) -> RuntimeResult {
         let mut result = RuntimeResult::new();
-        result.register(self.check_and_populate_args(&vec!["value".to_string()], args, exec_ctx));
+        result.register(self.check_and_populate_args(&["value".to_string()], args, exec_ctx));
 
         if result.should_return() {
             return result;
@@ -361,9 +353,9 @@ impl BuiltInFunction {
         result.success(Some(Number::from(length)))
     }
 
-    pub fn execute_clear(&self, args: &Vec<Box<Value>>, exec_ctx: &mut Context) -> RuntimeResult {
+    pub fn execute_clear(&self, args: &[Box<Value>], exec_ctx: &mut Context) -> RuntimeResult {
         let mut result = RuntimeResult::new();
-        result.register(self.check_and_populate_args(&vec!["value".to_string()], args, exec_ctx));
+        result.register(self.check_and_populate_args(&["value".to_string()], args, exec_ctx));
 
         if result.should_return() {
             return result;
@@ -387,9 +379,9 @@ impl BuiltInFunction {
         result.success(Some(cleared_value))
     }
 
-    pub fn execute_error(&self, args: &Vec<Box<Value>>, exec_ctx: &mut Context) -> RuntimeResult {
+    pub fn execute_error(&self, args: &[Box<Value>], exec_ctx: &mut Context) -> RuntimeResult {
         let mut result = RuntimeResult::new();
-        result.register(self.check_and_populate_args(&vec!["msg".to_string()], args, exec_ctx));
+        result.register(self.check_and_populate_args(&["msg".to_string()], args, exec_ctx));
 
         if result.should_return() {
             return result;
@@ -417,9 +409,9 @@ impl BuiltInFunction {
         )))
     }
 
-    pub fn execute_type(&self, args: &Vec<Box<Value>>, exec_ctx: &mut Context) -> RuntimeResult {
+    pub fn execute_type(&self, args: &[Box<Value>], exec_ctx: &mut Context) -> RuntimeResult {
         let mut result = RuntimeResult::new();
-        result.register(self.check_and_populate_args(&vec!["value".to_string()], args, exec_ctx));
+        result.register(self.check_and_populate_args(&["value".to_string()], args, exec_ctx));
 
         if result.should_return() {
             return result;
@@ -430,9 +422,9 @@ impl BuiltInFunction {
         )))
     }
 
-    pub fn execute_exec(&self, args: &Vec<Box<Value>>, exec_ctx: &mut Context) -> RuntimeResult {
+    pub fn execute_exec(&self, args: &[Box<Value>], exec_ctx: &mut Context) -> RuntimeResult {
         let mut result = RuntimeResult::new();
-        result.register(self.check_and_populate_args(&vec!["code".to_string()], args, exec_ctx));
+        result.register(self.check_and_populate_args(&["code".to_string()], args, exec_ctx));
 
         if result.should_return() {
             return result;

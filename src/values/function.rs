@@ -1,4 +1,4 @@
-use std::{cell::RefCell, rc::Rc};
+use std::{cell::RefCell, rc::Rc, sync::Arc};
 
 use crate::{
     errors::standard_error::StandardError,
@@ -15,7 +15,7 @@ use crate::{
 pub struct Function {
     pub name: String,
     pub body_node: Box<AstNode>,
-    pub arg_names: Vec<String>,
+    pub arg_names: Arc<[String]>,
     pub should_auto_return: bool,
     pub context: Option<Context>,
     pub pos_start: Option<Position>,
@@ -26,13 +26,13 @@ impl Function {
     pub fn new(
         name: String,
         body_node: Box<AstNode>,
-        arg_names: Vec<String>,
+        arg_names: &[String],
         should_auto_return: bool,
     ) -> Self {
         Self {
             name: name,
             body_node: body_node,
-            arg_names: arg_names,
+            arg_names: Arc::from(arg_names),
             should_auto_return: should_auto_return,
             context: None,
             pos_start: None,
@@ -61,7 +61,7 @@ impl Function {
         new_context
     }
 
-    pub fn check_args(&self, arg_names: &Vec<String>, args: &Vec<Box<Value>>) -> RuntimeResult {
+    pub fn check_args(&self, arg_names: &[String], args: &[Box<Value>]) -> RuntimeResult {
         let mut result = RuntimeResult::new();
 
         if args.len() > arg_names.len() || args.len() < arg_names.len() {
@@ -84,12 +84,7 @@ impl Function {
         result.success(None)
     }
 
-    pub fn populate_args(
-        &self,
-        arg_names: &Vec<String>,
-        args: &Vec<Box<Value>>,
-        expr_ctx: &mut Context,
-    ) {
+    pub fn populate_args(&self, arg_names: &[String], args: &[Box<Value>], expr_ctx: &mut Context) {
         for i in 0..args.len() {
             let arg_name = arg_names[i].clone();
             let mut arg_value = args[i].clone();
@@ -100,14 +95,14 @@ impl Function {
                 .as_mut()
                 .unwrap()
                 .borrow_mut()
-                .set(arg_name, Some(arg_value));
+                .set(arg_name.to_string(), Some(arg_value));
         }
     }
 
     pub fn check_and_populate_args(
         &self,
-        arg_names: &Vec<String>,
-        args: &Vec<Box<Value>>,
+        arg_names: &[String],
+        args: &[Box<Value>],
         expr_ctx: &mut Context,
     ) -> RuntimeResult {
         let mut result = RuntimeResult::new();
@@ -122,7 +117,7 @@ impl Function {
         result.success(None)
     }
 
-    pub fn execute(&self, args: &Vec<Box<Value>>) -> RuntimeResult {
+    pub fn execute(&self, args: &[Box<Value>]) -> RuntimeResult {
         let mut result = RuntimeResult::new();
         let mut interpreter = Interpreter::new();
         let mut exec_context = self.generate_new_context();
