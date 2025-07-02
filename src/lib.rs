@@ -57,7 +57,7 @@ pub fn run(filename: &str, code: Option<String>) -> Option<StandardError> {
     let duration = start.elapsed();
 
     if cfg!(feature = "benchmark") {
-        println!("Time elapsed in ms: {:?}", &duration);
+        println!("Time elapsed: {:?}ms", &duration.as_millis());
     }
 
     result.error

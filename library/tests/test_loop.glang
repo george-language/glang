@@ -1,7 +1,5 @@
 # file test_loop.glang: test a large iteration of glang's 'walk' loop
-# use `cargo build --features benchmark` to see the elapsed time of the whole program
-# if you are using flamegraph, try `cargo flamegraph --release -- library/tests/test_loop.glang`
 
 walk i = 0 through 10000 {
-    skip;
+    bark(i);
 }
