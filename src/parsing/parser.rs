@@ -213,7 +213,7 @@ impl Parser {
         }
 
         parse_result.success(Some(Box::new(AstNode::List(ListNode::new(
-            element_nodes.clone(),
+            &element_nodes,
             pos_start,
             self.current_token_copy().pos_end,
         )))))
@@ -847,7 +847,7 @@ impl Parser {
 
         if self.current_token_ref().token_type == TokenType::TT_EOF {
             return parse_result.success(Some(Box::new(AstNode::List(ListNode::new(
-                Vec::new(),
+                &[],
                 Some(pos_start),
                 Some(self.current_pos_end()),
             )))));
@@ -899,7 +899,7 @@ impl Parser {
         }
 
         return parse_result.success(Some(Box::new(AstNode::List(ListNode::new(
-            statements,
+            &statements,
             Some(pos_start),
             Some(self.current_pos_end()),
         )))));
