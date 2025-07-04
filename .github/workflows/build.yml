@@ -1,7 +1,7 @@
 name: GLang MacOS Build
 
 on:
-  push:
+  release:
     branches:
       - main
 
