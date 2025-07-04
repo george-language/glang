@@ -28,6 +28,10 @@ impl SymbolTable {
     }
 
     pub fn set(&mut self, name: String, value: Option<Box<Value>>) {
+        if name == "_" {
+            return;
+        }
+
         self.symbols.insert(name, value);
     }
 
