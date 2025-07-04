@@ -33,9 +33,11 @@ jobs:
             -output dist/GeorgeLanguage/glang
           chmod +x dist/GeorgeLanguage/glang
 
-      - name: Copy library folder
+      - name: Copy repo folders
         run: |
           cp -r library dist/GeorgeLanguage/
+          cp -r LICENSE dist/GeorgeLanguage/
+          cp -r README.md dist/GeorgeLanguage/
 
       - name: Create zip file
         run: |
@@ -45,5 +47,5 @@ jobs:
       - name: Upload zip artifact
         uses: actions/upload-artifact@v4
         with:
-          name: GeorgeLanguage_+macos.zip
+          name: GeorgeLanguage_+macos
           path: dist/GeorgeLanguage_+macos.zip
