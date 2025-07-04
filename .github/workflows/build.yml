@@ -1,4 +1,4 @@
-name: GLang macOS CLI Build
+name: GLang MacOS Build
 
 on:
   push:
@@ -8,12 +8,6 @@ on:
 jobs:
   build:
     runs-on: macos-latest
-    strategy:
-      matrix:
-        arch: [x86_64-apple-darwin, aarch64-apple-darwin]
-
-    env:
-      CARGO_BUILD_TARGET: ${{ matrix.arch }}
 
     steps:
       - name: Checkout code
@@ -24,35 +18,32 @@ jobs:
         with:
           targets: x86_64-apple-darwin,aarch64-apple-darwin
 
-      - name: Install create-dmg
-        run: brew install create-dmg
+      - name: Build for x86_64
+        run: cargo build --release --target x86_64-apple-darwin
 
-      - name: Build CLI binary
-        run: cargo build --release --target=${{ matrix.arch }}
+      - name: Build for aarch64
+        run: cargo build --release --target aarch64-apple-darwin
 
-      - name: Prepare files for DMG
+      - name: Combine into universal binary
         run: |
-          mkdir dmg_content
-          cp target/${{ matrix.arch }}/release/glang dmg_content/
-          cp utils/README.txt dmg_content/
-          chmod +x dmg_content/glang
+          mkdir -p dist/GeorgeLanguage
+          lipo -create \
+            target/x86_64-apple-darwin/release/glang \
+            target/aarch64-apple-darwin/release/glang \
+            -output dist/GeorgeLanguage/glang
+          chmod +x dist/GeorgeLanguage/glang
 
-      - name: Create DMG
+      - name: Copy library folder
         run: |
-          create-dmg \
-            --volname "George Language Installer" \
-            --background "utils/dmg_installer_background.png" \
-            --window-pos 200 120 \
-            --window-size 500 300 \
-            --icon-size 100 \
-            --icon "glang" 100 150 \
-            --icon "README.txt" 300 150 \
-            --app-drop-link 420 150 \
-            "GeorgeLanguage_${{ matrix.arch }}.dmg" \
-            dmg_content/
+          cp -r library dist/GeorgeLanguage/
 
-      - name: Upload DMG
+      - name: Create zip file
+        run: |
+          cd dist
+          zip -r GeorgeLanguage_+macos.zip GeorgeLanguage
+
+      - name: Upload zip artifact
         uses: actions/upload-artifact@v4
         with:
-          name: GeorgeLanguage_${{ matrix.arch }}.dmg
-          path: GeorgeLanguage_${{ matrix.arch }}.dmg
+          name: GeorgeLanguage_+macos.zip
+          path: dist/GeorgeLanguage_+macos.zip
