@@ -6,11 +6,11 @@ use crate::{
     },
     lexing::{lexer::Lexer, position::Position},
     parsing::parser::Parser,
-    values::{list::List, number::Number, string::Str, value::Value},
+    values::{number::Number, string::Str, value::Value},
 };
 use std::{
     cell::RefCell,
-    fs,
+    env, fs,
     io::{Write, stdin, stdout},
     rc::Rc,
 };
@@ -124,6 +124,7 @@ impl BuiltInFunction {
             "uhoh" => return self.execute_error(args, &mut exec_context),
             "type" => return self.execute_type(args, &mut exec_context),
             "run" => return self.execute_exec(args, &mut exec_context),
+            "_env" => return self.execute_env(args, &mut exec_context),
             _ => panic!("CRITICAL ERROR: BUILT IN NAME IS NOT DEFINED"),
         };
     }
@@ -439,6 +440,43 @@ impl BuiltInFunction {
         }
 
         result.success(Some(Number::null_value()))
+    }
+
+    pub fn execute_env(&self, args: &[Box<Value>], exec_ctx: &mut Context) -> RuntimeResult {
+        let mut result = RuntimeResult::new();
+        result.register(self.check_and_populate_args(&["var".to_string()], args, exec_ctx));
+
+        if result.should_return() {
+            return result;
+        }
+
+        let env_arg = args[0].clone();
+
+        let variable = match env_arg.as_ref() {
+            Value::StringValue(glang) => glang.as_string(),
+            _ => {
+                return result.failure(Some(StandardError::new(
+                    "expected type string",
+                    env_arg.position_start().unwrap().clone(),
+                    env_arg.position_end().unwrap().clone(),
+                    Some("add the glang code you would like to execute"),
+                )));
+            }
+        };
+
+        match env::var(&variable) {
+            Ok(var) => {
+                return result.success(Some(Str::from(&var)));
+            }
+            Err(_) => {
+                return result.failure(Some(StandardError::new(
+                    "unable to access environment variable",
+                    env_arg.position_start().unwrap().clone(),
+                    env_arg.position_end().unwrap().clone(),
+                    None,
+                )));
+            }
+        }
     }
 
     pub fn as_string(&self) -> String {

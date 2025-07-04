@@ -7,6 +7,24 @@ use std::{env, fs};
 const VERSION: &str = "2.0";
 
 fn main() {
+    unsafe {
+        let mut path = env::current_exe()
+            .expect("Unable to retrieve current exe")
+            .parent()
+            .unwrap()
+            .join("library")
+            .to_string_lossy()
+            .replace("\\", "/");
+
+        // for development
+        if path.ends_with("target/debug/glang.exe") || path.ends_with("target/release/glang.exe") {
+            path = path.replace("target/debug/glang.exe", "");
+            path = path.replace("target/release/glang.exe", "");
+        }
+
+        env::set_var("GLANG_STD", &path);
+    }
+
     let mut args = env::args();
 
     if args.len() > 1 {

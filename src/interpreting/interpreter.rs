@@ -31,6 +31,7 @@ impl Interpreter {
 
         let builtins = [
             "bark", "chew", "dig", "bury", "tostring", "tonumber", "length", "uhoh", "type", "run",
+            "_env",
         ];
 
         for builtin in &builtins {
@@ -452,7 +453,10 @@ impl Interpreter {
             Ok(extra) => contents.push_str(&extra),
             Err(_) => {
                 return result.failure(Some(StandardError::new(
-                    "file contents couldn't be read properly",
+                    &format!(
+                        "file contents couldn't be read properly on {}",
+                        file_to_import
+                    ),
                     import.position_start().unwrap(),
                     import.position_end().unwrap(),
                     Some("add a UTF-8 encoded '.glang' file you would like to import"),
