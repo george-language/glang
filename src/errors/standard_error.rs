@@ -44,14 +44,19 @@ impl StandardError {
                     0
                 };
 
-                let col_end = if i == pos_end.line_num {
+                let col_end = if i == pos_end.line_num - 1 {
                     pos_end.column_num as usize
                 } else {
-                    line.len()
+                    line.len() - 1
                 };
 
-                let arrow_line =
-                    " ".repeat(col_start) + &"^".repeat((col_start + col_end) - col_end);
+                let arrow_len = if col_end > col_start {
+                    col_end - col_start
+                } else {
+                    1
+                };
+
+                let arrow_line = " ".repeat(col_start) + &"^".repeat(arrow_len);
                 result.push_str(&arrow_line);
                 result.push('\n');
             }
