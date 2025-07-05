@@ -27,8 +27,8 @@ impl StandardError {
     pub fn format_code_as_messup(
         &self,
         text: &str,
-        pos_start: Position,
-        pos_end: Position,
+        pos_start: &Position,
+        pos_end: &Position,
     ) -> String {
         let lines: Vec<&str> = text.lines().collect();
         let mut result = String::new();
@@ -80,15 +80,15 @@ impl Display for StandardError {
             format!(
                 "\ncaused by:\n\n{}",
                 self.format_code_as_messup(
-                    self.pos_start.file_contents.as_str(),
-                    self.pos_start.clone(),
-                    self.pos_end.clone(),
+                    &self.pos_start.file_contents,
+                    &self.pos_start,
+                    &self.pos_end,
                 )
             )
             .as_str(),
         );
 
-        if let Some(msg) = self.help.clone() {
+        if let Some(msg) = &self.help {
             output.push_str(format!("\n{DIM_GREEN}help:{RESET} {}", msg).as_str());
         }
 
