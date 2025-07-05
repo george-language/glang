@@ -258,11 +258,14 @@ impl Lexer {
         while let Some(character) = self.current_char {
             if LETTERS_DIGITS.contains(character) {
                 id_string.push(character);
+
                 self.advance();
             } else {
                 break;
             }
         }
+
+        let pos_end = self.position.clone();
 
         let token_type = if KEYWORDS.contains(&id_string.as_str()) {
             TokenType::TT_KEYWORD
@@ -270,12 +273,7 @@ impl Lexer {
             TokenType::TT_IDENTIFIER
         };
 
-        Token::new(
-            token_type,
-            Some(id_string),
-            Some(pos_start),
-            Some(self.position.clone()),
-        )
+        Token::new(token_type, Some(id_string), Some(pos_start), Some(pos_end))
     }
 
     pub fn make_string(&mut self) -> Result<Token, Option<StandardError>> {
@@ -326,11 +324,13 @@ impl Lexer {
 
         self.advance();
 
+        let pos_end = self.position.clone();
+
         Ok(Token::new(
             TokenType::TT_STR,
             Some(string),
             Some(pos_start),
-            Some(self.position.clone()),
+            Some(pos_end),
         ))
     }
 

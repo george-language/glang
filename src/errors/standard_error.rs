@@ -39,7 +39,7 @@ impl StandardError {
                 result.push('\n');
 
                 let col_start = if i == pos_start.line_num {
-                    pos_start.column_num
+                    pos_start.column_num as usize
                 } else {
                     0
                 };
@@ -50,8 +50,8 @@ impl StandardError {
                     line.len()
                 };
 
-                let arrow_line = " ".repeat(col_start as usize)
-                    + &"^".repeat(col_end.saturating_sub(col_start as usize));
+                let arrow_line =
+                    " ".repeat(col_start) + &"^".repeat((col_start + col_end) - col_end);
                 result.push_str(&arrow_line);
                 result.push('\n');
             }
