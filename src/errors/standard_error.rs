@@ -57,7 +57,7 @@ impl StandardError {
                 };
 
                 let arrow_line = " ".repeat(col_start) + &"^".repeat(arrow_len);
-                result.push_str(&arrow_line);
+                result.push_str(format!("{BOLD}{}{RESET}", &arrow_line).as_str());
                 result.push('\n');
             }
         }
