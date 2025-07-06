@@ -60,6 +60,7 @@ fn main() {
                 println!("George Language {VERSION}");
             } else if first_arg == "--help" {
                 println!("{BOLD}Usage: {ITALIC}glang [command] ... [options]{RESET}\n");
+                println!("  glang:                    use glang interactively in the terminal");
                 println!("  glang <file>:             run a '.glang' file");
                 println!("  glang new <project_name>: create a glang project");
                 println!(

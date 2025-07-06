@@ -58,9 +58,7 @@ pub fn run(filename: &str, code: Option<String>) -> Option<StandardError> {
     let result = interpreter.visit(ast.node.unwrap(), &mut context);
 
     if cfg!(feature = "benchmark") {
-        let duration = start.elapsed();
-
-        println!("Time elapsed: {:?}ms", &duration.as_millis());
+        println!("Time elapsed: {:?}ms", start.elapsed().as_millis());
     }
 
     result.error
