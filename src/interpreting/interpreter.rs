@@ -48,13 +48,13 @@ impl Interpreter {
 
     pub fn evaluate(&mut self, src: &str, context: &mut Context) -> Option<StandardError> {
         let mut lexer = Lexer::new("<eval>", src.to_string());
-        let (tokens, error) = lexer.make_tokens();
+        let token_result = lexer.make_tokens();
 
-        if error.is_some() {
-            return error;
+        if token_result.is_err() {
+            return token_result.err();
         }
 
-        let mut parser = Parser::new(&tokens);
+        let mut parser = Parser::new(&token_result.ok().unwrap());
         let ast = parser.parse();
 
         if ast.error.is_some() {
@@ -485,13 +485,13 @@ impl Interpreter {
         }
 
         let mut lexer = Lexer::new(&import.position_start().unwrap().filename, contents);
-        let (tokens, error) = lexer.make_tokens();
+        let token_result = lexer.make_tokens();
 
-        if error.is_some() {
-            return result.failure(error);
+        if token_result.is_err() {
+            return result.failure(token_result.err());
         }
 
-        let mut parser = Parser::new(&tokens);
+        let mut parser = Parser::new(&token_result.ok().unwrap());
         let ast = parser.parse();
 
         if ast.error.is_some() {

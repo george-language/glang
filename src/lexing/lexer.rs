@@ -42,7 +42,7 @@ impl Lexer {
         }
     }
 
-    pub fn make_tokens(&mut self) -> (Vec<Token>, Option<StandardError>) {
+    pub fn make_tokens(&mut self) -> Result<Vec<Token>, StandardError> {
         let mut tokens = Vec::new();
 
         while self.current_char != None {
@@ -60,7 +60,16 @@ impl Lexer {
                     ));
                     self.advance();
                 } else if DIGITS.contains(current_char) {
-                    tokens.push(self.make_number());
+                    let result = self.make_number();
+
+                    match result {
+                        Ok(token) => {
+                            tokens.push(token);
+                        }
+                        Err(error) => {
+                            return Err(error);
+                        }
+                    }
                 } else if LETTERS.contains(current_char) {
                     tokens.push(self.make_identifier());
                 } else if current_char == '"' {
@@ -71,7 +80,7 @@ impl Lexer {
                             tokens.push(token);
                         }
                         Err(error) => {
-                            return (Vec::new(), error);
+                            return Err(error);
                         }
                     }
                 } else if current_char == '+' {
@@ -172,7 +181,7 @@ impl Lexer {
                             tokens.push(token);
                         }
                         Err(error) => {
-                            return (Vec::new(), error);
+                            return Err(error);
                         }
                     }
                 } else if current_char == '=' {
@@ -194,15 +203,12 @@ impl Lexer {
                     let character = current_char.clone();
                     self.advance();
 
-                    return (
-                        Vec::new(),
-                        Some(StandardError::new(
-                            format!("unkown character '{}'", character).as_str(),
-                            pos_start,
-                            self.position.clone(),
-                            Some("replace this character with one known by glang"),
-                        )),
-                    );
+                    return Err(StandardError::new(
+                        format!("unkown character '{}'", character).as_str(),
+                        pos_start,
+                        self.position.clone(),
+                        Some("replace this character with one known by glang"),
+                    ));
                 }
             }
         }
@@ -213,10 +219,11 @@ impl Lexer {
             Some(self.position.clone()),
             None,
         ));
-        (tokens, None)
+
+        Ok(tokens)
     }
 
-    pub fn make_number(&mut self) -> Token {
+    pub fn make_number(&mut self) -> Result<Token, StandardError> {
         let mut num_str = String::new();
         let mut dot_count = 0;
         let pos_start = self.position.clone();
@@ -230,6 +237,13 @@ impl Lexer {
                 }
                 dot_count += 1;
                 num_str.push('.');
+            } else if LETTERS.contains(character) {
+                return Err(StandardError::new(
+                    "object names cannot start with numerical values",
+                    pos_start,
+                    self.position.clone(),
+                    None,
+                ));
             } else {
                 break;
             }
@@ -243,12 +257,12 @@ impl Lexer {
             TokenType::TT_FLOAT
         };
 
-        Token::new(
+        Ok(Token::new(
             token_type,
             Some(num_str),
             Some(pos_start),
             Some(self.position.clone()),
-        )
+        ))
     }
 
     pub fn make_identifier(&mut self) -> Token {
@@ -276,7 +290,7 @@ impl Lexer {
         Token::new(token_type, Some(id_string), Some(pos_start), Some(pos_end))
     }
 
-    pub fn make_string(&mut self) -> Result<Token, Option<StandardError>> {
+    pub fn make_string(&mut self) -> Result<Token, StandardError> {
         let mut string = String::new();
         let pos_start = self.position.clone();
         let mut escape_char = false;
@@ -295,14 +309,20 @@ impl Lexer {
             }
 
             if escape_char {
-                string.push(*escape_chars.get(&character).ok_or_else(|| {
-                    Some(StandardError::new(
-                        "invalid escape character",
-                        pos_start.clone(),
-                        self.position.clone(),
-                        None,
-                    ))
-                })?);
+                match escape_chars.get(&character) {
+                    Some(char) => {
+                        string.push(*char);
+                    }
+                    None => {
+                        return Err(StandardError::new(
+                            "invalid escape character",
+                            pos_start.clone(),
+                            self.position.clone(),
+                            None,
+                        ));
+                    }
+                }
+
                 escape_char = false;
             } else if character == '\\' {
                 escape_char = true;
@@ -314,12 +334,12 @@ impl Lexer {
         }
 
         if self.current_char != Some('"') {
-            return Err(Some(StandardError::new(
+            return Err(StandardError::new(
                 "unterminated string literal",
                 pos_start,
                 self.position.clone(),
                 Some("add a '\"' at the end of the string to close it"),
-            )));
+            ));
         }
 
         self.advance();
@@ -374,7 +394,7 @@ impl Lexer {
         )
     }
 
-    pub fn make_not_equals(&mut self) -> Result<Token, Option<StandardError>> {
+    pub fn make_not_equals(&mut self) -> Result<Token, StandardError> {
         let pos_start = self.position.clone();
         self.advance();
 
@@ -392,12 +412,13 @@ impl Lexer {
         }
 
         self.advance();
-        return Err(Some(StandardError::new(
+
+        return Err(StandardError::new(
             "expected '=' after '!'",
             pos_start,
             self.position.clone(),
             Some("add a '=' after the '!' character"),
-        )));
+        ));
     }
 
     pub fn make_less_than(&mut self) -> Token {
