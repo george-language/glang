@@ -59,15 +59,16 @@ fn main() {
             } else if first_arg == "--version" || first_arg == "-v" {
                 println!("George Language {VERSION}");
             } else if first_arg == "--help" {
-                println!("{BOLD}Usage: {ITALIC}glang [command] ... [options]{RESET}");
-                println!("glang <file>:             run a '.glang' file");
-                println!("glang new <project_name>: create a glang project");
+                println!("{BOLD}Usage: {ITALIC}glang [command] ... [options]{RESET}\n");
+                println!("  glang <file>:             run a '.glang' file");
+                println!("  glang new <project_name>: create a glang project");
                 println!(
-                    "glang init:               initialize a glang project in the current directory"
+                    "  glang init:               initialize a glang project in the current directory"
                 );
-                println!("glang --version:          print the glang version");
-                println!("glang --v:                print the glang version");
-                println!("glang --help:             see this message again");
+                println!("  glang --version:          print the glang version");
+                println!("  glang --v:                print the glang version");
+                println!("  glang --help:             see this message again");
+                println!("");
             } else if first_arg.ends_with(".glang") {
                 let error = run(first_arg.as_str(), None);
 
