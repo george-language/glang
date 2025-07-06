@@ -35,6 +35,7 @@ impl StandardError {
 
         for i in pos_start.line_num..=pos_end.line_num {
             if let Some(line) = lines.get(i as usize) {
+                result.push_str("   | ");
                 result.push_str(line);
                 result.push('\n');
 
@@ -57,8 +58,8 @@ impl StandardError {
                 };
 
                 let arrow_line = " ".repeat(col_start) + &"^".repeat(arrow_len);
-                result.push_str(format!("{BOLD}{}{RESET}", &arrow_line).as_str());
-                result.push('\n');
+                result.push_str(format!("   | {BOLD}{}{RESET}", &arrow_line).as_str());
+                result.push_str("\n   | ");
             }
         }
 
@@ -71,11 +72,11 @@ impl Display for StandardError {
         let mut output = String::new();
         output.push_str(
             format!(
-                "{DIM_RED}{BOLD}error:{RESET} {}\nwhere: \n|     line {},\n|     column {},\n|     in {}",
+                "{DIM_RED}{BOLD}error:{RESET} {}\n   in: {}:{}:{}",
                 self.text,
+                self.pos_start.filename,
                 self.pos_start.line_num,
                 self.pos_start.column_num,
-                self.pos_start.filename
             )
             .as_str(),
         );
@@ -83,7 +84,7 @@ impl Display for StandardError {
         // this will print the '^' indicating where the issue is
         output.push_str(
             format!(
-                "\ncaused by:\n\n{}",
+                "\n   + \n   | \n{}",
                 self.format_code_as_messup(
                     &self.pos_start.file_contents,
                     &self.pos_start,
@@ -94,8 +95,18 @@ impl Display for StandardError {
         );
 
         if let Some(msg) = &self.help {
-            output.push_str(format!("\n{DIM_GREEN}help:{RESET} {}", msg).as_str());
+            output.push_str(format!("\n{DIM_GREEN}   +--> help:{RESET} {}", msg).as_str());
+        } else {
+            output.push_str("\n   + ");
         }
+
+        output.push_str(
+            format!(
+                "\n{DIM_YELLOW}{BOLD}process finished with exit code {}{RESET}",
+                -1
+            )
+            .as_str(),
+        );
 
         write!(f, "{}{RESET}", output)
     }
