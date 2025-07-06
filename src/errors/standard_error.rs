@@ -47,7 +47,7 @@ impl StandardError {
                 let col_end = if i == pos_end.line_num - 1 {
                     pos_end.column_num as usize
                 } else {
-                    line.len() - 1
+                    line.len()
                 };
 
                 let arrow_len = if col_end > col_start {

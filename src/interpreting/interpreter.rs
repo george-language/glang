@@ -46,6 +46,26 @@ impl Interpreter {
         interpreter
     }
 
+    pub fn evaluate(&mut self, src: &str, context: &mut Context) -> Option<StandardError> {
+        let mut lexer = Lexer::new("<eval>", src.to_string());
+        let (tokens, error) = lexer.make_tokens();
+
+        if error.is_some() {
+            return error;
+        }
+
+        let mut parser = Parser::new(&tokens);
+        let ast = parser.parse();
+
+        if ast.error.is_some() {
+            return ast.error;
+        }
+
+        self.visit(ast.node.unwrap(), context);
+
+        None
+    }
+
     pub fn visit(&mut self, node: Box<AstNode>, context: &mut Context) -> RuntimeResult {
         match node.as_ref() {
             AstNode::List(node) => {
