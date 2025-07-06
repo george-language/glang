@@ -1,3 +1,4 @@
+pub mod command;
 mod errors;
 mod interpreting;
 mod lexing;
