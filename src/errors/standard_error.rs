@@ -95,7 +95,7 @@ impl Display for StandardError {
         );
 
         if let Some(msg) = &self.help {
-            output.push_str(format!("\n{DIM_GREEN}   +--> help:{RESET} {}", msg).as_str());
+            output.push_str(format!("\n   + - > {DIM_GREEN}{ITALIC}help:{RESET} {}", msg).as_str());
         } else {
             output.push_str("\n   + ");
         }
