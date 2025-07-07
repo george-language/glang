@@ -75,7 +75,7 @@ impl Display for StandardError {
                 "{DIM_RED}{BOLD}error:{RESET} {}\n   in: {}:{}:{}",
                 self.text,
                 self.pos_start.filename,
-                self.pos_start.line_num,
+                self.pos_start.line_num + 1,
                 self.pos_start.column_num,
             )
             .as_str(),
