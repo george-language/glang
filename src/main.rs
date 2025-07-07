@@ -2,7 +2,7 @@ use glang::{command, run};
 use std::env;
 use std::path::Path;
 
-const VERSION: &str = "2.0";
+const VERSION: &str = "2.0-alpha";
 
 fn main() {
     unsafe {
