@@ -83,3 +83,20 @@ func hashmap_values(hashmap_obj) {
 
     give values;
 }
+
+# Pretty print a hashmap
+# arg <hashmap_obj>: the hashmap object
+# returns: null
+func bark_hashmap(hashmap_obj) {
+    bark("{");
+
+    walk i = 0 through length(hashmap_obj) {
+        obj pair = retrieve(hashmap_obj, i);
+        obj key = retrieve(pair, 0);
+        obj value = retrieve(pair, 1);
+
+        bark("    " + tostring(key) + ": " + tostring(value));
+    }
+
+    bark("}");
+}
