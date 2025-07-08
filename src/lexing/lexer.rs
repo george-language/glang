@@ -4,10 +4,12 @@ use crate::lexing::token::Token;
 use crate::lexing::token_type::TokenType;
 use crate::syntax::attributes::*;
 use std::collections::HashMap;
+use std::sync::Arc;
 
 pub struct Lexer {
     pub filename: String,
     pub text: String,
+    pub chars: Arc<[char]>,
     pub position: Position,
     pub current_char: Option<char>,
 }
@@ -19,6 +21,7 @@ impl Lexer {
         let mut lexer = Self {
             filename: filename.to_string(),
             text: contents.to_string(),
+            chars: contents.chars().collect::<Vec<_>>().into(),
             position: Position::new(-1, 0, -1, filename, &contents.clone()),
             current_char: None,
         };
@@ -30,13 +33,8 @@ impl Lexer {
     pub fn advance(&mut self) {
         self.position.advance(self.current_char);
 
-        if self.position.index >= 0 && (self.position.index as usize) < self.text.len() {
-            self.current_char = Some(
-                self.text
-                    .chars()
-                    .nth(self.position.index as usize)
-                    .unwrap_or(' '),
-            );
+        if self.position.index >= 0 && (self.position.index as usize) < self.chars.len() {
+            self.current_char = Some(self.chars[self.position.index as usize]);
         } else {
             self.current_char = None;
         }
@@ -45,171 +43,169 @@ impl Lexer {
     pub fn make_tokens(&mut self) -> Result<Vec<Token>, StandardError> {
         let mut tokens = Vec::new();
 
-        while self.current_char != None {
-            if let Some(current_char) = self.current_char.clone() {
-                if current_char == ' ' || current_char == '\t' {
-                    self.advance();
-                } else if current_char == '#' {
-                    self.skip_comment();
-                } else if current_char == ';' || current_char == '\n' {
-                    tokens.push(Token::new(
-                        TokenType::TT_NEWLINE,
-                        None,
-                        Some(self.position.clone()),
-                        None,
-                    ));
-                    self.advance();
-                } else if DIGITS.contains(current_char) {
-                    let result = self.make_number();
+        while let Some(current_char) = self.current_char {
+            if current_char == ' ' || current_char == '\t' {
+                self.advance();
+            } else if current_char == '#' {
+                self.skip_comment();
+            } else if current_char == ';' || current_char == '\n' {
+                tokens.push(Token::new(
+                    TokenType::TT_NEWLINE,
+                    None,
+                    Some(self.position.clone()),
+                    None,
+                ));
+                self.advance();
+            } else if DIGITS.contains(current_char) {
+                let result = self.make_number();
 
-                    match result {
-                        Ok(token) => {
-                            tokens.push(token);
-                        }
-                        Err(error) => {
-                            return Err(error);
-                        }
+                match result {
+                    Ok(token) => {
+                        tokens.push(token);
                     }
-                } else if LETTERS.contains(current_char) {
-                    tokens.push(self.make_identifier());
-                } else if current_char == '"' {
-                    let result = self.make_string();
-
-                    match result {
-                        Ok(token) => {
-                            tokens.push(token);
-                        }
-                        Err(error) => {
-                            return Err(error);
-                        }
+                    Err(error) => {
+                        return Err(error);
                     }
-                } else if current_char == '+' {
-                    tokens.push(Token::new(
-                        TokenType::TT_PLUS,
-                        None,
-                        Some(self.position.clone()),
-                        None,
-                    ));
-                    self.advance();
-                } else if current_char == '-' {
-                    tokens.push(self.make_minus_or_arrow());
-                } else if current_char == '*' {
-                    tokens.push(Token::new(
-                        TokenType::TT_MUL,
-                        None,
-                        Some(self.position.clone()),
-                        None,
-                    ));
-                    self.advance();
-                } else if current_char == '/' {
-                    tokens.push(Token::new(
-                        TokenType::TT_DIV,
-                        None,
-                        Some(self.position.clone()),
-                        None,
-                    ));
-                    self.advance();
-                } else if current_char == '^' {
-                    tokens.push(Token::new(
-                        TokenType::TT_POW,
-                        None,
-                        Some(self.position.clone()),
-                        None,
-                    ));
-                    self.advance();
-                } else if current_char == '%' {
-                    tokens.push(Token::new(
-                        TokenType::TT_MOD,
-                        None,
-                        Some(self.position.clone()),
-                        None,
-                    ));
-                    self.advance();
-                } else if current_char == '(' {
-                    tokens.push(Token::new(
-                        TokenType::TT_LPAREN,
-                        None,
-                        Some(self.position.clone()),
-                        None,
-                    ));
-                    self.advance();
-                } else if current_char == ')' {
-                    tokens.push(Token::new(
-                        TokenType::TT_RPAREN,
-                        None,
-                        Some(self.position.clone()),
-                        None,
-                    ));
-                    self.advance();
-                } else if current_char == '[' {
-                    tokens.push(Token::new(
-                        TokenType::TT_LSQUARE,
-                        None,
-                        Some(self.position.clone()),
-                        None,
-                    ));
-                    self.advance();
-                } else if current_char == ']' {
-                    tokens.push(Token::new(
-                        TokenType::TT_RSQUARE,
-                        None,
-                        Some(self.position.clone()),
-                        None,
-                    ));
-                    self.advance();
-                } else if current_char == '{' {
-                    tokens.push(Token::new(
-                        TokenType::TT_LBRACKET,
-                        None,
-                        Some(self.position.clone()),
-                        None,
-                    ));
-                    self.advance();
-                } else if current_char == '}' {
-                    tokens.push(Token::new(
-                        TokenType::TT_RBRACKET,
-                        None,
-                        Some(self.position.clone()),
-                        None,
-                    ));
-                    self.advance();
-                } else if current_char == '!' {
-                    let result = self.make_not_equals();
-
-                    match result {
-                        Ok(token) => {
-                            tokens.push(token);
-                        }
-                        Err(error) => {
-                            return Err(error);
-                        }
-                    }
-                } else if current_char == '=' {
-                    tokens.push(self.make_equals());
-                } else if current_char == '<' {
-                    tokens.push(self.make_less_than())
-                } else if current_char == '>' {
-                    tokens.push(self.make_greater_than())
-                } else if current_char == ',' {
-                    tokens.push(Token::new(
-                        TokenType::TT_COMMA,
-                        None,
-                        Some(self.position.clone()),
-                        None,
-                    ));
-                    self.advance();
-                } else {
-                    let pos_start = self.position.clone();
-                    let character = current_char.clone();
-                    self.advance();
-
-                    return Err(StandardError::new(
-                        format!("unkown character '{}'", character).as_str(),
-                        pos_start,
-                        self.position.clone(),
-                        Some("replace this character with one known by glang"),
-                    ));
                 }
+            } else if LETTERS.contains(current_char) {
+                tokens.push(self.make_identifier());
+            } else if current_char == '"' {
+                let result = self.make_string();
+
+                match result {
+                    Ok(token) => {
+                        tokens.push(token);
+                    }
+                    Err(error) => {
+                        return Err(error);
+                    }
+                }
+            } else if current_char == '+' {
+                tokens.push(Token::new(
+                    TokenType::TT_PLUS,
+                    None,
+                    Some(self.position.clone()),
+                    None,
+                ));
+                self.advance();
+            } else if current_char == '-' {
+                tokens.push(self.make_minus_or_arrow());
+            } else if current_char == '*' {
+                tokens.push(Token::new(
+                    TokenType::TT_MUL,
+                    None,
+                    Some(self.position.clone()),
+                    None,
+                ));
+                self.advance();
+            } else if current_char == '/' {
+                tokens.push(Token::new(
+                    TokenType::TT_DIV,
+                    None,
+                    Some(self.position.clone()),
+                    None,
+                ));
+                self.advance();
+            } else if current_char == '^' {
+                tokens.push(Token::new(
+                    TokenType::TT_POW,
+                    None,
+                    Some(self.position.clone()),
+                    None,
+                ));
+                self.advance();
+            } else if current_char == '%' {
+                tokens.push(Token::new(
+                    TokenType::TT_MOD,
+                    None,
+                    Some(self.position.clone()),
+                    None,
+                ));
+                self.advance();
+            } else if current_char == '(' {
+                tokens.push(Token::new(
+                    TokenType::TT_LPAREN,
+                    None,
+                    Some(self.position.clone()),
+                    None,
+                ));
+                self.advance();
+            } else if current_char == ')' {
+                tokens.push(Token::new(
+                    TokenType::TT_RPAREN,
+                    None,
+                    Some(self.position.clone()),
+                    None,
+                ));
+                self.advance();
+            } else if current_char == '[' {
+                tokens.push(Token::new(
+                    TokenType::TT_LSQUARE,
+                    None,
+                    Some(self.position.clone()),
+                    None,
+                ));
+                self.advance();
+            } else if current_char == ']' {
+                tokens.push(Token::new(
+                    TokenType::TT_RSQUARE,
+                    None,
+                    Some(self.position.clone()),
+                    None,
+                ));
+                self.advance();
+            } else if current_char == '{' {
+                tokens.push(Token::new(
+                    TokenType::TT_LBRACKET,
+                    None,
+                    Some(self.position.clone()),
+                    None,
+                ));
+                self.advance();
+            } else if current_char == '}' {
+                tokens.push(Token::new(
+                    TokenType::TT_RBRACKET,
+                    None,
+                    Some(self.position.clone()),
+                    None,
+                ));
+                self.advance();
+            } else if current_char == '!' {
+                let result = self.make_not_equals();
+
+                match result {
+                    Ok(token) => {
+                        tokens.push(token);
+                    }
+                    Err(error) => {
+                        return Err(error);
+                    }
+                }
+            } else if current_char == '=' {
+                tokens.push(self.make_equals());
+            } else if current_char == '<' {
+                tokens.push(self.make_less_than())
+            } else if current_char == '>' {
+                tokens.push(self.make_greater_than())
+            } else if current_char == ',' {
+                tokens.push(Token::new(
+                    TokenType::TT_COMMA,
+                    None,
+                    Some(self.position.clone()),
+                    None,
+                ));
+                self.advance();
+            } else {
+                let pos_start = self.position.clone();
+                let character = current_char.clone();
+                self.advance();
+
+                return Err(StandardError::new(
+                    format!("unkown character '{}'", character).as_str(),
+                    pos_start,
+                    self.position.clone(),
+                    Some("replace this character with one known by glang"),
+                ));
             }
         }
 
