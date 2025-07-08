@@ -484,7 +484,7 @@ impl Interpreter {
             }
         }
 
-        let mut lexer = Lexer::new(&import.position_start().unwrap().filename, contents);
+        let mut lexer = Lexer::new(&file_to_import, contents);
         let token_result = lexer.make_tokens();
 
         if token_result.is_err() {
