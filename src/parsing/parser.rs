@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use crate::{
     errors::standard_error::StandardError,
     lexing::{position::Position, token::Token, token_type::TokenType},
@@ -14,6 +12,7 @@ use crate::{
     },
     parsing::parse_result::ParseResult,
 };
+use std::sync::Arc;
 
 pub struct Parser {
     pub tokens: Arc<[Token]>,
@@ -71,17 +70,21 @@ impl Parser {
     pub fn current_pos_start(&self) -> Position {
         self.current_token
             .as_ref()
-            .and_then(|tok| tok.pos_start.as_ref())
-            .cloned()
-            .expect("Expected a pos_start")
+            .unwrap()
+            .pos_start
+            .as_ref()
+            .unwrap()
+            .clone()
     }
 
     pub fn current_pos_end(&self) -> Position {
         self.current_token
             .as_ref()
-            .and_then(|tok| tok.pos_end.as_ref())
-            .cloned()
-            .expect("Expected a pos_end")
+            .unwrap()
+            .pos_end
+            .as_ref()
+            .unwrap()
+            .clone()
     }
 
     pub fn parse(&mut self) -> ParseResult {
@@ -160,7 +163,7 @@ impl Parser {
 
     pub fn list_expr(&mut self) -> ParseResult {
         let mut parse_result = ParseResult::new();
-        let mut element_nodes: Vec<Option<Box<AstNode>>> = Vec::new();
+        let mut element_nodes: Vec<Box<AstNode>> = Vec::new();
         let pos_start = self.current_token_ref().pos_start.clone();
 
         if self.current_token_ref().token_type != TokenType::TT_LSQUARE {
@@ -179,26 +182,30 @@ impl Parser {
             parse_result.register_advancement();
             self.advance();
         } else {
-            element_nodes.push(parse_result.register(self.expr()));
+            let element = parse_result.register(self.expr());
 
             if parse_result.error.is_some() {
                 return parse_result.failure(Some(StandardError::new(
                     "expected closing bracket or list element",
-                    self.current_token_copy().pos_start.unwrap(),
-                    self.current_token_copy().pos_end.unwrap(),
+                    self.current_pos_start(),
+                    self.current_pos_end(),
                     Some("add a ']' to close the list or add a list element followed by a comma"),
                 )));
             }
+
+            element_nodes.push(element.unwrap());
 
             while self.current_token_ref().token_type == TokenType::TT_COMMA {
                 parse_result.register_advancement();
                 self.advance();
 
-                element_nodes.push(parse_result.register(self.expr()));
+                let element = parse_result.register(self.expr());
 
                 if parse_result.error.is_some() {
                     return parse_result;
                 }
+
+                element_nodes.push(element.unwrap());
             }
 
             if self.current_token_ref().token_type != TokenType::TT_RSQUARE {
@@ -836,7 +843,7 @@ impl Parser {
 
     pub fn statements(&mut self) -> ParseResult {
         let mut parse_result = ParseResult::new();
-        let mut statements: Vec<Option<Box<AstNode>>> = Vec::new();
+        let mut statements: Vec<Box<AstNode>> = Vec::new();
         let pos_start = self.current_pos_start();
 
         while self.current_token_ref().token_type == TokenType::TT_NEWLINE {
@@ -858,7 +865,7 @@ impl Parser {
             return parse_result;
         }
 
-        statements.push(statement);
+        statements.push(statement.unwrap());
 
         let mut more_statements = true;
 
@@ -894,7 +901,7 @@ impl Parser {
                 return parse_result;
             }
 
-            statements.push(statement);
+            statements.push(statement.unwrap());
         }
 
         return parse_result.success(Some(Box::new(AstNode::List(ListNode::new(

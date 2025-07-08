@@ -3,14 +3,14 @@ use std::{fmt::Display, sync::Arc};
 
 #[derive(Debug, Clone)]
 pub struct ListNode {
-    pub element_nodes: Arc<[Option<Box<AstNode>>]>,
+    pub element_nodes: Arc<[Box<AstNode>]>,
     pub pos_start: Option<Position>,
     pub pos_end: Option<Position>,
 }
 
 impl ListNode {
     pub fn new(
-        element_nodes: &[Option<Box<AstNode>>],
+        element_nodes: &[Box<AstNode>],
         pos_start: Option<Position>,
         pos_end: Option<Position>,
     ) -> Self {

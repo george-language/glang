@@ -140,7 +140,7 @@ impl Interpreter {
         let mut elements: Vec<Option<Box<Value>>> = Vec::new();
 
         for element in node.element_nodes.iter() {
-            elements.push(result.register(self.visit(element.as_ref().unwrap().clone(), context)));
+            elements.push(result.register(self.visit(element.to_owned(), context)));
 
             if result.should_return() {
                 return result;
