@@ -8,6 +8,7 @@ const VERSION: &str = "2.0-beta";
 #[derive(Parser)]
 #[command(name = "glang", version = VERSION, about = "The George Programming Language")]
 struct Cli {
+    file: Option<String>,
     #[command(subcommand)]
     command: Option<Commands>,
 }
@@ -18,8 +19,6 @@ enum Commands {
     New { name: String },
     #[command(about = "Initialize a glang project in the current directory")]
     Init,
-    #[command(about = "Run a '.glang' source file")]
-    Run { file: String },
 }
 
 fn main() {
@@ -39,21 +38,21 @@ fn main() {
 
     let cli = Cli::parse();
 
-    match cli.command {
-        Some(Commands::New { name }) => {
+    match (cli.command, cli.file) {
+        (Some(Commands::New { name }), _) => {
             glang::command::new_project(Path::new(&name));
         }
-        Some(Commands::Init) => {
+        (Some(Commands::Init), _) => {
             glang::command::new_project(Path::new("."));
         }
-        Some(Commands::Run { file }) => {
+        (None, Some(file)) => {
             let error = glang::run(&file, None);
 
             if let Some(err) = error {
                 println!("{}", err);
             }
         }
-        None => {
+        (None, None) => {
             glang::command::show_version(VERSION);
             glang::command::launch_repl();
         }
