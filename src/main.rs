@@ -1,8 +1,26 @@
-use glang::{command, run};
+use clap::{Parser, Subcommand};
+use glang;
 use std::env;
 use std::path::Path;
 
 const VERSION: &str = "2.0-beta";
+
+#[derive(Parser)]
+#[command(name = "glang", version = VERSION, about = "The George Programming Language")]
+struct Cli {
+    #[command(subcommand)]
+    command: Option<Commands>,
+}
+
+#[derive(Subcommand)]
+enum Commands {
+    #[command(about = "Create a glang project")]
+    New { name: String },
+    #[command(about = "Initialize a glang project in the current directory")]
+    Init,
+    #[command(about = "Run a '.glang' source file")]
+    Run { file: String },
+}
 
 fn main() {
     unsafe {
@@ -19,44 +37,25 @@ fn main() {
         env::set_var("GLANG_STD", &path);
     }
 
-    let mut args = env::args();
+    let cli = Cli::parse();
 
-    if args.len() > 1 {
-        args.next();
+    match cli.command {
+        Some(Commands::New { name }) => {
+            glang::command::new_project(Path::new(&name));
+        }
+        Some(Commands::Init) => {
+            glang::command::new_project(Path::new("."));
+        }
+        Some(Commands::Run { file }) => {
+            let error = glang::run(&file, None);
 
-        if let Some(first_arg) = args.next() {
-            let first_arg = first_arg.as_str();
-
-            match first_arg {
-                "new" => {
-                    if let Some(second_arg) = args.next() {
-                        command::new_project(Path::new(second_arg.as_str()));
-                    }
-                }
-                "init" => {
-                    command::new_project(Path::new("."));
-                }
-                "--version" | "-v" => {
-                    command::show_version(VERSION);
-                }
-                "--help" => {
-                    command::show_help();
-                }
-                _ => {
-                    if first_arg.ends_with(".glang") {
-                        let error = run(first_arg, None);
-
-                        if error.is_some() {
-                            println!("{}", error.unwrap());
-                        }
-                    } else {
-                        println!("Unrecognized command '{}'", first_arg);
-                    }
-                }
+            if let Some(err) = error {
+                println!("{}", err);
             }
         }
-    } else {
-        command::show_version(VERSION);
-        command::launch_repl();
+        None => {
+            glang::command::show_version(VERSION);
+            glang::command::launch_repl();
+        }
     }
 }
