@@ -2,6 +2,7 @@
 name = "glang"
 repository = "https://github.com/mpsoftwarefoundation/GeorgeLanguage.git"
 description = "The George Programming Language"
+authors = ["MP Software Foundation"]
 version = "0.0.0"
 edition = "2024"
 
