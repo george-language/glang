@@ -40,10 +40,10 @@ fn main() {
 
     match (cli.command, cli.file) {
         (Some(Commands::New { name }), _) => {
-            glang::command::new_project(Path::new(&name));
+            glang::new_project(Path::new(&name));
         }
         (Some(Commands::Init), _) => {
-            glang::command::new_project(Path::new("."));
+            glang::new_project(Path::new("."));
         }
         (None, Some(file)) => {
             let error = glang::run(&file, None);
@@ -53,8 +53,7 @@ fn main() {
             }
         }
         (None, None) => {
-            glang::command::show_version(VERSION);
-            glang::command::launch_repl();
+            glang::launch_repl(VERSION);
         }
     }
 }
