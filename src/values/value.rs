@@ -42,7 +42,7 @@ impl Value {
         &mut self,
         pos_start: Option<Position>,
         pos_end: Option<Position>,
-    ) -> Box<Value> {
+    ) -> Value {
         match self {
             Value::NumberValue(value) => {
                 value.pos_start = pos_start;
@@ -66,10 +66,10 @@ impl Value {
             }
         }
 
-        Box::new(self.clone())
+        self.clone()
     }
 
-    pub fn set_context(&mut self, context: Option<Context>) -> Box<Value> {
+    pub fn set_context(&mut self, context: Option<Context>) -> Value {
         match self {
             Value::NumberValue(value) => value.context = context,
             Value::ListValue(value) => value.context = context,
@@ -78,27 +78,26 @@ impl Value {
             Value::BuiltInFunction(value) => value.context = context,
         }
 
-        Box::new(self.clone())
+        self.clone()
     }
 
     pub fn perform_operation(
         &mut self,
         operator: &str,
-        other: Box<Value>,
-    ) -> (Option<Box<Value>>, Option<StandardError>) {
+        other: Value,
+    ) -> Result<Value, StandardError> {
         match self {
             Value::NumberValue(value) => value.perform_operation(operator, other),
             Value::ListValue(value) => value.perform_operation(operator, other),
             Value::StringValue(value) => value.perform_operation(operator, other),
-            _ => (
-                None,
-                Some(StandardError::new(
+            _ => {
+                return Err(StandardError::new(
                     format!("type doesn't support the '{}' operator", operator).as_str(),
                     self.position_start().unwrap(),
                     self.position_end().unwrap(),
                     None,
-                )),
-            ),
+                ));
+            }
         }
     }
 

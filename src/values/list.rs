@@ -4,18 +4,17 @@ use crate::{
     lexing::position::Position,
     values::{number::Number, value::Value},
 };
-use std::iter::zip;
 
 #[derive(Debug, Clone)]
 pub struct List {
-    pub elements: Vec<Option<Box<Value>>>,
+    pub elements: Vec<Value>,
     pub context: Option<Context>,
     pub pos_start: Option<Position>,
     pub pos_end: Option<Position>,
 }
 
 impl List {
-    pub fn new(elements: Vec<Option<Box<Value>>>) -> Self {
+    pub fn new(elements: Vec<Value>) -> Self {
         Self {
             elements: elements,
             context: None,
@@ -24,180 +23,102 @@ impl List {
         }
     }
 
-    pub fn from(elements: Vec<Option<Box<Value>>>) -> Box<Value> {
-        Box::new(Value::ListValue(List::new(elements)))
+    pub fn from(elements: Vec<Value>) -> Value {
+        Value::ListValue(List::new(elements))
     }
 
     pub fn perform_operation(
         &mut self,
         operator: &str,
-        other: Box<Value>,
-    ) -> (Option<Box<Value>>, Option<StandardError>) {
-        match other.as_ref() {
-            Value::ListValue(right) => match operator {
+        other: Value,
+    ) -> Result<Value, StandardError> {
+        match other {
+            Value::ListValue(ref right) => match operator {
                 "+" => {
-                    return (Some(self.append(&mut right.elements.clone())), None);
+                    return Ok(self.append(&mut right.elements.clone()));
                 }
                 "*" => {
-                    return (Some(self.push(Some(other.clone()))), None);
-                }
-                "==" => {
-                    if self.elements.len() != right.elements.len() {
-                        return (
-                            Some(Number::false_value().set_context(self.context.clone())),
-                            None,
-                        );
-                    } else {
-                        for (a, b) in zip(self.elements.clone(), right.elements.clone()) {
-                            let (result, error) = a.unwrap().perform_operation("==", b.unwrap());
-
-                            if error.is_some() {
-                                return (None, error);
-                            }
-                            if !result.is_some() {
-                                return (
-                                    Some(Number::false_value().set_context(self.context.clone())),
-                                    None,
-                                );
-                            }
-                        }
-                    }
-
-                    return (
-                        Some(Number::true_value().set_context(self.context.clone())),
-                        None,
-                    );
-                }
-                "!=" => {
-                    if self.elements.len() != right.elements.len() {
-                        return (
-                            Some(Number::false_value().set_context(self.context.clone())),
-                            None,
-                        );
-                    } else {
-                        for (a, b) in zip(self.elements.clone(), right.elements.clone()) {
-                            let (result, error) = a.unwrap().perform_operation("==", b.unwrap());
-
-                            if error.is_some() {
-                                return (None, error);
-                            }
-                            if !result.is_some() {
-                                return (
-                                    Some(Number::true_value().set_context(self.context.clone())),
-                                    None,
-                                );
-                            }
-                        }
-                    }
-
-                    return (
-                        Some(Number::false_value().set_context(self.context.clone())),
-                        None,
-                    );
+                    return Ok(self.push(other.clone()));
                 }
                 "and" => {
-                    return (
-                        Some(
-                            Value::NumberValue(Number::new(
-                                (!self.elements.is_empty() && !right.elements.is_empty()) as u8
-                                    as f64,
-                            ))
-                            .set_context(self.context.clone()),
-                        ),
-                        None,
-                    );
+                    return Ok(Value::NumberValue(Number::new(
+                        (!self.elements.is_empty() && !right.elements.is_empty()) as u8 as f64,
+                    ))
+                    .set_context(self.context.clone()));
                 }
                 "or" => {
-                    return (
-                        Some(
-                            Value::NumberValue(Number::new(
-                                (!self.elements.is_empty() || !right.elements.is_empty()) as u8
-                                    as f64,
-                            ))
-                            .set_context(self.context.clone()),
-                        ),
-                        None,
-                    );
+                    return Ok(Value::NumberValue(Number::new(
+                        (!self.elements.is_empty() || !right.elements.is_empty()) as u8 as f64,
+                    ))
+                    .set_context(self.context.clone()));
                 }
-                _ => return (None, Some(self.illegal_operation(Some(other)))),
+                _ => return Err(self.illegal_operation(Some(other))),
             },
-            Value::NumberValue(right) => match operator {
+            Value::NumberValue(ref right) => match operator {
                 "*" => {
-                    return (Some(self.push(Some(other.clone()))), None);
+                    return Ok(self.push(other.clone()));
                 }
                 "^" => {
                     if right.value < -1.0 {
-                        return (
-                            None,
-                            Some(StandardError::new(
-                                "cannot access a negative index",
-                                right.pos_start.clone().unwrap(),
-                                right.pos_end.clone().unwrap(),
-                                Some(
-                                    "use an index greater than or equal to 0 or use -1 to reverse the list",
-                                ),
-                            )),
-                        );
+                        return Err(StandardError::new(
+                            "cannot access a negative index",
+                            right.pos_start.clone().unwrap(),
+                            right.pos_end.clone().unwrap(),
+                            Some(
+                                "use an index greater than or equal to 0 or use -1 to reverse the list",
+                            ),
+                        ));
                     }
 
                     if right.value == -1.0 {
-                        return (Some(self.reverse()), None);
+                        return Ok(self.reverse());
                     }
 
                     if (right.value as usize) >= self.elements.len() {
-                        return (
+                        return Err(StandardError::new(
+                            "index is out of bounds",
+                            right.pos_start.clone().unwrap(),
+                            right.pos_end.clone().unwrap(),
                             None,
-                            Some(StandardError::new(
-                                "index is out of bounds",
-                                right.pos_start.clone().unwrap(),
-                                right.pos_end.clone().unwrap(),
-                                None,
-                            )),
-                        );
+                        ));
                     }
 
-                    return (self.retrieve(right.value as usize), None);
+                    return Ok(self.retrieve(right.value as usize));
                 }
                 "-" => {
                     if right.value < 0.0 {
-                        return (
-                            None,
-                            Some(StandardError::new(
-                                "cannot access a negative index",
-                                right.pos_start.clone().unwrap(),
-                                right.pos_end.clone().unwrap(),
-                                Some("use an index greater than or equal to 0"),
-                            )),
-                        );
+                        return Err(StandardError::new(
+                            "cannot access a negative index",
+                            right.pos_start.clone().unwrap(),
+                            right.pos_end.clone().unwrap(),
+                            Some("use an index greater than or equal to 0"),
+                        ));
                     }
 
                     if (right.value as usize) >= self.elements.len() {
-                        return (
+                        return Err(StandardError::new(
+                            "index is out of bounds",
+                            right.pos_start.clone().unwrap(),
+                            right.pos_end.clone().unwrap(),
                             None,
-                            Some(StandardError::new(
-                                "index is out of bounds",
-                                right.pos_start.clone().unwrap(),
-                                right.pos_end.clone().unwrap(),
-                                None,
-                            )),
-                        );
+                        ));
                     }
 
-                    return (Some(self.remove(right.value as usize)), None);
+                    return Ok(self.remove(right.value as usize));
                 }
-                _ => return (None, Some(self.illegal_operation(Some(other)))),
+                _ => return Err(self.illegal_operation(Some(other))),
             },
             _ => {
                 if operator == "*" {
-                    return (Some(self.push(Some(other.clone()))), None);
+                    return Ok(self.push(other.clone()));
                 }
 
-                return (None, Some(self.illegal_operation(Some(other))));
+                return Err(self.illegal_operation(Some(other)));
             }
         }
     }
 
-    pub fn illegal_operation(&self, other: Option<Box<Value>>) -> StandardError {
+    pub fn illegal_operation(&self, other: Option<Value>) -> StandardError {
         StandardError::new(
             "operation not supported by type",
             self.pos_start.as_ref().unwrap().clone(),
@@ -210,48 +131,43 @@ impl List {
         )
     }
 
-    pub fn push(&mut self, item: Option<Box<Value>>) -> Box<Value> {
+    pub fn push(&mut self, item: Value) -> Value {
         let mut copy = self.clone();
         copy.elements.push(item);
 
-        Box::new(Value::ListValue(copy))
+        Value::ListValue(copy)
     }
 
-    pub fn append(&mut self, other: &mut Vec<Option<Box<Value>>>) -> Box<Value> {
+    pub fn append(&mut self, other: &mut Vec<Value>) -> Value {
         let mut copy = self.clone();
         copy.elements.append(other);
 
-        Box::new(Value::ListValue(copy))
+        Value::ListValue(copy)
     }
 
-    pub fn remove(&mut self, index: usize) -> Box<Value> {
+    pub fn remove(&mut self, index: usize) -> Value {
         let mut copy = self.clone();
-        copy.elements.remove(index).unwrap();
+        copy.elements.remove(index);
 
-        Box::new(Value::ListValue(copy))
+        Value::ListValue(copy)
     }
 
-    pub fn retrieve(&self, index: usize) -> Option<Box<Value>> {
+    pub fn retrieve(&self, index: usize) -> Value {
         self.elements[index].clone()
     }
 
-    pub fn reverse(&mut self) -> Box<Value> {
+    pub fn reverse(&mut self) -> Value {
         let mut copy = self.clone();
         copy.elements.reverse();
 
-        Box::new(Value::ListValue(copy))
+        Value::ListValue(copy)
     }
 
     pub fn as_string(&self) -> String {
         let output = self
             .elements
             .iter()
-            .map(|item| {
-                item.as_ref().map_or_else(
-                    || Number::null_value().as_string(),
-                    |boxed| boxed.as_string(),
-                )
-            })
+            .map(|item| item.as_string())
             .collect::<Vec<_>>()
             .join(", ");
 

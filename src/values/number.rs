@@ -21,29 +21,25 @@ impl Number {
         }
     }
 
-    pub fn from(value: f64) -> Box<Value> {
-        Box::new(Value::NumberValue(Number::new(value)))
+    pub fn from(value: f64) -> Value {
+        Value::NumberValue(Number::new(value))
     }
 
-    pub fn null_value() -> Box<Value> {
-        Box::new(Value::NumberValue(Number::new(0.0)))
+    pub fn null_value() -> Value {
+        Value::NumberValue(Number::new(0.0))
     }
 
-    pub fn true_value() -> Box<Value> {
-        Box::new(Value::NumberValue(Number::new(1.0)))
+    pub fn true_value() -> Value {
+        Value::NumberValue(Number::new(1.0))
     }
 
-    pub fn false_value() -> Box<Value> {
-        Box::new(Value::NumberValue(Number::new(0.0)))
+    pub fn false_value() -> Value {
+        Value::NumberValue(Number::new(0.0))
     }
 
-    pub fn perform_operation(
-        &self,
-        operator: &str,
-        other: Box<Value>,
-    ) -> (Option<Box<Value>>, Option<StandardError>) {
-        match other.as_ref() {
-            Value::NumberValue(right) => {
+    pub fn perform_operation(&self, operator: &str, other: Value) -> Result<Value, StandardError> {
+        match other {
+            Value::NumberValue(ref right) => {
                 let left_val = self.value;
                 let right_val = right.value;
 
@@ -53,44 +49,35 @@ impl Number {
                     "*" => Some(left_val * right_val),
                     "/" => {
                         if right_val == 0.0 {
-                            return (
+                            return Err(StandardError::new(
+                                "division by zero",
+                                right.pos_start.clone().unwrap(),
+                                right.pos_end.clone().unwrap(),
                                 None,
-                                Some(StandardError::new(
-                                    "division by zero",
-                                    right.pos_start.clone().unwrap(),
-                                    right.pos_end.clone().unwrap(),
-                                    None,
-                                )),
-                            );
+                            ));
                         }
                         Some(left_val / right_val)
                     }
                     "^" => {
                         if right_val <= 0.0 {
-                            return (
+                            return Err(StandardError::new(
+                                "powered by operator less than or equal to 0",
+                                right.pos_start.clone().unwrap(),
+                                right.pos_end.clone().unwrap(),
                                 None,
-                                Some(StandardError::new(
-                                    "powered by operator less than or equal to 0",
-                                    right.pos_start.clone().unwrap(),
-                                    right.pos_end.clone().unwrap(),
-                                    None,
-                                )),
-                            );
+                            ));
                         }
 
                         Some(left_val.powf(right_val))
                     }
                     "%" => {
                         if right_val <= 0.0 {
-                            return (
+                            return Err(StandardError::new(
+                                "modded by operator less than or equal to 0",
+                                right.pos_start.clone().unwrap(),
+                                right.pos_end.clone().unwrap(),
                                 None,
-                                Some(StandardError::new(
-                                    "modded by operator less than or equal to 0",
-                                    right.pos_start.clone().unwrap(),
-                                    right.pos_end.clone().unwrap(),
-                                    None,
-                                )),
-                            );
+                            ));
                         }
 
                         Some(left_val.rem_euclid(right_val))
@@ -104,22 +91,17 @@ impl Number {
                     "and" => Some(((left_val != 0.0) && (right_val != 0.0)) as u8 as f64),
                     "or" => Some(((left_val != 0.0) || (right_val != 0.0)) as u8 as f64),
                     "not" => Some(if self.value == 0.0 { 1.0 } else { 0.0 }),
-                    _ => return (None, Some(self.illegal_operation(Some(other)))),
+                    _ => return Err(self.illegal_operation(Some(other))),
                 };
 
-                (
-                    Some(
-                        Value::NumberValue(Number::new(result.unwrap()))
-                            .set_context(self.context.clone()),
-                    ),
-                    None,
-                )
+                Ok(Value::NumberValue(Number::new(result.unwrap()))
+                    .set_context(self.context.clone()))
             }
-            _ => (None, Some(self.illegal_operation(Some(other)))),
+            _ => Err(self.illegal_operation(Some(other))),
         }
     }
 
-    pub fn illegal_operation(&self, other: Option<Box<Value>>) -> StandardError {
+    pub fn illegal_operation(&self, other: Option<Value>) -> StandardError {
         StandardError::new(
             "operation not supported by type",
             self.pos_start.as_ref().unwrap().clone(),
@@ -133,6 +115,6 @@ impl Number {
     }
 
     pub fn as_string(&self) -> String {
-        format!("{}", self.value).to_string()
+        self.value.to_string()
     }
 }

@@ -54,7 +54,7 @@ impl BuiltInFunction {
         new_context
     }
 
-    pub fn check_args(&self, arg_names: &[String], args: &[Box<Value>]) -> RuntimeResult {
+    pub fn check_args(&self, arg_names: &[String], args: &[Value]) -> RuntimeResult {
         let mut result = RuntimeResult::new();
 
         if args.len() > arg_names.len() || args.len() < arg_names.len() {
@@ -77,7 +77,7 @@ impl BuiltInFunction {
         result.success(None)
     }
 
-    pub fn populate_args(&self, arg_names: &[String], args: &[Box<Value>], exec_ctx: &mut Context) {
+    pub fn populate_args(&self, arg_names: &[String], args: &[Value], exec_ctx: &mut Context) {
         for i in 0..args.len() {
             let arg_name = arg_names[i].clone();
             let mut arg_value = args[i].clone();
@@ -95,7 +95,7 @@ impl BuiltInFunction {
     pub fn check_and_populate_args(
         &self,
         arg_names: &[String],
-        args: &[Box<Value>],
+        args: &[Value],
         exec_ctx: &mut Context,
     ) -> RuntimeResult {
         let mut result = RuntimeResult::new();
@@ -110,7 +110,7 @@ impl BuiltInFunction {
         result.success(None)
     }
 
-    pub fn execute(&self, args: &[Box<Value>]) -> RuntimeResult {
+    pub fn execute(&self, args: &[Value]) -> RuntimeResult {
         let mut exec_context = self.generate_new_context();
 
         match self.name.as_str() {
@@ -129,7 +129,7 @@ impl BuiltInFunction {
         };
     }
 
-    pub fn execute_print(&self, args: &[Box<Value>], exec_ctx: &mut Context) -> RuntimeResult {
+    pub fn execute_print(&self, args: &[Value], exec_ctx: &mut Context) -> RuntimeResult {
         let mut result = RuntimeResult::new();
         result.register(self.check_and_populate_args(&["value".to_string()], args, exec_ctx));
 
@@ -142,7 +142,7 @@ impl BuiltInFunction {
         result.success(Some(Number::null_value()))
     }
 
-    pub fn execute_input(&self, args: &[Box<Value>], exec_ctx: &mut Context) -> RuntimeResult {
+    pub fn execute_input(&self, args: &[Value], exec_ctx: &mut Context) -> RuntimeResult {
         let mut result = RuntimeResult::new();
         result.register(self.check_and_populate_args(&["msg".to_string()], args, exec_ctx));
 
@@ -152,7 +152,7 @@ impl BuiltInFunction {
 
         let message_arg = args[0].clone();
 
-        let message = match message_arg.as_ref() {
+        let message = match &message_arg {
             Value::StringValue(string) => string.as_string(),
             _ => {
                 return result.failure(Some(StandardError::new(
@@ -177,7 +177,7 @@ impl BuiltInFunction {
         result.success(Some(Str::from(input.trim())))
     }
 
-    pub fn execute_read(&self, args: &[Box<Value>], exec_ctx: &mut Context) -> RuntimeResult {
+    pub fn execute_read(&self, args: &[Value], exec_ctx: &mut Context) -> RuntimeResult {
         let mut result = RuntimeResult::new();
         result.register(self.check_and_populate_args(&["file".to_string()], args, exec_ctx));
 
@@ -187,7 +187,7 @@ impl BuiltInFunction {
 
         let file_arg = args[0].clone();
 
-        let filename = match file_arg.as_ref() {
+        let filename = match &file_arg {
             Value::StringValue(string) => string.as_string(),
             _ => {
                 return result.failure(Some(StandardError::new(
@@ -225,7 +225,7 @@ impl BuiltInFunction {
         result.success(Some(Str::from(contents.as_str())))
     }
 
-    pub fn execute_write(&self, args: &[Box<Value>], exec_ctx: &mut Context) -> RuntimeResult {
+    pub fn execute_write(&self, args: &[Value], exec_ctx: &mut Context) -> RuntimeResult {
         let mut result = RuntimeResult::new();
         result.register(self.check_and_populate_args(
             &["file".to_string(), "contents".to_string()],
@@ -240,7 +240,7 @@ impl BuiltInFunction {
         let file_arg = args[0].clone();
         let contents_arg = args[1].clone();
 
-        let filename = match file_arg.as_ref() {
+        let filename = match &file_arg {
             Value::StringValue(string) => string.as_string(),
             _ => {
                 return result.failure(Some(StandardError::new(
@@ -252,7 +252,7 @@ impl BuiltInFunction {
             }
         };
 
-        let contents = match contents_arg.as_ref() {
+        let contents = match &contents_arg {
             Value::StringValue(string) => string.as_string(),
             _ => {
                 return result.failure(Some(StandardError::new(
@@ -279,7 +279,7 @@ impl BuiltInFunction {
         result.success(Some(Number::null_value()))
     }
 
-    pub fn execute_tostring(&self, args: &[Box<Value>], exec_ctx: &mut Context) -> RuntimeResult {
+    pub fn execute_tostring(&self, args: &[Value], exec_ctx: &mut Context) -> RuntimeResult {
         let mut result = RuntimeResult::new();
         result.register(self.check_and_populate_args(&["value".to_string()], args, exec_ctx));
 
@@ -290,7 +290,7 @@ impl BuiltInFunction {
         result.success(Some(Str::from(args[0].as_string().as_str())))
     }
 
-    pub fn execute_tonumber(&self, args: &[Box<Value>], exec_ctx: &mut Context) -> RuntimeResult {
+    pub fn execute_tonumber(&self, args: &[Value], exec_ctx: &mut Context) -> RuntimeResult {
         let mut result = RuntimeResult::new();
         result.register(self.check_and_populate_args(&["value".to_string()], args, exec_ctx));
 
@@ -300,7 +300,7 @@ impl BuiltInFunction {
 
         let string_to_convert = args[0].clone();
 
-        let value: f64 = match string_to_convert.as_ref() {
+        let value: f64 = match &string_to_convert {
             Value::StringValue(string) => match string.as_string().parse() {
                 Ok(number) => number,
                 Err(e) => {
@@ -325,7 +325,7 @@ impl BuiltInFunction {
         result.success(Some(Number::from(value)))
     }
 
-    pub fn execute_length(&self, args: &[Box<Value>], exec_ctx: &mut Context) -> RuntimeResult {
+    pub fn execute_length(&self, args: &[Value], exec_ctx: &mut Context) -> RuntimeResult {
         let mut result = RuntimeResult::new();
         result.register(self.check_and_populate_args(&["value".to_string()], args, exec_ctx));
 
@@ -335,7 +335,7 @@ impl BuiltInFunction {
 
         let object_arg = args[0].clone();
 
-        let length: f64 = match object_arg.as_ref() {
+        let length: f64 = match &object_arg {
             Value::StringValue(value) => value.value.len() as f64,
             Value::ListValue(value) => value.elements.len() as f64,
             _ => {
@@ -351,7 +351,7 @@ impl BuiltInFunction {
         result.success(Some(Number::from(length)))
     }
 
-    pub fn execute_error(&self, args: &[Box<Value>], exec_ctx: &mut Context) -> RuntimeResult {
+    pub fn execute_error(&self, args: &[Value], exec_ctx: &mut Context) -> RuntimeResult {
         let mut result = RuntimeResult::new();
         result.register(self.check_and_populate_args(&["msg".to_string()], args, exec_ctx));
 
@@ -361,7 +361,7 @@ impl BuiltInFunction {
 
         let error = args[0].clone();
 
-        let message = match error.as_ref() {
+        let message = match &error {
             Value::StringValue(_) => error,
             _ => {
                 return result.failure(Some(StandardError::new(
@@ -381,7 +381,7 @@ impl BuiltInFunction {
         )))
     }
 
-    pub fn execute_type(&self, args: &[Box<Value>], exec_ctx: &mut Context) -> RuntimeResult {
+    pub fn execute_type(&self, args: &[Value], exec_ctx: &mut Context) -> RuntimeResult {
         let mut result = RuntimeResult::new();
         result.register(self.check_and_populate_args(&["value".to_string()], args, exec_ctx));
 
@@ -394,7 +394,7 @@ impl BuiltInFunction {
         )))
     }
 
-    pub fn execute_exec(&self, args: &[Box<Value>], exec_ctx: &mut Context) -> RuntimeResult {
+    pub fn execute_exec(&self, args: &[Value], exec_ctx: &mut Context) -> RuntimeResult {
         let mut result = RuntimeResult::new();
         result.register(self.check_and_populate_args(&["code".to_string()], args, exec_ctx));
 
@@ -404,7 +404,7 @@ impl BuiltInFunction {
 
         let code_arg = args[0].clone();
 
-        let code = match code_arg.as_ref() {
+        let code = match &code_arg {
             Value::StringValue(glang) => glang.as_string(),
             _ => {
                 return result.failure(Some(StandardError::new(
@@ -442,7 +442,7 @@ impl BuiltInFunction {
         result.success(Some(Number::null_value()))
     }
 
-    pub fn execute_env(&self, args: &[Box<Value>], exec_ctx: &mut Context) -> RuntimeResult {
+    pub fn execute_env(&self, args: &[Value], exec_ctx: &mut Context) -> RuntimeResult {
         let mut result = RuntimeResult::new();
         result.register(self.check_and_populate_args(&["var".to_string()], args, exec_ctx));
 
@@ -452,7 +452,7 @@ impl BuiltInFunction {
 
         let env_arg = args[0].clone();
 
-        let variable = match env_arg.as_ref() {
+        let variable = match &env_arg {
             Value::StringValue(glang) => glang.as_string(),
             _ => {
                 return result.failure(Some(StandardError::new(

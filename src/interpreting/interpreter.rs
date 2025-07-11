@@ -37,9 +37,7 @@ impl Interpreter {
         for builtin in &builtins {
             interpreter.global_symbol_table.borrow_mut().set(
                 builtin.to_string(),
-                Some(Box::new(Value::BuiltInFunction(BuiltInFunction::new(
-                    builtin,
-                )))),
+                Some(Value::BuiltInFunction(BuiltInFunction::new(builtin))),
             );
         }
 
@@ -137,14 +135,16 @@ impl Interpreter {
 
     pub fn visit_list_node(&mut self, node: &ListNode, context: &mut Context) -> RuntimeResult {
         let mut result = RuntimeResult::new();
-        let mut elements: Vec<Option<Box<Value>>> = Vec::new();
+        let mut elements: Vec<Value> = Vec::new();
 
         for element in node.element_nodes.iter() {
-            elements.push(result.register(self.visit(element.to_owned(), context)));
+            let element_result = result.register(self.visit(element.to_owned(), context));
 
             if result.should_return() {
                 return result;
             }
+
+            elements.push(element_result.unwrap());
         }
 
         result.success(Some(
@@ -271,7 +271,6 @@ impl Interpreter {
         let start_value = match result
             .register(self.visit(node.start_value_node.clone(), context))
             .unwrap()
-            .as_ref()
         {
             Value::NumberValue(value) => Number::new(value.value),
             _ => {
@@ -291,7 +290,6 @@ impl Interpreter {
         let end_value = match result
             .register(self.visit(node.end_value_node.clone(), context))
             .unwrap()
-            .as_ref()
         {
             Value::NumberValue(value) => Number::new(value.value),
             _ => {
@@ -314,7 +312,6 @@ impl Interpreter {
             step_value = match result
                 .register(self.visit(node.step_value_node.as_ref().unwrap().clone(), context))
                 .unwrap()
-                .as_ref()
             {
                 Value::NumberValue(value) => Number::new(value.value),
                 _ => {
@@ -340,7 +337,7 @@ impl Interpreter {
             while i < end_value.value {
                 context.symbol_table.as_mut().unwrap().borrow_mut().set(
                     node.var_name_token.value.as_ref().unwrap().clone(),
-                    Some(Box::new(Value::NumberValue(Number::new(i)))),
+                    Some(Value::NumberValue(Number::new(i))),
                 );
                 i += step_value.value;
 
@@ -365,7 +362,7 @@ impl Interpreter {
             while i > end_value.value {
                 context.symbol_table.as_mut().unwrap().borrow_mut().set(
                     node.var_name_token.value.as_ref().unwrap().clone(),
-                    Some(Box::new(Value::NumberValue(Number::new(i)))),
+                    Some(Value::NumberValue(Number::new(i))),
                 );
                 i += step_value.value;
 
@@ -437,8 +434,8 @@ impl Interpreter {
         }
 
         let import = import.unwrap();
-        let file_to_import = match import.as_ref() {
-            Value::StringValue(string) => string.as_string(),
+        let file_to_import = match import {
+            Value::StringValue(ref string) => string.as_string(),
             _ => {
                 return result.failure(Some(StandardError::new(
                     "expected type string",
@@ -507,7 +504,7 @@ impl Interpreter {
             return result.failure(module_result.error);
         }
 
-        let symbols: Vec<(String, Option<Box<Value>>)> = module_context
+        let symbols: Vec<(String, Option<Value>)> = module_context
             .symbol_table
             .as_ref()
             .unwrap()
@@ -577,7 +574,7 @@ impl Interpreter {
 
     pub fn visit_call_node(&mut self, node: &CallNode, context: &mut Context) -> RuntimeResult {
         let mut result = RuntimeResult::new();
-        let mut args: Vec<Box<Value>> = Vec::new();
+        let mut args: Vec<Value> = Vec::new();
 
         let value_to_call = result.register(self.visit(node.node_to_call.clone(), context));
 
@@ -601,7 +598,7 @@ impl Interpreter {
             args.push(arg);
         }
 
-        let return_value = result.register(match value_to_call.as_ref() {
+        let return_value = result.register(match value_to_call {
             Value::FunctionValue(value) => value.execute(&args),
             Value::BuiltInFunction(value) => value.execute(&args),
             _ => {
@@ -648,51 +645,52 @@ impl Interpreter {
 
         let right = right.unwrap();
 
-        let (mut number, mut error): (Option<Box<Value>>, Option<StandardError>) = (None, None);
+        let operation_result: Result<Value, StandardError>;
 
         if node.op_token.token_type == TokenType::TT_PLUS {
-            (number, error) = left.perform_operation("+", right);
+            operation_result = left.perform_operation("+", right);
         } else if node.op_token.token_type == TokenType::TT_MINUS {
-            (number, error) = left.perform_operation("-", right);
+            operation_result = left.perform_operation("-", right);
         } else if node.op_token.token_type == TokenType::TT_MUL {
-            (number, error) = left.perform_operation("*", right);
+            operation_result = left.perform_operation("*", right);
         } else if node.op_token.token_type == TokenType::TT_DIV {
-            (number, error) = left.perform_operation("/", right);
+            operation_result = left.perform_operation("/", right);
         } else if node.op_token.token_type == TokenType::TT_POW {
-            (number, error) = left.perform_operation("^", right);
+            operation_result = left.perform_operation("^", right);
         } else if node.op_token.token_type == TokenType::TT_MOD {
-            (number, error) = left.perform_operation("%", right);
+            operation_result = left.perform_operation("%", right);
         } else if node.op_token.token_type == TokenType::TT_GT {
-            (number, error) = left.perform_operation(">", right);
+            operation_result = left.perform_operation(">", right);
         } else if node.op_token.token_type == TokenType::TT_LT {
-            (number, error) = left.perform_operation("<", right);
+            operation_result = left.perform_operation("<", right);
         } else if node.op_token.token_type == TokenType::TT_EE {
-            (number, error) = left.perform_operation("==", right);
+            operation_result = left.perform_operation("==", right);
         } else if node.op_token.token_type == TokenType::TT_NE {
-            (number, error) = left.perform_operation("!=", right);
+            operation_result = left.perform_operation("!=", right);
         } else if node.op_token.token_type == TokenType::TT_LTE {
-            (number, error) = left.perform_operation("<=", right);
+            operation_result = left.perform_operation("<=", right);
         } else if node.op_token.token_type == TokenType::TT_GTE {
-            (number, error) = left.perform_operation(">=", right);
+            operation_result = left.perform_operation(">=", right);
         } else if node.op_token.matches(TokenType::TT_KEYWORD, "and") {
-            (number, error) = left.perform_operation("and", right);
+            operation_result = left.perform_operation("and", right);
         } else if node.op_token.matches(TokenType::TT_KEYWORD, "or") {
-            (number, error) = left.perform_operation("or", right);
+            operation_result = left.perform_operation("or", right);
         } else {
-            (number, error) = left.perform_operation("", right);
+            operation_result = left.perform_operation("", right);
         }
 
-        if error.is_some() {
-            return result.failure(error);
+        if operation_result.is_err() {
+            return result.failure(operation_result.err());
         } else {
-            if number.is_some() {
+            if operation_result.is_ok() {
                 return result.success(Some(
-                    number
+                    operation_result
+                        .ok()
                         .unwrap()
                         .set_position(node.pos_start.clone(), node.pos_end.clone()),
                 ));
             } else {
-                return result.success(None);
+                return result.success(Some(Number::null_value()));
             }
         }
     }
@@ -711,32 +709,40 @@ impl Interpreter {
 
         let mut value = value.unwrap();
 
-        let (mut number, mut error): (Option<Box<Value>>, Option<StandardError>) = (None, None);
+        let operation_result: Result<Value, StandardError>;
 
         if node.op_token.token_type == TokenType::TT_MINUS {
-            (number, error) = value.perform_operation("*", Number::from(-1.0));
+            operation_result = value.perform_operation("*", Number::from(-1.0));
         } else if node.op_token.matches(TokenType::TT_KEYWORD, "not") {
-            (number, error) = value.perform_operation("not", Number::false_value());
+            operation_result = value.perform_operation("not", Number::false_value());
+        } else {
+            operation_result = Err(StandardError::new(
+                "unsupported unary operation",
+                value.position_start().unwrap(),
+                value.position_end().unwrap(),
+                None,
+            ))
         }
 
-        if error.is_some() {
-            return result.failure(error);
+        if operation_result.is_err() {
+            return result.failure(operation_result.err());
         } else {
-            if number.is_some() {
+            if operation_result.is_ok() {
                 return result.success(Some(
-                    number
+                    operation_result
+                        .ok()
                         .unwrap()
                         .set_position(node.pos_start.clone(), node.pos_end.clone()),
                 ));
             } else {
-                return result.success(None);
+                return result.success(Some(Number::null_value()));
             }
         }
     }
 
     pub fn visit_return_node(&mut self, node: &ReturnNode, context: &mut Context) -> RuntimeResult {
         let mut result = RuntimeResult::new();
-        let mut value: Option<Box<Value>> = None;
+        let mut value: Option<Value> = None;
 
         if node.node_to_return.is_some() {
             value =

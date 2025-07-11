@@ -61,7 +61,7 @@ impl Function {
         new_context
     }
 
-    pub fn check_args(&self, arg_names: &[String], args: &[Box<Value>]) -> RuntimeResult {
+    pub fn check_args(&self, arg_names: &[String], args: &[Value]) -> RuntimeResult {
         let mut result = RuntimeResult::new();
 
         if args.len() > arg_names.len() || args.len() < arg_names.len() {
@@ -84,7 +84,7 @@ impl Function {
         result.success(None)
     }
 
-    pub fn populate_args(&self, arg_names: &[String], args: &[Box<Value>], expr_ctx: &mut Context) {
+    pub fn populate_args(&self, arg_names: &[String], args: &[Value], expr_ctx: &mut Context) {
         for i in 0..args.len() {
             let arg_name = arg_names[i].clone();
             let mut arg_value = args[i].clone();
@@ -102,7 +102,7 @@ impl Function {
     pub fn check_and_populate_args(
         &self,
         arg_names: &[String],
-        args: &[Box<Value>],
+        args: &[Value],
         expr_ctx: &mut Context,
     ) -> RuntimeResult {
         let mut result = RuntimeResult::new();
@@ -117,7 +117,7 @@ impl Function {
         result.success(None)
     }
 
-    pub fn execute(&self, args: &[Box<Value>]) -> RuntimeResult {
+    pub fn execute(&self, args: &[Value]) -> RuntimeResult {
         let mut result = RuntimeResult::new();
         let mut interpreter = Interpreter::new();
         let mut exec_context = self.generate_new_context();

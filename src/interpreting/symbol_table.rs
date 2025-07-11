@@ -3,7 +3,7 @@ use std::collections::HashMap;
 
 #[derive(Debug, Clone)]
 pub struct SymbolTable {
-    pub symbols: HashMap<String, Option<Box<Value>>>,
+    pub symbols: HashMap<String, Option<Value>>,
     pub parent: Option<Box<SymbolTable>>,
 }
 
@@ -15,7 +15,7 @@ impl SymbolTable {
         }
     }
 
-    pub fn get(&self, name: &str) -> Option<Box<Value>> {
+    pub fn get(&self, name: &str) -> Option<Value> {
         if let Some(value) = self.symbols.get(name) {
             return value.clone();
         }
@@ -27,7 +27,7 @@ impl SymbolTable {
         None
     }
 
-    pub fn set(&mut self, name: String, value: Option<Box<Value>>) {
+    pub fn set(&mut self, name: String, value: Option<Value>) {
         if name == "_" {
             return;
         }
@@ -41,8 +41,8 @@ impl SymbolTable {
 
     pub fn combined(
         &self,
-        table: HashMap<String, Option<Box<Value>>>,
-    ) -> HashMap<String, Option<Box<Value>>> {
+        table: HashMap<String, Option<Value>>,
+    ) -> HashMap<String, Option<Value>> {
         let mut new_map = self.symbols.clone();
         new_map.extend(table);
 
