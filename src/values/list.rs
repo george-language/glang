@@ -1,3 +1,5 @@
+use std::iter::zip;
+
 use crate::{
     errors::standard_error::StandardError,
     interpreting::context::Context,
@@ -39,6 +41,36 @@ impl List {
                 }
                 "*" => {
                     return Ok(self.push(other.clone()));
+                }
+                "==" => {
+                    let mut is_eq = Number::null_value();
+
+                    for (a, b) in zip(&self.elements, &right.elements) {
+                        let result = a.to_owned().perform_operation("==", b.to_owned());
+
+                        if result.is_err() {
+                            return Err(result.err().unwrap());
+                        }
+
+                        is_eq = result.ok().unwrap();
+                    }
+
+                    return Ok(is_eq.set_context(self.context.clone()));
+                }
+                "!=" => {
+                    let mut is_neq = Number::null_value();
+
+                    for (a, b) in zip(&self.elements, &right.elements) {
+                        let result = a.to_owned().perform_operation("!=", b.to_owned());
+
+                        if result.is_err() {
+                            return Err(result.err().unwrap());
+                        }
+
+                        is_neq = result.ok().unwrap();
+                    }
+
+                    return Ok(is_neq.set_context(self.context.clone()));
                 }
                 "and" => {
                     return Ok(Value::NumberValue(Number::new(
