@@ -1,11 +1,10 @@
-use std::iter::zip;
-
 use crate::{
     errors::standard_error::StandardError,
     interpreting::context::Context,
     lexing::position::Position,
     values::{number::Number, value::Value},
 };
+use std::iter::zip;
 
 #[derive(Debug, Clone)]
 pub struct List {
