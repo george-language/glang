@@ -1,0 +1,11 @@
+# file test_try.glang: test glang's try/except functionality
+
+func danger() {
+    unsafe {
+        1 / 0;
+    } safe {
+        bark("can't divide by 0");
+    }
+}
+
+danger();

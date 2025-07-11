@@ -3,7 +3,7 @@ use glang;
 use std::env;
 use std::path::Path;
 
-const VERSION: &str = "2.0";
+const VERSION: &str = "2.1";
 
 #[derive(Parser)]
 #[command(name = "glang", version = VERSION, about = "The George Programming Language")]

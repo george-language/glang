@@ -16,12 +16,12 @@ impl IfNode {
     ) -> Self {
         Self {
             cases: Arc::from(cases),
-            else_case: else_case.clone(),
-            pos_start: Some(cases[0].0.position_start().unwrap()),
+            else_case: else_case.to_owned(),
+            pos_start: cases[0].0.position_start(),
             pos_end: if else_case.is_none() {
-                Some(cases[cases.len() - 1].0.position_start().unwrap().clone())
+                cases[cases.len() - 1].0.position_start()
             } else {
-                Some(else_case.unwrap().0.position_end().unwrap())
+                else_case.unwrap().0.position_end()
             },
         }
     }

@@ -1,5 +1,3 @@
-use std::fmt::Display;
-
 use crate::{
     lexing::position::Position,
     nodes::{
@@ -7,11 +5,12 @@ use crate::{
         continue_node::ContinueNode, for_node::ForNode,
         function_definition_node::FunctionDefinitionNode, if_node::IfNode, import_node::ImportNode,
         list_node::ListNode, number_node::NumberNode, return_node::ReturnNode,
-        string_node::StringNode, unary_operator_node::UnaryOperatorNode,
-        variable_access_node::VariableAccessNode, variable_assign_node::VariableAssignNode,
-        while_node::WhileNode,
+        string_node::StringNode, try_except_node::TryExceptNode,
+        unary_operator_node::UnaryOperatorNode, variable_access_node::VariableAccessNode,
+        variable_assign_node::VariableAssignNode, while_node::WhileNode,
     },
 };
+use std::fmt::Display;
 
 #[derive(Debug, Clone)]
 pub enum AstNode {
@@ -27,6 +26,7 @@ pub enum AstNode {
     Number(NumberNode),
     Return(ReturnNode),
     Strings(StringNode),
+    TryExcept(TryExceptNode),
     UnaryOperator(UnaryOperatorNode),
     VariableAccess(VariableAccessNode),
     VariableAssign(VariableAssignNode),
@@ -48,6 +48,7 @@ impl AstNode {
             AstNode::Number(node) => node.pos_start.clone(),
             AstNode::Return(node) => node.pos_start.clone(),
             AstNode::Strings(node) => node.pos_start.clone(),
+            AstNode::TryExcept(node) => node.pos_start.clone(),
             AstNode::UnaryOperator(node) => node.pos_start.clone(),
             AstNode::VariableAccess(node) => node.pos_start.clone(),
             AstNode::VariableAssign(node) => node.pos_start.clone(),
@@ -69,6 +70,7 @@ impl AstNode {
             AstNode::Number(node) => node.pos_end.clone(),
             AstNode::Return(node) => node.pos_end.clone(),
             AstNode::Strings(node) => node.pos_end.clone(),
+            AstNode::TryExcept(node) => node.pos_end.clone(),
             AstNode::UnaryOperator(node) => node.pos_end.clone(),
             AstNode::VariableAccess(node) => node.pos_end.clone(),
             AstNode::VariableAssign(node) => node.pos_end.clone(),

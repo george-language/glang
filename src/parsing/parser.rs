@@ -6,9 +6,9 @@ use crate::{
         call_node::CallNode, continue_node::ContinueNode, for_node::ForNode,
         function_definition_node::FunctionDefinitionNode, if_node::IfNode, import_node::ImportNode,
         list_node::ListNode, number_node::NumberNode, return_node::ReturnNode,
-        string_node::StringNode, unary_operator_node::UnaryOperatorNode,
-        variable_access_node::VariableAccessNode, variable_assign_node::VariableAssignNode,
-        while_node::WhileNode,
+        string_node::StringNode, try_except_node::TryExceptNode,
+        unary_operator_node::UnaryOperatorNode, variable_access_node::VariableAccessNode,
+        variable_assign_node::VariableAssignNode, while_node::WhileNode,
     },
     parsing::parse_result::ParseResult,
 };
@@ -677,6 +677,111 @@ impl Parser {
         )))));
     }
 
+    pub fn try_expr(&mut self) -> ParseResult {
+        let mut parse_result = ParseResult::new();
+
+        if !self
+            .current_token_ref()
+            .matches(TokenType::TT_KEYWORD, "unsafe")
+        {
+            return parse_result.failure(Some(StandardError::new(
+                "expected keyword",
+                self.current_pos_start(),
+                self.current_pos_end(),
+                Some("add the 'unsafe' keyword to represent try/except behaviour"),
+            )));
+        }
+
+        parse_result.register_advancement();
+        self.advance();
+
+        self.skip_newlines(&mut parse_result);
+
+        if self.current_token_ref().token_type != TokenType::TT_LBRACKET {
+            return parse_result.failure(Some(StandardError::new(
+                "expected '{'",
+                self.current_pos_start(),
+                self.current_pos_end(),
+                Some("add a '{' to define the body"),
+            )));
+        }
+
+        parse_result.register_advancement();
+        self.advance();
+
+        let try_body = parse_result.register(self.statements());
+
+        if parse_result.error.is_some() {
+            return parse_result;
+        }
+
+        if self.current_token_ref().token_type != TokenType::TT_RBRACKET {
+            return parse_result.failure(Some(StandardError::new(
+                "expected '}'",
+                self.current_pos_start(),
+                self.current_pos_end(),
+                Some("add a '}' to close the body"),
+            )));
+        }
+
+        parse_result.register_advancement();
+        self.advance();
+
+        self.skip_newlines(&mut parse_result);
+
+        if !self
+            .current_token_ref()
+            .matches(TokenType::TT_KEYWORD, "safe")
+        {
+            return parse_result.failure(Some(StandardError::new(
+                "expected keyword",
+                self.current_pos_start(),
+                self.current_pos_end(),
+                Some("add the 'ok' keyword to represent try/except behaviour"),
+            )));
+        }
+
+        parse_result.register_advancement();
+        self.advance();
+
+        self.skip_newlines(&mut parse_result);
+
+        if self.current_token_ref().token_type != TokenType::TT_LBRACKET {
+            return parse_result.failure(Some(StandardError::new(
+                "expected '{'",
+                self.current_pos_start(),
+                self.current_pos_end(),
+                Some("add a '{' to define the body"),
+            )));
+        }
+
+        parse_result.register_advancement();
+        self.advance();
+
+        let except_body = parse_result.register(self.statements());
+
+        if parse_result.error.is_some() {
+            return parse_result;
+        }
+
+        if self.current_token_ref().token_type != TokenType::TT_RBRACKET {
+            return parse_result.failure(Some(StandardError::new(
+                "expected '}'",
+                self.current_pos_start(),
+                self.current_pos_end(),
+                Some("add a '}' to close the body"),
+            )));
+        }
+
+        parse_result.register_advancement();
+        self.advance();
+
+        return parse_result.success(Some(Box::new(AstNode::TryExcept(TryExceptNode::new(
+            try_body.unwrap(),
+            except_body.unwrap(),
+        )))));
+    }
+
     pub fn import_expr(&mut self) -> ParseResult {
         let mut parse_result = ParseResult::new();
 
@@ -1044,6 +1149,14 @@ impl Parser {
             return parse_result.success(expr);
         } else if token.matches(TokenType::TT_KEYWORD, "while") {
             let expr = parse_result.register(self.while_expr());
+
+            if parse_result.error.is_some() {
+                return parse_result;
+            }
+
+            return parse_result.success(expr);
+        } else if token.matches(TokenType::TT_KEYWORD, "unsafe") {
+            let expr = parse_result.register(self.try_expr());
 
             if parse_result.error.is_some() {
                 return parse_result;

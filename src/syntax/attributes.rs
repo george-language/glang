@@ -13,6 +13,8 @@ pub const KEYWORDS: &[&str] = &[
     "through",
     "step",
     "while",
+    "unsafe",
+    "safe",
     "func",
     "fetch",
     "give",

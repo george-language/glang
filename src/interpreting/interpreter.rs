@@ -7,9 +7,9 @@ use crate::{
         call_node::CallNode, continue_node::ContinueNode, for_node::ForNode,
         function_definition_node::FunctionDefinitionNode, if_node::IfNode, import_node::ImportNode,
         list_node::ListNode, number_node::NumberNode, return_node::ReturnNode,
-        string_node::StringNode, unary_operator_node::UnaryOperatorNode,
-        variable_access_node::VariableAccessNode, variable_assign_node::VariableAssignNode,
-        while_node::WhileNode,
+        string_node::StringNode, try_except_node::TryExceptNode,
+        unary_operator_node::UnaryOperatorNode, variable_access_node::VariableAccessNode,
+        variable_assign_node::VariableAssignNode, while_node::WhileNode,
     },
     parsing::parser::Parser,
     values::{
@@ -92,6 +92,9 @@ impl Interpreter {
             }
             AstNode::While(node) => {
                 return self.visit_while_node(&node, context);
+            }
+            AstNode::TryExcept(node) => {
+                return self.visit_try_except_node(&node, context);
             }
             AstNode::FunctionDefinition(node) => {
                 return self.visit_function_definition_node(&node, context);
@@ -419,6 +422,27 @@ impl Interpreter {
 
             if result.loop_should_break {
                 break;
+            }
+        }
+
+        result.success(Some(Number::null_value()))
+    }
+
+    pub fn visit_try_except_node(
+        &mut self,
+        node: &TryExceptNode,
+        context: &mut Context,
+    ) -> RuntimeResult {
+        let mut result = RuntimeResult::new();
+
+        let _ = result.register(self.visit(node.try_body_node.clone(), context));
+        let try_error = result.error.clone();
+
+        if try_error.is_some() {
+            let _ = result.register(self.visit(node.except_body_node.clone(), context));
+
+            if result.error.is_some() {
+                return result;
             }
         }
 
