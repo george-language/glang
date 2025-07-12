@@ -23,10 +23,8 @@ impl ForNode {
         step_value_node: Option<Box<AstNode>>,
         body_node: Box<AstNode>,
     ) -> Self {
-        let var_name_token = var_name_token.clone();
-
         Self {
-            var_name_token: var_name_token.clone(),
+            var_name_token: var_name_token.to_owned(),
             start_value_node: start_value_node,
             end_value_node: end_value_node,
             step_value_node: step_value_node,

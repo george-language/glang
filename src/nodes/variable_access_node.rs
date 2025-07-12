@@ -11,9 +11,9 @@ pub struct VariableAccessNode {
 impl VariableAccessNode {
     pub fn new(var_name_token: Token) -> Self {
         Self {
-            var_name_token: var_name_token.clone(),
-            pos_start: var_name_token.clone().pos_start.clone(),
-            pos_end: var_name_token.clone().pos_end.clone(),
+            var_name_token: var_name_token.to_owned(),
+            pos_start: var_name_token.pos_start,
+            pos_end: var_name_token.pos_end,
         }
     }
 }

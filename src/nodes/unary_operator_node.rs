@@ -17,9 +17,9 @@ impl UnaryOperatorNode {
         let pos_end = node.position_end();
 
         Self {
-            op_token: op_token.clone(),
+            op_token: op_token.to_owned(),
             node: node,
-            pos_start: op_token.pos_start.clone(),
+            pos_start: op_token.pos_start,
             pos_end: pos_end,
         }
     }

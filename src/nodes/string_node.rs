@@ -11,9 +11,9 @@ pub struct StringNode {
 impl StringNode {
     pub fn new(token: Token) -> Self {
         Self {
-            token: token.clone(),
-            pos_start: token.clone().pos_start.clone(),
-            pos_end: token.clone().pos_end.clone(),
+            token: token.to_owned(),
+            pos_start: token.pos_start,
+            pos_end: token.pos_end,
         }
     }
 }
