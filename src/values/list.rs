@@ -33,13 +33,15 @@ impl List {
         operator: &str,
         other: Value,
     ) -> Result<Value, StandardError> {
+        match operator {
+            "*" => return Ok(self.push(other.clone())),
+            _ => {}
+        }
+
         match other {
             Value::ListValue(ref right) => match operator {
                 "+" => {
                     return Ok(self.append(&mut right.elements.clone()));
-                }
-                "*" => {
-                    return Ok(self.push(other.clone()));
                 }
                 "==" => {
                     let mut is_eq = Number::null_value();
@@ -86,9 +88,6 @@ impl List {
                 _ => return Err(self.illegal_operation(Some(other))),
             },
             Value::NumberValue(ref right) => match operator {
-                "*" => {
-                    return Ok(self.push(other.clone()));
-                }
                 "^" => {
                     if right.value < -1.0 {
                         return Err(StandardError::new(
@@ -140,10 +139,6 @@ impl List {
                 _ => return Err(self.illegal_operation(Some(other))),
             },
             _ => {
-                if operator == "*" {
-                    return Ok(self.push(other.clone()));
-                }
-
                 return Err(self.illegal_operation(Some(other)));
             }
         }
