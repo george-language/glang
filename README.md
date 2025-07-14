@@ -10,7 +10,7 @@
 _A dog-themed, interpreted programming language for beginners._
 </div>
 
-## 🐕 Code in Action
+## Code in Action
 
 ```
 # import the math module
@@ -41,7 +41,7 @@ bark("Pi is equal to: " + tostring(math_pi));
 bark("We have reached the end of our program. I hope you enjoyed!");
 ```
 
-## 🐾 Why George Language?
+## Why George Language?
 
 It all started as a joke. 😆
 One of our team members has a pug named George. He's adorable, stubborn, and full of personality. One day, someone asked:
@@ -58,7 +58,7 @@ We made GLang because we believe beginner-friendly languages don’t have to be 
 
 > Beginners don't say "print"; they say "make the computer bark!"
 
-## ✨ Features
+## Features
 
 * 🐶 Whimsical, beginner-friendly syntax
 * 📚 Built-in modules for math, strings, and more
@@ -66,16 +66,16 @@ We made GLang because we believe beginner-friendly languages don’t have to be 
 * 📦 Modular and extensible with `fetch`
 * 🌐 Open source and growing community
 
-## 🚀 Installation
+## Installation
 
 You can download GLang [here](https://sites.google.com/view/george-lang/install/), or check out the quick setup instructions in the [Guide Book](https://sites.google.com/view/george-lang/documentation/guide-book/).
 
-## 🛠️ Wanna Help Out?
+## Wanna Help Out?
 
 GLang is a growing pup — we’re always looking for contributors, testers, and idea-sharers.
 Check out [CONTRIBUTING.md](./CONTRIBUTING.md) or bark at us via Issues!
 
-## 📜 License
+## License
 
 George Language is licensed under **GPL v3**.
 That means it's **free, open source, and always will be** just like George's spirit.
