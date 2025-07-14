@@ -746,6 +746,20 @@ impl Parser {
 
         self.skip_newlines(&mut parse_result);
 
+        if self.current_token_ref().token_type != TokenType::TT_IDENTIFIER {
+            return parse_result.failure(Some(StandardError::new(
+                "expected identifier",
+                self.current_pos_start(),
+                self.current_pos_end(),
+                Some("add a name for the exception error like 'error'"),
+            )));
+        }
+
+        let error_name_token = self.current_token_copy();
+
+        parse_result.register_advancement();
+        self.advance();
+
         if self.current_token_ref().token_type != TokenType::TT_LBRACKET {
             return parse_result.failure(Some(StandardError::new(
                 "expected '{'",
@@ -779,6 +793,7 @@ impl Parser {
         return parse_result.success(Some(Box::new(AstNode::TryExcept(TryExceptNode::new(
             try_body.unwrap(),
             except_body.unwrap(),
+            error_name_token,
         )))));
     }
 

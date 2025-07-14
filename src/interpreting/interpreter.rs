@@ -439,6 +439,11 @@ impl Interpreter {
         let try_error = result.error.clone();
 
         if try_error.is_some() {
+            context.symbol_table.as_mut().unwrap().borrow_mut().set(
+                node.error_name_token.value.to_owned().unwrap(),
+                Some(Str::from(&try_error.unwrap().text)),
+            );
+
             let _ = result.register(self.visit(node.except_body_node.clone(), context));
 
             if result.error.is_some() {

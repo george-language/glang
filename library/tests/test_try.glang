@@ -3,8 +3,8 @@
 func danger() {
     unsafe {
         1 / 0;
-    } safe {
-        bark("can't divide by 0");
+    } safe error {
+        bark("Some error occured: " + error);
     }
 }
 
