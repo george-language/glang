@@ -2,8 +2,7 @@ name: GLang MacOS Build
 
 on:
   release:
-    branches:
-      - main
+    types: [published]
 
 jobs:
   build:
