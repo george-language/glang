@@ -4,11 +4,15 @@ obj true = 1;
 obj false = 0;
 
 # null/none values are just 0, which technically allows boolean operations on them:
-# not null (true)
+# ```
+# bark(not null);
+# ```
 obj null = 0;
 
 # use on any unimplemented code:
+# ```
 # func main() {
 #     skip;
 # }
+# ```
 obj skip = "unimplemented";

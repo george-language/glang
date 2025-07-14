@@ -1,9 +1,7 @@
 # file list.glang: list operations in glang
 
-# Add a value to a list object
-# arg <list>: the list to push into
-# arg <value>: the value to add into the list
-# returns: a copy of the list with the new value inside
+# add a value to a list
+# returns a the list with the new value inside
 func push(list, value) {
     if type(list) != "list" {
         uhoh("expected type list in 'push'");
@@ -12,10 +10,8 @@ func push(list, value) {
     give list * value;
 }
 
-# Add two lists together
-# arg <list_a>: first list to add
-# arg <list_b>: second list to add
-# returns: a new version of the two lists combined
+# add two lists together
+# returns <list_a> combined with <list_b>
 func append(list_a, list_b) {
     if type(list_a) != "list" {
         uhoh("argument 'list_a' must be type list in 'append'");
@@ -28,10 +24,8 @@ func append(list_a, list_b) {
     give list_a + list_b;
 }
 
-# Remove a value from a list
-# arg <list>: the list to remove the value from
-# arg <index>: index to remove from the list
-# returns: a new version of the list with the removed value
+# remove a value from a list
+# returns the list with the removed value
 func remove(list, index) {
     if type(list) != "list" {
         uhoh("expected type list in 'remove'");
@@ -44,10 +38,8 @@ func remove(list, index) {
     give list - index;
 }
 
-# Retrieve a value from a list
-# arg <list>: the list to retrieve the value from
-# arg <index>: index to retrieve from the list
-# returns: a copy of the value at the retrieved index
+# retrieve a value from a list
+# returns a copy of the value at the retrieved index
 func retrieve(list, index) {
     if type(list) != "list" {
         uhoh("expected type list in 'retrieve'");
@@ -60,9 +52,8 @@ func retrieve(list, index) {
     give list ^ index;
 }
 
-# Reverse a list
-# arg <list>: the list to reverse
-# returns: a new version of the list with it's values reversed
+# reverse a list
+# returns the list with it's elements reversed
 func reverse(list) {
     if type(list) != "list" {
         uhoh("expected type list in 'reverse'");
@@ -71,9 +62,8 @@ func reverse(list) {
     give list ^ -1;
 }
 
-# Clear a list (supports the string type as well)
-# arg <value>: the value to clear
-# returns: a new empty version of the value
+# clear a list (supports the string type as well)
+# returns an empty version of the value
 func clear(value) {
     if type(value) == "list" {
         give [];

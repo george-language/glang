@@ -1,16 +1,13 @@
 # file hashmap.glang: implementation of the hashmap data type
 
-# Create a new hashmap
-# returns: a list representing a hashmap
+# create a new hashmap
+# returns a list representing a hashmap
 func hashmap() {
     give [];
 }
 
-# Set the key & value pairs of a hashmap
-# arg <hashmap_obj>: the hashmap object
-# arg <key>: the key object
-# arg <value>: the value object
-# returns: a new hashmap with the key & value pair added to it
+# set the key & value pairs of a hashmap
+# returns a new hashmap with the key & value pair added to it
 func hashmap_set(hashmap_obj, key, value) {
     walk i = 0 through length(hashmap_obj) {
         obj pair = retrieve(hashmap_obj, i);
@@ -24,10 +21,8 @@ func hashmap_set(hashmap_obj, key, value) {
     give push(hashmap_obj, [key, value]);
 }
 
-# Get a value based on the key in a hashmap
-# arg <hashmap_obj>: the hashmap object
-# arg <key>: the key to search for
-# returns: the found value (if any) otherwise tosses an error
+# get a value based on the key in a hashmap
+# returns the found value (if any) otherwise tosses an error
 func hashmap_get(hashmap_obj, key) {
     walk i = 0 through length(hashmap_obj) {
         obj pair = retrieve(hashmap_obj, i);
@@ -40,10 +35,8 @@ func hashmap_get(hashmap_obj, key) {
     uhoh("key doesn't exist in hashmap");
 }
 
-# Remove a value based on the key in a hashmap
-# arg <hashmap_obj>: the hashmap object
-# arg <key>: the key to search for
-# returns: a new hashmap with the key & value pair removed (if any) otherwise tosses an error
+# remove a value based on the key in a hashmap
+# returns a new hashmap with the key & value pair removed (if any) otherwise tosses an error
 func hashmap_remove(hashmap_obj, key) {
     walk i = 0 through length(hashmap_obj) {
         obj pair = retrieve(hashmap_obj, i);
@@ -56,9 +49,8 @@ func hashmap_remove(hashmap_obj, key) {
     uhoh("key doesn't exist in hashmap");
 }
 
-# Get the keys in a hashmap
-# arg <hashmap_obj>: the hashmap object
-# returns: a list of all keys in the hashmap
+# get the keys in a hashmap
+# returns a list of all keys in the hashmap
 func hashmap_keys(hashmap_obj) {
     obj keys = [];
 
@@ -70,8 +62,7 @@ func hashmap_keys(hashmap_obj) {
     give keys;
 }
 
-# Get the values in a hashmap
-# arg <hashmap_obj>: the hashmap object
+# get the values in a hashmap
 # returns: a list of all values in the hashmap
 func hashmap_values(hashmap_obj) {
     obj values = [];
@@ -84,9 +75,8 @@ func hashmap_values(hashmap_obj) {
     give values;
 }
 
-# Pretty print a hashmap
-# arg <hashmap_obj>: the hashmap object
-# returns: null
+# pretty print a hashmap
+# returns null
 func bark_hashmap(hashmap_obj) {
     if length(hashmap_obj) > 0 {
         bark("{");

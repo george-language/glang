@@ -1,9 +1,7 @@
 # file string.glang: string operations in glang
 
-# Get char at index in string
-# arg <str>: the string to index
-# arg <index>: the second string
-# returns: the char at the specified index
+# get char at index in string
+# returns the char at the specified index
 func charat(str, index) {
     if type(str) != "string" {
         uhoh("expected type string in 'charat'");
@@ -20,9 +18,8 @@ func charat(str, index) {
     give str ^ index;
 }
 
-# Reverse a string
-# arg <str>: the string to reverse
-# returns: new string with the chars reversed
+# reverse a string
+# returns a new string with the chars reversed
 func reverse_str(str) {
     if type(str) != "string" {
         uhoh("expected type string in 'reverse_str'");
@@ -31,10 +28,8 @@ func reverse_str(str) {
     give str ^ -1;
 }
 
-# Check if a string starts with the specified chars
-# arg <str>: the string to check
-# arg <chars>: the starting chars
-# returns: true if starts with chars otherwise false
+# check if a string starts with the specified chars
+# returns true if starts with chars otherwise false
 func startswith(str, chars) {
     if type(str) != "string" {
         uhoh("expected type string in 'startswith'");
@@ -57,10 +52,8 @@ func startswith(str, chars) {
     give true;
 }
 
-# Check if a string ends with the specified chars
-# arg <str>: the string to check
-# arg <chars>: the ending chars
-# returns: true if ends with chars otherwise false
+# check if a string ends with the specified chars
+# returns true if ends with chars otherwise false
 func endswith(str, chars) {
     if type(str) != "string" {
         uhoh("expected type string in 'endswith'");
@@ -87,10 +80,8 @@ func endswith(str, chars) {
     give true;
 }
 
-# Join two strings together
-# arg <string_a>: the first string
-# arg <string_b>: the second string
-# returns: the two strings combined as a new string
+# join two strings together
+# returns the two strings combined as a new string
 func join(string_a, string_b) {
     if type(string_a) != "string" {
         uhoh("argument 'string_a' must be type string in 'join'");

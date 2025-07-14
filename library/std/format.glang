@@ -1,9 +1,7 @@
 # file format.glang: basic implementation of string formatting
 
-# Format a string with the specified argument
-# arg <str>: the string object
-# arg <value>: the value to format the string with (any)
-# returns: a new string with the formatted argument inside
+# format a string with the specified argument
+# returns a new string with the formatted argument inside
 func format(str, value) {
     if type(str) != "string" {
         uhoh("expected type string in 'format'");

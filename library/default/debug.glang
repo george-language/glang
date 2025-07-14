@@ -1,8 +1,7 @@
 # file debug.glang: tools for debugging objects
 
-# Get object documentation based on it's type
-# arg <value>: the object to get documentation based on
-# returns: a string representation of the documentation url
+# get object documentation based on it's type
+# returns a string representation of the documentation url
 func docs(value) {
     if type(value) == "number" {
         give "https://sites.google.com/view/george-lang/documentation/standard-docs/types/numbers/"
@@ -19,9 +18,8 @@ func docs(value) {
     }
 }
 
-# Display helpful info about a value
-# arg <value>: the object to display info about
-# returns: null
+# display helpful info about a value
+# returns null
 func debug(value) {
     bark("object type: '" + type(value) + "'");
     bark("display value: '" + tostring(value) + "'");

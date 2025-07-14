@@ -1,8 +1,7 @@
 # file number.glang: number operations in glang
 
-# Check if a number is a decimal value (float)
-# arg <num>: a number object
-# returns: true if decimal otherwise false
+# check if a number is a decimal value (float)
+# returns true if decimal otherwise false
 func isdecimal(num) {
     if type(num) != "number" {
         uhoh("expected type number in 'isdecimal'");
