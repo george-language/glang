@@ -52,19 +52,19 @@ That idea stuck. And **George Language (GLang)** was born.
 
 We made GLang because we believe beginner-friendly languages don’t have to be boring. GLang is:
 
-* 🐕 **Approachable** — Simple syntax and fun naming conventions
-* 🧠 **Educational** — Teaches real programming concepts under the hood
-* 🎉 **Memorable** — Functions like `bark`, `chew`, and `uhoh` make coding more intuitive and playful
+- 🐕 **Approachable** — Simple syntax and fun naming conventions
+- 🧠 **Educational** — Teaches real programming concepts under the hood
+- 🎉 **Memorable** — Functions like `bark`, `chew`, and `uhoh` make coding more intuitive and playful
 
 > Beginners don't say "print"; they say "make the computer bark!"
 
 ## Features
 
-* 🐶 Whimsical, beginner-friendly syntax
-* 📚 Built-in modules for math, strings, and more
-* 💬 Easy-to-understand functions like `dig()`, `bury()`, and `uhoh()`
-* 📦 Modular and extensible with `fetch`
-* 🌐 Open source and growing community
+- 🐶 Whimsical, beginner-friendly syntax
+- 📚 Built-in modules for math, strings, and more
+- 💬 Easy-to-understand functions like `dig()`, `bury()`, and `uhoh()`
+- 📦 Modular and extensible with `fetch`
+- 🌐 Open source and growing community
 
 ## Installation
 
