@@ -28,11 +28,7 @@ impl List {
         Value::ListValue(List::new(elements))
     }
 
-    pub fn perform_operation(
-        &mut self,
-        operator: &str,
-        other: Value,
-    ) -> Result<Value, StandardError> {
+    pub fn perform_operation(self, operator: &str, other: Value) -> Result<Value, StandardError> {
         match operator {
             "*" => return Ok(self.push(other.clone())),
             _ => {}
@@ -157,36 +153,32 @@ impl List {
         )
     }
 
-    pub fn push(&mut self, item: Value) -> Value {
-        let mut copy = self.clone();
-        copy.elements.push(item);
+    pub fn push(mut self, item: Value) -> Value {
+        self.elements.push(item);
 
-        Value::ListValue(copy)
+        Value::ListValue(self)
     }
 
-    pub fn append(&mut self, other: &mut Vec<Value>) -> Value {
-        let mut copy = self.clone();
-        copy.elements.append(other);
+    pub fn append(mut self, other: &mut Vec<Value>) -> Value {
+        self.elements.append(other);
 
-        Value::ListValue(copy)
+        Value::ListValue(self)
     }
 
-    pub fn remove(&mut self, index: usize) -> Value {
-        let mut copy = self.clone();
-        copy.elements.remove(index);
+    pub fn remove(mut self, index: usize) -> Value {
+        self.elements.remove(index);
 
-        Value::ListValue(copy)
+        Value::ListValue(self)
     }
 
     pub fn retrieve(&self, index: usize) -> Value {
         self.elements[index].clone()
     }
 
-    pub fn reverse(&mut self) -> Value {
-        let mut copy = self.clone();
-        copy.elements.reverse();
+    pub fn reverse(mut self) -> Value {
+        self.elements.reverse();
 
-        Value::ListValue(copy)
+        Value::ListValue(self)
     }
 
     pub fn as_string(&self) -> String {

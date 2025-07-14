@@ -88,7 +88,7 @@ impl Value {
     ) -> Result<Value, StandardError> {
         match self {
             Value::NumberValue(value) => value.perform_operation(operator, other),
-            Value::ListValue(value) => value.perform_operation(operator, other),
+            Value::ListValue(value) => value.to_owned().perform_operation(operator, other),
             Value::StringValue(value) => value.perform_operation(operator, other),
             _ => {
                 return Err(StandardError::new(
