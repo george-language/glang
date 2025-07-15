@@ -1,0 +1,6 @@
+# file test_os.glang: test operating system functionality
+
+fetch std_os;
+
+bark(os_type());
+bark(os_path());

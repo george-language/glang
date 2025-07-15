@@ -28,3 +28,14 @@ func os_type() {
 
     give os;
 }
+
+# get the system PATH variable
+# returns the full system PATH
+func os_path() {
+    # we don't really know if 'PATH' is available, so gracefully handle the error
+    unsafe {
+        give _env("PATH");
+    } safe error {
+        bark(error);
+    };
+}
