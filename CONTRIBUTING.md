@@ -7,6 +7,12 @@ The best way to get started is by asking for help in our [developers discussion]
 
 We don't have developer documentation (yet) as we are in focus of _creating_ not _relying on the community_.
 
+## Wanting To Help Test?
+
+We update GLang on the regular, which means there are always new versions to try out. You can test GLang with the `library/tests/` folder included with GLang, or create your own projects pushing the limits!
+
+If you find an issue, see more info below.
+
 ## "Issues" Section
 
 Found a bug or issue? You can report them [here](https://github.com/mpsoftwarefoundation/GeorgeLanguage/issues).
