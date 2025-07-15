@@ -1,0 +1,30 @@
+# file os.glang: operating system features in glang
+
+# get the operating system type
+# returns "windows", "macos", "linux", or "unkown" if the os can't be found
+func os_type() {
+    obj os = "unkown";
+
+    unsafe {
+        # 'OS' is windows only - we need to try to access it then default otherwise
+        obj _type = _env("OS");
+
+        if _type == "Windows_NT" {
+            obj os = "windows";
+        }
+    } safe _ {
+        obj _type = _env("OSTYPE"); # gnu/unix platforms (macos/linux)
+
+        if startswith(_type, "linux") {
+            obj os = "linux";
+        } alsoif startswith(_type, "darwin") {
+            obj os = "macos";
+        }
+    }
+
+    if os == "unkown" {
+        bark("Error: unable to access os type");
+    }
+
+    give os;
+}
