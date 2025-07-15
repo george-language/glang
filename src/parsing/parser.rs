@@ -46,6 +46,7 @@ impl Parser {
         self.current_token.clone()
     }
 
+    #[inline]
     pub fn skip_newlines(&mut self, parse_result: &mut ParseResult) {
         while self.current_token_ref().token_type == TokenType::TT_NEWLINE {
             parse_result.register_advancement();
@@ -178,6 +179,8 @@ impl Parser {
         parse_result.register_advancement();
         self.advance();
 
+        self.skip_newlines(&mut parse_result);
+
         if self.current_token_ref().token_type == TokenType::TT_RSQUARE {
             parse_result.register_advancement();
             self.advance();
@@ -199,6 +202,8 @@ impl Parser {
                 parse_result.register_advancement();
                 self.advance();
 
+                self.skip_newlines(&mut parse_result);
+
                 let element = parse_result.register(self.expr());
 
                 if parse_result.error.is_some() {
@@ -207,6 +212,8 @@ impl Parser {
 
                 element_nodes.push(element.unwrap());
             }
+
+            self.skip_newlines(&mut parse_result);
 
             if self.current_token_ref().token_type != TokenType::TT_RSQUARE {
                 return parse_result.failure(Some(StandardError::new(
