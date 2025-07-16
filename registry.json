@@ -1,6 +1,9 @@
 [
   {
     "name": "fancy_terminal",
+    "description": "Colorize terminal outputs in glang",
+    "version": "1.0",
+    "entry": "lib.glang",
     "url": "https://github.com/ktechhydle/fancy_terminal/archive/refs/heads/main.zip"
   }
 ]
