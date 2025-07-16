@@ -438,10 +438,6 @@ impl Interpreter {
         let _ = result.register(self.visit(node.try_body_node.clone(), context));
         let try_error = result.error.clone();
 
-        if result.should_return() {
-            return result;
-        }
-
         if try_error.is_some() {
             context.symbol_table.as_mut().unwrap().borrow_mut().set(
                 node.error_name_token.value.to_owned().unwrap(),
@@ -454,6 +450,10 @@ impl Interpreter {
                 return result;
             }
 
+            if result.should_return() {
+                return result;
+            }
+        } else {
             if result.should_return() {
                 return result;
             }
