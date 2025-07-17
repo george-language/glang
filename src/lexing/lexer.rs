@@ -330,42 +330,6 @@ impl Lexer {
                             None,
                         ));
                     }
-                } else if character == 'x' {
-                    self.advance();
-
-                    let hex1 = self.current_char.ok_or_else(|| {
-                        StandardError::new(
-                            "incomplete hex escape sequence",
-                            pos_start.clone(),
-                            self.position.clone(),
-                            None,
-                        )
-                    })?;
-
-                    self.advance();
-
-                    let hex2 = self.current_char.ok_or_else(|| {
-                        StandardError::new(
-                            "incomplete hex escape sequence",
-                            pos_start.clone(),
-                            self.position.clone(),
-                            None,
-                        )
-                    })?;
-
-                    let hex_str = format!("{}{}", hex1, hex2);
-
-                    if let Ok(byte) = u8::from_str_radix(&hex_str, 16) {
-                        string.push(byte as char);
-                        self.advance();
-                    } else {
-                        return Err(StandardError::new(
-                            "invalid hex escape sequence",
-                            pos_start.clone(),
-                            self.position.clone(),
-                            None,
-                        ));
-                    }
                 } else if let Some(replacement) = escape_chars.get(&character) {
                     string.push(*replacement);
                     self.advance();
@@ -379,6 +343,7 @@ impl Lexer {
                 }
 
                 escape_char = false;
+
                 continue;
             }
 
