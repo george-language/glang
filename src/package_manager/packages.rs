@@ -192,7 +192,17 @@ pub fn add_package(name: &str) {
         .expect("'requires' field of 'kennel.toml' must be an array of external kennel names");
 
     for requirement in requirements {
-        add_package(requirement.as_str().unwrap_or(""));
+        let pkg_name = requirement.as_str().unwrap_or("");
+
+        if pkg_name == name {
+            println!(
+                "{DIM_RED}Cannot require the Kennel dependency of another Kennel (circular requirements){RESET}"
+            );
+
+            return;
+        }
+
+        add_package(pkg_name);
     }
 
     let imports_file = get_package_path().join("kennels.glang");
