@@ -63,7 +63,7 @@ We made GLang because we believe beginner-friendly languages don’t have to be 
 - 🐶 Whimsical, beginner-friendly syntax
 - 📚 Built-in modules for math, strings, and more
 - 💬 Easy-to-understand functions like `dig()`, `bury()`, and `uhoh()`
-- 📦 Modular and extensible with `fetch`
+- 📦 Package management with `Kennels` and extensible with `fetch`
 - 🌐 Open source and growing community
 
 ## Installation
