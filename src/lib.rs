@@ -2,6 +2,7 @@ mod errors;
 mod interpreting;
 mod lexing;
 mod nodes;
+mod packages;
 mod parsing;
 mod syntax;
 mod values;
@@ -11,6 +12,8 @@ use crate::{
     lexing::lexer::Lexer,
     parsing::parser::Parser,
 };
+pub use packages::kennels::add_package;
+pub use packages::kennels::remove_package;
 use std::io::{Write, stdin, stdout};
 use std::time::Instant;
 use std::{fs, path::Path};

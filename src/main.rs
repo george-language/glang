@@ -19,11 +19,15 @@ enum Commands {
     New { name: String },
     #[command(about = "Initialize a glang project in the current directory")]
     Init,
+    #[command(about = "Install a glang package")]
+    Install { name: String },
+    #[command(about = "Remove a glang package")]
+    Remove { name: String },
 }
 
 fn main() {
     unsafe {
-        let path = env::current_exe()
+        let std_path = env::current_exe()
             .expect("Unable to retrieve current exe")
             .parent()
             .unwrap()
@@ -33,7 +37,18 @@ fn main() {
             .replace("target/debug/", "")
             .replace("target/release/", "");
 
-        env::set_var("GLANG_STD", &path);
+        let pkg_path = env::current_exe()
+            .expect("Unable to retrieve current exe")
+            .parent()
+            .unwrap()
+            .join("kennels")
+            .to_string_lossy()
+            .replace("\\", "/")
+            .replace("target/debug/", "")
+            .replace("target/release/", "");
+
+        env::set_var("GLANG_STD", &std_path);
+        env::set_var("GLANG_PKG", &pkg_path);
     }
 
     let cli = Cli::parse();
@@ -44,6 +59,12 @@ fn main() {
         }
         (Some(Commands::Init), _) => {
             glang::new_project(Path::new("."));
+        }
+        (Some(Commands::Install { name }), _) => {
+            glang::add_package(&name);
+        }
+        (Some(Commands::Remove { name }), _) => {
+            glang::remove_package(&name);
         }
         (None, Some(file)) => {
             let error = glang::run(&file, None);
