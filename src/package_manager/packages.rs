@@ -101,7 +101,7 @@ pub fn add_package(name: &str) {
         return;
     }
 
-    println!("📁 Downloading package from: {}", package.url);
+    println!("📁 Downloading kennel from: '{}'", package.url);
 
     let zip_bytes = match get(&package.url) {
         Ok(r) => match r.bytes() {
