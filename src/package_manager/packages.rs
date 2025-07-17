@@ -87,7 +87,7 @@ pub fn add_package(name: &str) {
     let package = match packages.iter().find(|p| p.name == name) {
         Some(p) => p,
         None => {
-            println!("{DIM_RED}Package '{}' not found in registry{RESET}", name);
+            println!("{DIM_RED}Kennel '{}' not found in registry{RESET}", name);
 
             return;
         }
@@ -96,7 +96,7 @@ pub fn add_package(name: &str) {
     let package_path = get_package_path().join(&package.name);
 
     if package_path.exists() {
-        println!("✅ Package '{}' is already installed", package.name);
+        println!("✅ Kennel '{}' is already installed", package.name);
         println!(
             "💡 To update, use {BOLD}`glang update {}`{RESET}",
             package.name
@@ -124,7 +124,7 @@ pub fn add_package(name: &str) {
     };
 
     println!(
-        "🎯 Extracting package to: '{}'",
+        "🎯 Extracting kennel to: '{}'",
         package_path.to_string_lossy().to_string()
     );
 
@@ -177,7 +177,7 @@ pub fn add_package(name: &str) {
             .expect("Error parsing 'kennel.toml'");
     let name = package_toml["name"]
         .as_str()
-        .expect("'name' field of 'kennel.toml' must be a package name");
+        .expect("'name' field of 'kennel.toml' must be a proper name");
     let description = package_toml["description"]
         .as_str()
         .unwrap_or("No description");
@@ -189,7 +189,7 @@ pub fn add_package(name: &str) {
         .expect("'entry' field of 'kennel.toml' must be a path to the glang entry point file");
     let requirements = package_toml["requires"]
         .as_array()
-        .expect("'requires' field of 'kennel.toml' must be an array of package names");
+        .expect("'requires' field of 'kennel.toml' must be an array of external kennel names");
 
     for requirement in requirements {
         add_package(requirement.as_str().unwrap_or(""));
@@ -207,10 +207,7 @@ pub fn add_package(name: &str) {
     );
     let _ = fs::write(&imports_file, imports);
 
-    println!(
-        "✅ Package '{} {}' installed successfully!",
-        &name, &version
-    );
+    println!("✅ Kennel '{} {}' installed successfully!", &name, &version);
 }
 
 pub fn remove_package(package: &str) {
@@ -221,7 +218,7 @@ pub fn remove_package(package: &str) {
     if package_path.exists() {
         let _ = fs::remove_dir_all(&package_path);
     } else {
-        println!("🤔 Package '{}' not installed", &package);
+        println!("🤔 Kennel '{}' not installed", &package);
 
         return;
     }
@@ -236,5 +233,5 @@ pub fn remove_package(package: &str) {
 
     let _ = fs::write(&kennels_file, contents);
 
-    println!("🗑️  Package '{}' removed", &package);
+    println!("🗑️  Kennel '{}' removed", &package);
 }
