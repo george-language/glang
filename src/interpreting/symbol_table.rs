@@ -1,14 +1,14 @@
 use crate::values::value::Value;
-use std::collections::HashMap;
+use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 #[derive(Debug, Clone)]
 pub struct SymbolTable {
     pub symbols: HashMap<String, Option<Value>>,
-    pub parent: Option<Box<SymbolTable>>,
+    pub parent: Option<Rc<RefCell<SymbolTable>>>,
 }
 
 impl SymbolTable {
-    pub fn new(parent: Option<Box<SymbolTable>>) -> Self {
+    pub fn new(parent: Option<Rc<RefCell<SymbolTable>>>) -> Self {
         Self {
             symbols: HashMap::new(),
             parent: parent,
@@ -21,7 +21,7 @@ impl SymbolTable {
         }
 
         if let Some(parent) = &self.parent {
-            return parent.get(name);
+            return parent.borrow().get(name);
         }
 
         None

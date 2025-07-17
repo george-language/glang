@@ -36,20 +36,20 @@ impl BuiltInFunction {
     pub fn generate_new_context(&self) -> Context {
         let mut new_context = Context::new(
             self.name.clone(),
-            Some(Box::new(self.context.as_ref().unwrap().clone())),
+            Some(Rc::new(RefCell::new(
+                self.context.as_ref().unwrap().clone(),
+            ))),
             self.pos_start.clone(),
         );
-        new_context.symbol_table = Some(Rc::new(RefCell::new(SymbolTable::new(Some(Box::new(
-            new_context
-                .parent
-                .as_ref()
-                .unwrap()
-                .symbol_table
-                .as_ref()
-                .unwrap()
-                .borrow()
-                .clone(),
-        ))))));
+        let parent_st = self
+            .context
+            .as_ref()
+            .unwrap()
+            .symbol_table
+            .as_ref()
+            .unwrap()
+            .clone();
+        new_context.symbol_table = Some(Rc::new(RefCell::new(SymbolTable::new(Some(parent_st)))));
 
         new_context
     }
