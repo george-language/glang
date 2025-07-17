@@ -294,8 +294,9 @@ impl Lexer {
         self.advance();
 
         let mut escape_chars = HashMap::new();
-        escape_chars.insert('n', '\n');
         escape_chars.insert('r', '\r');
+        escape_chars.insert('e', '\x1b');
+        escape_chars.insert('n', '\n');
         escape_chars.insert('t', '\t');
         escape_chars.insert('\\', '\\');
         escape_chars.insert('"', '\"');
@@ -306,22 +307,76 @@ impl Lexer {
             }
 
             if escape_char {
-                match escape_chars.get(&character) {
-                    Some(char) => {
-                        string.push(*char);
-                    }
-                    None => {
+                if character == 'e' {
+                    string.push('\x1b');
+                    self.advance();
+                    if self.current_char == Some('[') {
+                        string.push('[');
+                        self.advance();
+
+                        while let Some(c) = self.current_char {
+                            string.push(c);
+                            self.advance();
+                            if c == 'm' {
+                                break;
+                            }
+                        }
+                    } else {
                         return Err(StandardError::new(
-                            "invalid escape character",
+                            "invalid ANSI escape sequence (expected '[')",
                             pos_start.clone(),
                             self.position.clone(),
                             None,
                         ));
                     }
+                } else if character == 'x' {
+                    self.advance();
+                    let hex1 = self.current_char.ok_or_else(|| {
+                        StandardError::new(
+                            "incomplete hex escape sequence",
+                            pos_start.clone(),
+                            self.position.clone(),
+                            None,
+                        )
+                    })?;
+                    self.advance();
+                    let hex2 = self.current_char.ok_or_else(|| {
+                        StandardError::new(
+                            "incomplete hex escape sequence",
+                            pos_start.clone(),
+                            self.position.clone(),
+                            None,
+                        )
+                    })?;
+                    let hex_str = format!("{}{}", hex1, hex2);
+                    if let Ok(byte) = u8::from_str_radix(&hex_str, 16) {
+                        string.push(byte as char);
+                        self.advance();
+                    } else {
+                        return Err(StandardError::new(
+                            "invalid hex escape sequence",
+                            pos_start.clone(),
+                            self.position.clone(),
+                            None,
+                        ));
+                    }
+                } else if let Some(replacement) = escape_chars.get(&character) {
+                    string.push(*replacement);
+                    self.advance();
+                } else {
+                    return Err(StandardError::new(
+                        "invalid escape character",
+                        pos_start.clone(),
+                        self.position.clone(),
+                        None,
+                    ));
                 }
 
                 escape_char = false;
-            } else if character == '\\' {
+                continue;
+            }
+
+            if character == '\\' {
                 escape_char = true;
             } else {
                 string.push(character);
@@ -332,7 +387,7 @@ impl Lexer {
 
         if self.current_char != Some('"') {
             return Err(StandardError::new(
-                "unterminated string literal",
+                "unfinished string",
                 pos_start,
                 self.position.clone(),
                 Some("add a '\"' at the end of the string to close it"),
