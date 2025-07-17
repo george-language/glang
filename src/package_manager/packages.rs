@@ -1,11 +1,7 @@
 use reqwest::blocking::get;
 use serde::Deserialize;
 use simply_colored::*;
-use std::{
-    fs,
-    io::Read,
-    path::{Path, PathBuf},
-};
+use std::{fs, io::Read, path::PathBuf};
 use std::{fs::File, io::Cursor};
 use toml::Table;
 use zip::ZipArchive;
@@ -19,7 +15,7 @@ struct PackageRegistry {
 fn get_package_path() -> PathBuf {
     std::env::var("GLANG_PKG")
         .map(PathBuf::from)
-        .unwrap_or_else(|_| PathBuf::from("kennels")) // fallback default
+        .unwrap_or_else(|_| PathBuf::from("kennels"))
 }
 
 pub fn package_installed(package: &str) -> bool {
@@ -211,13 +207,16 @@ pub fn add_package(name: &str) {
     imports.push_str(
         format!(
             "\n# {} {}: {}\nobj {} = _env(\"GLANG_PKG\") + \"/{}/{}\";",
-            &name, &version, &description, &name, &name, &entry
+            &package.name, &version, &description, &name, &package.name, &entry
         )
         .as_str(),
     );
     let _ = fs::write(&imports_file, imports);
 
-    println!("✅ Kennel '{} {}' installed successfully!", &name, &version);
+    println!(
+        "✅ Kennel '{} {}' installed successfully!",
+        &package.name, &version
+    );
 }
 
 pub fn remove_package(package: &str) {
