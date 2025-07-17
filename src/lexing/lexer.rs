@@ -310,6 +310,7 @@ impl Lexer {
                 if character == 'e' {
                     string.push('\x1b');
                     self.advance();
+
                     if self.current_char == Some('[') {
                         string.push('[');
                         self.advance();
@@ -331,6 +332,7 @@ impl Lexer {
                     }
                 } else if character == 'x' {
                     self.advance();
+
                     let hex1 = self.current_char.ok_or_else(|| {
                         StandardError::new(
                             "incomplete hex escape sequence",
@@ -339,7 +341,9 @@ impl Lexer {
                             None,
                         )
                     })?;
+
                     self.advance();
+
                     let hex2 = self.current_char.ok_or_else(|| {
                         StandardError::new(
                             "incomplete hex escape sequence",
@@ -348,7 +352,9 @@ impl Lexer {
                             None,
                         )
                     })?;
+
                     let hex_str = format!("{}{}", hex1, hex2);
+
                     if let Ok(byte) = u8::from_str_radix(&hex_str, 16) {
                         string.push(byte as char);
                         self.advance();
