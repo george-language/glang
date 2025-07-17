@@ -2,7 +2,7 @@ mod errors;
 mod interpreting;
 mod lexing;
 mod nodes;
-mod packages;
+mod package_manager;
 mod parsing;
 mod syntax;
 mod values;
@@ -12,8 +12,10 @@ use crate::{
     lexing::lexer::Lexer,
     parsing::parser::Parser,
 };
-pub use packages::kennels::add_package;
-pub use packages::kennels::remove_package;
+pub use package_manager::packages::add_package;
+pub use package_manager::packages::package_installed;
+pub use package_manager::packages::remove_package;
+use simply_colored::*;
 use std::io::{Write, stdin, stdout};
 use std::time::Instant;
 use std::{fs, path::Path};
@@ -25,7 +27,7 @@ pub fn run(filename: &str, code: Option<String>) -> Option<StandardError> {
         match fs::read_to_string(filename) {
             Ok(s) => s,
             Err(e) => {
-                println!("Failed to read provided '.glang' file: {e}");
+                println!("{DIM_RED}Failed to read provided '.glang' file: {e}{RESET}");
 
                 return None;
             }

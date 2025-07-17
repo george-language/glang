@@ -23,6 +23,8 @@ enum Commands {
     Install { name: String },
     #[command(about = "Remove a glang package")]
     Remove { name: String },
+    #[command(about = "Update a glang package")]
+    Update { name: String },
 }
 
 fn main() {
@@ -65,6 +67,14 @@ fn main() {
         }
         (Some(Commands::Remove { name }), _) => {
             glang::remove_package(&name);
+        }
+        (Some(Commands::Update { name }), _) => {
+            if glang::package_installed(&name) {
+                glang::remove_package(&name);
+                glang::add_package(&name);
+            } else {
+                println!("🤔 Package '{}' not installed", &name);
+            }
         }
         (None, Some(file)) => {
             let error = glang::run(&file, None);

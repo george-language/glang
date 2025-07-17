@@ -22,6 +22,12 @@ fn get_package_path() -> PathBuf {
         .unwrap_or_else(|_| PathBuf::from("kennels")) // fallback default
 }
 
+pub fn package_installed(package: &str) -> bool {
+    let package_path = get_package_path().join(&package);
+
+    package_path.exists()
+}
+
 pub fn create_package_dir() {
     let kennels_dir = get_package_path();
 
@@ -29,7 +35,7 @@ pub fn create_package_dir() {
         match fs::create_dir_all(&kennels_dir) {
             Ok(_) => {}
             Err(e) => {
-                println!("Error: {}", e);
+                println!("Error creating 'kennels' dir: {}", e);
                 return;
             }
         }
@@ -55,7 +61,7 @@ pub fn add_package(name: &str) {
     ) {
         Ok(r) => r,
         Err(e) => {
-            println!("Failed to fetch registry: {}", e);
+            println!("{DIM_RED}Failed to retrieve registry: {}{RESET}", e);
 
             return;
         }
@@ -64,7 +70,7 @@ pub fn add_package(name: &str) {
     let mut registry_json = String::new();
 
     if let Err(e) = resp.read_to_string(&mut registry_json) {
-        println!("Failed to read registry data: {}", e);
+        println!("{DIM_RED}Failed to read registry data: {}{RESET}", e);
 
         return;
     }
@@ -72,7 +78,7 @@ pub fn add_package(name: &str) {
     let packages: Vec<PackageRegistry> = match serde_json::from_str(&registry_json) {
         Ok(p) => p,
         Err(e) => {
-            println!("Failed to parse registry JSON: {}", e);
+            println!("{DIM_RED}Failed to parse registry JSON: {}{RESET}", e);
 
             return;
         }
@@ -81,7 +87,7 @@ pub fn add_package(name: &str) {
     let package = match packages.iter().find(|p| p.name == name) {
         Some(p) => p,
         None => {
-            println!("{DIM_RED}Package '{}' not found in registry.{RESET}", name);
+            println!("{DIM_RED}Package '{}' not found in registry{RESET}", name);
 
             return;
         }
@@ -91,7 +97,10 @@ pub fn add_package(name: &str) {
 
     if package_path.exists() {
         println!("✅ Package '{}' is already installed", package.name);
-        println!("💡 To update, use `glang update {}`", package.name);
+        println!(
+            "💡 To update, use {BOLD}`glang update {}`{RESET}",
+            package.name
+        );
 
         return;
     }
@@ -102,13 +111,13 @@ pub fn add_package(name: &str) {
         Ok(r) => match r.bytes() {
             Ok(b) => b,
             Err(e) => {
-                println!("Failed to get zip content: {}", e);
+                println!("{DIM_RED}Failed to get zip content: {}", e);
 
                 return;
             }
         },
         Err(e) => {
-            println!("Failed to download zip: {}", e);
+            println!("{DIM_RED}Failed to download zip: {}", e);
 
             return;
         }
@@ -123,7 +132,7 @@ pub fn add_package(name: &str) {
     let mut archive = match ZipArchive::new(reader) {
         Ok(archive) => archive,
         Err(e) => {
-            println!("Failed to open zip archive: {}", e);
+            println!("{DIM_RED}Failed to open zip archive: {}{RESET}", e);
 
             return;
         }
@@ -144,12 +153,12 @@ pub fn add_package(name: &str) {
 
         if file.name().ends_with('/') {
             fs::create_dir_all(&path).unwrap_or_else(|e| {
-                println!("Failed to create dir {:?}: {}", path, e);
+                println!("{DIM_RED}Failed to create dir {:?}: {}{RESET}", path, e);
             });
         } else {
             if let Some(parent) = path.parent() {
                 fs::create_dir_all(parent).unwrap_or_else(|e| {
-                    println!("Failed to create dir {:?}: {}", parent, e);
+                    println!("{DIM_RED}Failed to create dir {:?}: {}{RESET}", parent, e);
                 });
             }
 
@@ -165,27 +174,42 @@ pub fn add_package(name: &str) {
             .expect("Error reading 'kennel.toml'")
             .as_str()
             .parse::<Table>()
-            .unwrap();
+            .expect("Error parsing 'kennel.toml'");
+    let name = package_toml["name"]
+        .as_str()
+        .expect("'name' field of 'kennel.toml' must be a package name");
+    let description = package_toml["description"]
+        .as_str()
+        .unwrap_or("No description");
+    let version = package_toml["version"]
+        .as_str()
+        .expect("'version' field of 'kennel.toml' must be a valid version number");
+    let entry = package_toml["entry"]
+        .as_str()
+        .expect("'entry' field of 'kennel.toml' must be a path to the glang entry point file");
+    let requirements = package_toml["requires"]
+        .as_array()
+        .expect("'requires' field of 'kennel.toml' must be an array of package names");
+
+    for requirement in requirements {
+        add_package(requirement.as_str().unwrap_or(""));
+    }
+
     let imports_file = get_package_path().join("kennels.glang");
 
     let mut imports = fs::read_to_string(&imports_file).expect("Error reading 'kennels.glang'");
     imports.push_str(
         format!(
-            "obj {} = _env(\"GLANG_PKG\") + \"/{}/{}\"; # {} {}: {}\n",
-            package_toml["name"],
-            package_toml["name"],
-            package_toml["entry"],
-            package_toml["name"],
-            package_toml["version"],
-            package_toml["description"],
+            "\n# {} {}: {}\nobj {} = _env(\"GLANG_PKG\") + \"/{}/{}\";",
+            &name, &version, &description, &name, &name, &entry
         )
         .as_str(),
     );
     let _ = fs::write(&imports_file, imports);
 
     println!(
-        "✅ Package '{}' '{}' installed successfully!",
-        package_toml["name"], package_toml["version"]
+        "✅ Package '{} {}' installed successfully!",
+        &name, &version
     );
 }
 
@@ -197,7 +221,7 @@ pub fn remove_package(package: &str) {
     if package_path.exists() {
         let _ = fs::remove_dir_all(&package_path);
     } else {
-        println!("Package '{}' not installed", &package);
+        println!("🤔 Package '{}' not installed", &package);
 
         return;
     }
@@ -212,5 +236,5 @@ pub fn remove_package(package: &str) {
 
     let _ = fs::write(&kennels_file, contents);
 
-    println!("✅ Package '{}' removed", &package);
+    println!("🗑️  Package '{}' removed", &package);
 }
