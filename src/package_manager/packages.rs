@@ -18,6 +18,12 @@ fn get_package_path() -> PathBuf {
         .unwrap_or_else(|_| PathBuf::from("kennels"))
 }
 
+fn is_snake_case(s: &str) -> bool {
+    !s.is_empty()
+        && s.chars()
+            .all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || c == '_')
+}
+
 pub fn package_installed(package: &str) -> bool {
     let package_path = get_package_path().join(&package);
 
@@ -101,7 +107,7 @@ pub fn add_package(name: &str) {
         return;
     }
 
-    println!("📁 Downloading kennel from: '{}'", package.url);
+    println!("📁 Downloading kennel from '{}'", package.url);
 
     let zip_bytes = match get(&package.url) {
         Ok(r) => match r.bytes() {
@@ -120,7 +126,7 @@ pub fn add_package(name: &str) {
     };
 
     println!(
-        "🎯 Extracting kennel to: '{}'",
+        "🎯 Extracting kennel to '{}'",
         package_path.to_string_lossy().to_string()
     );
 
@@ -173,7 +179,7 @@ pub fn add_package(name: &str) {
             .expect("Error parsing 'kennel.toml'");
     let name = package_toml["name"]
         .as_str()
-        .expect("'name' field of 'kennel.toml' must be a proper name");
+        .expect("'name' field of 'kennel.toml' must be a string");
     let description = package_toml["description"]
         .as_str()
         .unwrap_or("No description");
@@ -187,8 +193,25 @@ pub fn add_package(name: &str) {
         .as_array()
         .expect("'requires' field of 'kennel.toml' must be an array of external kennel names");
 
+    if !is_snake_case(&name) {
+        println!(
+            "{DIM_RED}'name' field of {}'s 'kennel.toml' must be a proper snake case name{RESET}",
+            package.name
+        );
+
+        return;
+    }
+
     for requirement in requirements {
         let pkg_name = requirement.as_str().unwrap_or("");
+
+        if !is_snake_case(&pkg_name) {
+            println!(
+                "{DIM_RED}'name' field of {pkg_name}'s 'kennel.toml' must be a proper snake case name{RESET}"
+            );
+
+            return;
+        }
 
         if pkg_name == name {
             println!(
@@ -228,6 +251,10 @@ pub fn remove_package(package: &str) {
         let _ = fs::remove_dir_all(&package_path);
     } else {
         println!("🤔 Kennel '{}' not installed", &package);
+        println!(
+            "💡 To install, try {BOLD}`glang install {}`{RESET}",
+            &package
+        );
 
         return;
     }
