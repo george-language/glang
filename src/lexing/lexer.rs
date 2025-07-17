@@ -44,168 +44,179 @@ impl Lexer {
         let mut tokens = Vec::new();
 
         while let Some(current_char) = self.current_char {
-            if current_char == ' ' || current_char == '\t' {
-                self.advance();
-            } else if current_char == '#' {
-                self.skip_comment();
-            } else if current_char == ';' || current_char == '\n' {
-                tokens.push(Token::new(
-                    TokenType::TT_NEWLINE,
-                    None,
-                    Some(self.position.clone()),
-                    None,
-                ));
-                self.advance();
-            } else if DIGITS.contains(current_char) {
-                let result = self.make_number();
+            let token = match current_char {
+                ' ' | '\t' => {
+                    self.advance();
 
-                match result {
-                    Ok(token) => {
-                        tokens.push(token);
-                    }
-                    Err(error) => {
-                        return Err(error);
-                    }
+                    continue;
                 }
-            } else if LETTERS.contains(current_char) {
-                tokens.push(self.make_identifier());
-            } else if current_char == '"' {
-                let result = self.make_string();
+                '#' => {
+                    self.skip_comment();
 
-                match result {
-                    Ok(token) => {
-                        tokens.push(token);
-                    }
-                    Err(error) => {
-                        return Err(error);
-                    }
+                    continue;
                 }
-            } else if current_char == '+' {
-                tokens.push(Token::new(
-                    TokenType::TT_PLUS,
-                    None,
-                    Some(self.position.clone()),
-                    None,
-                ));
-                self.advance();
-            } else if current_char == '-' {
-                tokens.push(self.make_minus_or_arrow());
-            } else if current_char == '*' {
-                tokens.push(Token::new(
-                    TokenType::TT_MUL,
-                    None,
-                    Some(self.position.clone()),
-                    None,
-                ));
-                self.advance();
-            } else if current_char == '/' {
-                tokens.push(Token::new(
-                    TokenType::TT_DIV,
-                    None,
-                    Some(self.position.clone()),
-                    None,
-                ));
-                self.advance();
-            } else if current_char == '^' {
-                tokens.push(Token::new(
-                    TokenType::TT_POW,
-                    None,
-                    Some(self.position.clone()),
-                    None,
-                ));
-                self.advance();
-            } else if current_char == '%' {
-                tokens.push(Token::new(
-                    TokenType::TT_MOD,
-                    None,
-                    Some(self.position.clone()),
-                    None,
-                ));
-                self.advance();
-            } else if current_char == '(' {
-                tokens.push(Token::new(
-                    TokenType::TT_LPAREN,
-                    None,
-                    Some(self.position.clone()),
-                    None,
-                ));
-                self.advance();
-            } else if current_char == ')' {
-                tokens.push(Token::new(
-                    TokenType::TT_RPAREN,
-                    None,
-                    Some(self.position.clone()),
-                    None,
-                ));
-                self.advance();
-            } else if current_char == '[' {
-                tokens.push(Token::new(
-                    TokenType::TT_LSQUARE,
-                    None,
-                    Some(self.position.clone()),
-                    None,
-                ));
-                self.advance();
-            } else if current_char == ']' {
-                tokens.push(Token::new(
-                    TokenType::TT_RSQUARE,
-                    None,
-                    Some(self.position.clone()),
-                    None,
-                ));
-                self.advance();
-            } else if current_char == '{' {
-                tokens.push(Token::new(
-                    TokenType::TT_LBRACKET,
-                    None,
-                    Some(self.position.clone()),
-                    None,
-                ));
-                self.advance();
-            } else if current_char == '}' {
-                tokens.push(Token::new(
-                    TokenType::TT_RBRACKET,
-                    None,
-                    Some(self.position.clone()),
-                    None,
-                ));
-                self.advance();
-            } else if current_char == '!' {
-                let result = self.make_not_equals();
+                ';' | '\n' => {
+                    let token = Token::new(
+                        TokenType::TT_NEWLINE,
+                        None,
+                        Some(self.position.clone()),
+                        None,
+                    );
+                    self.advance();
 
-                match result {
-                    Ok(token) => {
-                        tokens.push(token);
-                    }
-                    Err(error) => {
-                        return Err(error);
-                    }
+                    Some(token)
                 }
-            } else if current_char == '=' {
-                tokens.push(self.make_equals());
-            } else if current_char == '<' {
-                tokens.push(self.make_less_than())
-            } else if current_char == '>' {
-                tokens.push(self.make_greater_than())
-            } else if current_char == ',' {
-                tokens.push(Token::new(
-                    TokenType::TT_COMMA,
-                    None,
-                    Some(self.position.clone()),
-                    None,
-                ));
-                self.advance();
-            } else {
-                let pos_start = self.position.clone();
-                let character = current_char.clone();
-                self.advance();
+                c if DIGITS.contains(c) => match self.make_number() {
+                    Ok(token) => Some(token),
+                    Err(error) => return Err(error),
+                },
+                c if LETTERS.contains(c) => Some(self.make_identifier()),
+                '"' => match self.make_string() {
+                    Ok(token) => Some(token),
+                    Err(error) => return Err(error),
+                },
+                '+' => {
+                    let token =
+                        Token::new(TokenType::TT_PLUS, None, Some(self.position.clone()), None);
 
-                return Err(StandardError::new(
-                    format!("unkown character '{}'", character).as_str(),
-                    pos_start,
-                    self.position.clone(),
-                    Some("replace this character with one known by glang"),
-                ));
+                    self.advance();
+
+                    Some(token)
+                }
+                '-' => Some(self.make_minus_or_arrow()),
+                '*' => {
+                    let token =
+                        Token::new(TokenType::TT_MUL, None, Some(self.position.clone()), None);
+
+                    self.advance();
+
+                    Some(token)
+                }
+                '/' => {
+                    let token =
+                        Token::new(TokenType::TT_DIV, None, Some(self.position.clone()), None);
+
+                    self.advance();
+
+                    Some(token)
+                }
+                '^' => {
+                    let token =
+                        Token::new(TokenType::TT_POW, None, Some(self.position.clone()), None);
+
+                    self.advance();
+
+                    Some(token)
+                }
+                '%' => {
+                    let token =
+                        Token::new(TokenType::TT_MOD, None, Some(self.position.clone()), None);
+
+                    self.advance();
+
+                    Some(token)
+                }
+                '(' => {
+                    let token = Token::new(
+                        TokenType::TT_LPAREN,
+                        None,
+                        Some(self.position.clone()),
+                        None,
+                    );
+
+                    self.advance();
+
+                    Some(token)
+                }
+                ')' => {
+                    let token = Token::new(
+                        TokenType::TT_RPAREN,
+                        None,
+                        Some(self.position.clone()),
+                        None,
+                    );
+
+                    self.advance();
+
+                    Some(token)
+                }
+                '[' => {
+                    let token = Token::new(
+                        TokenType::TT_LSQUARE,
+                        None,
+                        Some(self.position.clone()),
+                        None,
+                    );
+
+                    self.advance();
+
+                    Some(token)
+                }
+                ']' => {
+                    let token = Token::new(
+                        TokenType::TT_RSQUARE,
+                        None,
+                        Some(self.position.clone()),
+                        None,
+                    );
+
+                    self.advance();
+
+                    Some(token)
+                }
+                '{' => {
+                    let token = Token::new(
+                        TokenType::TT_LBRACKET,
+                        None,
+                        Some(self.position.clone()),
+                        None,
+                    );
+
+                    self.advance();
+
+                    Some(token)
+                }
+                '}' => {
+                    let token = Token::new(
+                        TokenType::TT_RBRACKET,
+                        None,
+                        Some(self.position.clone()),
+                        None,
+                    );
+
+                    self.advance();
+
+                    Some(token)
+                }
+                '!' => match self.make_not_equals() {
+                    Ok(token) => Some(token),
+                    Err(error) => return Err(error),
+                },
+                '=' => Some(self.make_equals()),
+                '<' => Some(self.make_less_than()),
+                '>' => Some(self.make_greater_than()),
+                ',' => {
+                    let token =
+                        Token::new(TokenType::TT_COMMA, None, Some(self.position.clone()), None);
+                    self.advance();
+                    Some(token)
+                }
+                unknown_char => {
+                    let pos_start = self.position.clone();
+
+                    self.advance();
+
+                    return Err(StandardError::new(
+                        format!("unkown character '{}'", unknown_char).as_str(),
+                        pos_start,
+                        self.position.clone(),
+                        Some("replace this character with one known by glang"),
+                    ));
+                }
+            };
+
+            if let Some(t) = token {
+                tokens.push(t);
             }
         }
 
