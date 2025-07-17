@@ -297,6 +297,7 @@ impl Lexer {
         escape_chars.insert('n', '\n');
         escape_chars.insert('r', '\r');
         escape_chars.insert('t', '\t');
+        escape_chars.insert('\\', '\\');
         escape_chars.insert('"', '\"');
 
         while let Some(character) = self.current_char {
