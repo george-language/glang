@@ -19,11 +19,11 @@ enum Commands {
     New { name: String },
     #[command(about = "Initialize a glang project in the current directory")]
     Init,
-    #[command(about = "Install a glang package")]
+    #[command(about = "Install a glang kennel (package)")]
     Install { name: String },
-    #[command(about = "Remove a glang package")]
+    #[command(about = "Remove a glang kennel (package)")]
     Remove { name: String },
-    #[command(about = "Update a glang package")]
+    #[command(about = "Update a glang kennel (package)")]
     Update { name: String },
 }
 
