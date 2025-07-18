@@ -12,16 +12,16 @@ use crate::{
     lexing::lexer::Lexer,
     parsing::parser::Parser,
 };
-pub use package_manager::packages::add_package;
-pub use package_manager::packages::package_installed;
-pub use package_manager::packages::remove_package;
+pub use package_manager::packages::{add_package, package_installed, remove_package};
 use simply_colored::*;
 use std::{
     cell::RefCell,
+    fs,
     io::{Write, stdin, stdout},
+    path::Path,
+    rc::Rc,
+    time::Instant,
 };
-use std::{fs, path::Path};
-use std::{rc::Rc, time::Instant};
 
 pub fn run(filename: &str, code: Option<String>) -> Option<StandardError> {
     let contents = if filename == "<stdin>" {
