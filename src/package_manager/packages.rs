@@ -1,7 +1,8 @@
+use crate::package_manager::paths::get_package_path;
 use reqwest::blocking::get;
 use serde::Deserialize;
 use simply_colored::*;
-use std::{fs, io::Read, path::PathBuf};
+use std::{fs, io::Read};
 use std::{fs::File, io::Cursor};
 use toml::Table;
 use zip::ZipArchive;
@@ -12,19 +13,13 @@ struct PackageRegistry {
     url: String,
 }
 
-fn get_package_path() -> PathBuf {
-    std::env::var("GLANG_PKG")
-        .map(PathBuf::from)
-        .unwrap_or_else(|_| PathBuf::from("kennels"))
-}
-
 fn is_snake_case(s: &str) -> bool {
     !s.is_empty()
         && s.chars()
             .all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || c == '_')
 }
 
-pub fn package_installed(package: &str) -> bool {
+pub fn is_package_installed(package: &str) -> bool {
     let package_path = get_package_path().join(&package);
 
     package_path.exists()

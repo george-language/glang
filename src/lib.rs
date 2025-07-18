@@ -12,7 +12,11 @@ use crate::{
     lexing::lexer::Lexer,
     parsing::parser::Parser,
 };
-pub use package_manager::packages::{add_package, package_installed, remove_package};
+pub use package_manager::{
+    logs::package_not_installed,
+    packages::{add_package, is_package_installed, remove_package},
+    paths::get_package_path,
+};
 use simply_colored::*;
 use std::{
     cell::RefCell,

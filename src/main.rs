@@ -19,11 +19,11 @@ enum Commands {
     New { name: String },
     #[command(about = "Initialize a glang project in the current directory")]
     Init,
-    #[command(about = "Install a glang kennel (package)")]
+    #[command(about = "Install a glang kennel from the internet")]
     Install { name: String },
-    #[command(about = "Remove a glang kennel (package)")]
+    #[command(about = "Remove an installed glang kennel")]
     Remove { name: String },
-    #[command(about = "Update a glang kennel (package)")]
+    #[command(about = "Update an installed glang kennel to the latest version")]
     Update { name: String },
 }
 
@@ -69,11 +69,11 @@ fn main() {
             glang::remove_package(&name);
         }
         (Some(Commands::Update { name }), _) => {
-            if glang::package_installed(&name) {
+            if glang::is_package_installed(&name) {
                 glang::remove_package(&name);
                 glang::add_package(&name);
             } else {
-                println!("🤔 Package '{}' not installed", &name);
+                glang::package_not_installed(&name);
             }
         }
         (None, Some(file)) => {
