@@ -2,8 +2,7 @@ use crate::package_manager::paths::get_package_path;
 use reqwest::blocking::get;
 use serde::Deserialize;
 use simply_colored::*;
-use std::{fs, io::Read};
-use std::{fs::File, io::Cursor};
+use std::{fs, fs::File, io::Cursor, io::Read};
 use toml::Table;
 use zip::ZipArchive;
 
