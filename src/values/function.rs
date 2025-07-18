@@ -17,7 +17,7 @@ pub struct Function {
     pub body_node: Box<AstNode>,
     pub arg_names: Arc<[String]>,
     pub should_auto_return: bool,
-    pub context: Option<Context>,
+    pub context: Option<Rc<RefCell<Context>>>,
     pub pos_start: Option<Position>,
     pub pos_end: Option<Position>,
 }
@@ -40,25 +40,24 @@ impl Function {
         }
     }
 
-    pub fn generate_new_context(&self) -> Context {
+    pub fn generate_new_context(&self) -> Rc<RefCell<Context>> {
         let mut new_context = Context::new(
             self.name.clone(),
-            Some(Rc::new(RefCell::new(
-                self.context.as_ref().unwrap().clone(),
-            ))),
+            Some(self.context.as_ref().unwrap().clone()),
             self.pos_start.clone(),
         );
         let parent_st = self
             .context
             .as_ref()
             .unwrap()
+            .borrow()
             .symbol_table
             .as_ref()
             .unwrap()
             .clone();
         new_context.symbol_table = Some(Rc::new(RefCell::new(SymbolTable::new(Some(parent_st)))));
 
-        new_context
+        Rc::new(RefCell::new(new_context))
     }
 
     pub fn check_args(&self, arg_names: &[String], args: &[Value]) -> RuntimeResult {
@@ -84,13 +83,19 @@ impl Function {
         result.success(None)
     }
 
-    pub fn populate_args(&self, arg_names: &[String], args: &[Value], expr_ctx: &mut Context) {
+    pub fn populate_args(
+        &self,
+        arg_names: &[String],
+        args: &[Value],
+        expr_ctx: Rc<RefCell<Context>>,
+    ) {
         for i in 0..args.len() {
             let arg_name = arg_names[i].clone();
             let mut arg_value = args[i].clone();
             arg_value.set_context(Some(expr_ctx.clone()));
 
             expr_ctx
+                .borrow_mut()
                 .symbol_table
                 .as_mut()
                 .unwrap()
@@ -103,7 +108,7 @@ impl Function {
         &self,
         arg_names: &[String],
         args: &[Value],
-        expr_ctx: &mut Context,
+        expr_ctx: Rc<RefCell<Context>>,
     ) -> RuntimeResult {
         let mut result = RuntimeResult::new();
         result.register(self.check_args(arg_names, args));
@@ -120,15 +125,16 @@ impl Function {
     pub fn execute(&self, args: &[Value]) -> RuntimeResult {
         let mut result = RuntimeResult::new();
         let mut interpreter = Interpreter::new();
-        let mut exec_context = self.generate_new_context();
+        let exec_context = self.generate_new_context();
 
-        result.register(self.check_and_populate_args(&self.arg_names, args, &mut exec_context));
+        result.register(self.check_and_populate_args(&self.arg_names, args, exec_context.clone()));
 
         if result.should_return() {
             return result;
         }
 
-        let value = result.register(interpreter.visit(self.body_node.clone(), &mut exec_context));
+        let value =
+            result.register(interpreter.visit(self.body_node.clone(), exec_context.clone()));
 
         if result.should_return() && result.func_return_value.is_none() {
             return result;

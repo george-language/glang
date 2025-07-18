@@ -44,7 +44,7 @@ impl Interpreter {
         interpreter
     }
 
-    pub fn evaluate(&mut self, src: &str, context: &mut Context) -> Option<StandardError> {
+    pub fn evaluate(&mut self, src: &str, context: Rc<RefCell<Context>>) -> Option<StandardError> {
         let mut lexer = Lexer::new("<eval>", src.to_string());
         let token_result = lexer.make_tokens();
 
@@ -64,7 +64,7 @@ impl Interpreter {
         None
     }
 
-    pub fn visit(&mut self, node: Box<AstNode>, context: &mut Context) -> RuntimeResult {
+    pub fn visit(&mut self, node: Box<AstNode>, context: Rc<RefCell<Context>>) -> RuntimeResult {
         match node.as_ref() {
             AstNode::List(node) => {
                 return self.visit_list_node(&node, context);
@@ -126,7 +126,11 @@ impl Interpreter {
         }
     }
 
-    pub fn visit_number_node(&self, node: &NumberNode, context: &mut Context) -> RuntimeResult {
+    pub fn visit_number_node(
+        &self,
+        node: &NumberNode,
+        context: Rc<RefCell<Context>>,
+    ) -> RuntimeResult {
         let value: f64 = node.token.value.as_ref().unwrap().parse().unwrap();
 
         RuntimeResult::new().success(Some(
@@ -136,12 +140,16 @@ impl Interpreter {
         ))
     }
 
-    pub fn visit_list_node(&mut self, node: &ListNode, context: &mut Context) -> RuntimeResult {
+    pub fn visit_list_node(
+        &mut self,
+        node: &ListNode,
+        context: Rc<RefCell<Context>>,
+    ) -> RuntimeResult {
         let mut result = RuntimeResult::new();
         let mut elements: Vec<Value> = Vec::new();
 
         for element in node.element_nodes.iter() {
-            let element_result = result.register(self.visit(element.to_owned(), context));
+            let element_result = result.register(self.visit(element.to_owned(), context.clone()));
 
             if result.should_return() {
                 return result;
@@ -157,7 +165,11 @@ impl Interpreter {
         ))
     }
 
-    pub fn visit_string_node(&mut self, node: &StringNode, context: &mut Context) -> RuntimeResult {
+    pub fn visit_string_node(
+        &mut self,
+        node: &StringNode,
+        context: Rc<RefCell<Context>>,
+    ) -> RuntimeResult {
         RuntimeResult::new().success(Some(
             Value::StringValue(Str::new(node.token.value.as_ref().unwrap().clone()))
                 .set_context(Some(context.clone()))
@@ -168,17 +180,18 @@ impl Interpreter {
     pub fn visit_variable_assign_node(
         &mut self,
         node: &VariableAssignNode,
-        context: &mut Context,
+        context: Rc<RefCell<Context>>,
     ) -> RuntimeResult {
         let mut result = RuntimeResult::new();
         let var_name = node.var_name_token.value.as_ref().unwrap().clone();
-        let value = result.register(self.visit(node.value_node.clone(), context));
+        let value = result.register(self.visit(node.value_node.clone(), context.clone()));
 
         if result.should_return() {
             return result;
         }
 
         context
+            .borrow_mut()
             .symbol_table
             .as_mut()
             .unwrap()
@@ -191,11 +204,12 @@ impl Interpreter {
     pub fn visit_variable_access_node(
         &mut self,
         node: &VariableAccessNode,
-        context: &mut Context,
+        context: Rc<RefCell<Context>>,
     ) -> RuntimeResult {
         let mut result = RuntimeResult::new();
         let var_name = node.var_name_token.value.as_ref().unwrap();
         let mut value = context
+            .borrow()
             .symbol_table
             .as_ref()
             .unwrap()
@@ -223,11 +237,11 @@ impl Interpreter {
         result.success(value)
     }
 
-    pub fn visit_if_node(&mut self, node: &IfNode, context: &mut Context) -> RuntimeResult {
+    pub fn visit_if_node(&mut self, node: &IfNode, context: Rc<RefCell<Context>>) -> RuntimeResult {
         let mut result = RuntimeResult::new();
 
         for (condition, expr, should_return_null) in node.cases.iter() {
-            let condition_value = result.register(self.visit(condition.clone(), context));
+            let condition_value = result.register(self.visit(condition.clone(), context.clone()));
 
             if result.should_return() {
                 return result;
@@ -236,7 +250,7 @@ impl Interpreter {
             let condition_value = condition_value.unwrap();
 
             if condition_value.is_true() {
-                let expr_value = result.register(self.visit(expr.clone(), context));
+                let expr_value = result.register(self.visit(expr.clone(), context.clone()));
 
                 if result.should_return() {
                     return result;
@@ -252,7 +266,7 @@ impl Interpreter {
 
         if node.else_case.is_some() {
             let (expr, should_return_null) = node.else_case.as_ref().unwrap().clone();
-            let else_value = result.register(self.visit(expr.clone(), context));
+            let else_value = result.register(self.visit(expr.clone(), context.clone()));
 
             if result.should_return() {
                 return result;
@@ -268,11 +282,15 @@ impl Interpreter {
         result.success(Some(Number::null_value()))
     }
 
-    pub fn visit_for_node(&mut self, node: &ForNode, context: &mut Context) -> RuntimeResult {
+    pub fn visit_for_node(
+        &mut self,
+        node: &ForNode,
+        context: Rc<RefCell<Context>>,
+    ) -> RuntimeResult {
         let mut result = RuntimeResult::new();
 
         let start_value = match result
-            .register(self.visit(node.start_value_node.clone(), context))
+            .register(self.visit(node.start_value_node.clone(), context.clone()))
             .unwrap()
         {
             Value::NumberValue(value) => Number::new(value.value),
@@ -291,7 +309,7 @@ impl Interpreter {
         }
 
         let end_value = match result
-            .register(self.visit(node.end_value_node.clone(), context))
+            .register(self.visit(node.end_value_node.clone(), context.clone()))
             .unwrap()
         {
             Value::NumberValue(value) => Number::new(value.value),
@@ -313,7 +331,10 @@ impl Interpreter {
 
         if node.step_value_node.is_some() {
             step_value = match result
-                .register(self.visit(node.step_value_node.as_ref().unwrap().clone(), context))
+                .register(self.visit(
+                    node.step_value_node.as_ref().unwrap().clone(),
+                    context.clone(),
+                ))
                 .unwrap()
             {
                 Value::NumberValue(value) => Number::new(value.value),
@@ -338,13 +359,19 @@ impl Interpreter {
 
         if step_value.value >= 0.0 {
             while i < end_value.value {
-                context.symbol_table.as_mut().unwrap().borrow_mut().set(
-                    node.var_name_token.value.as_ref().unwrap().clone(),
-                    Some(Value::NumberValue(Number::new(i))),
-                );
+                context
+                    .borrow_mut()
+                    .symbol_table
+                    .as_mut()
+                    .unwrap()
+                    .borrow_mut()
+                    .set(
+                        node.var_name_token.value.as_ref().unwrap().clone(),
+                        Some(Value::NumberValue(Number::new(i))),
+                    );
                 i += step_value.value;
 
-                let _ = result.register(self.visit(node.body_node.clone(), context));
+                let _ = result.register(self.visit(node.body_node.clone(), context.clone()));
 
                 if result.should_return()
                     && result.loop_should_continue == false
@@ -363,13 +390,19 @@ impl Interpreter {
             }
         } else {
             while i > end_value.value {
-                context.symbol_table.as_mut().unwrap().borrow_mut().set(
-                    node.var_name_token.value.as_ref().unwrap().clone(),
-                    Some(Value::NumberValue(Number::new(i))),
-                );
+                context
+                    .borrow_mut()
+                    .symbol_table
+                    .as_mut()
+                    .unwrap()
+                    .borrow_mut()
+                    .set(
+                        node.var_name_token.value.as_ref().unwrap().clone(),
+                        Some(Value::NumberValue(Number::new(i))),
+                    );
                 i += step_value.value;
 
-                let _ = result.register(self.visit(node.body_node.clone(), context));
+                let _ = result.register(self.visit(node.body_node.clone(), context.clone()));
 
                 if result.should_return()
                     && result.loop_should_continue == false
@@ -391,11 +424,16 @@ impl Interpreter {
         result.success(Some(Number::null_value()))
     }
 
-    pub fn visit_while_node(&mut self, node: &WhileNode, context: &mut Context) -> RuntimeResult {
+    pub fn visit_while_node(
+        &mut self,
+        node: &WhileNode,
+        context: Rc<RefCell<Context>>,
+    ) -> RuntimeResult {
         let mut result = RuntimeResult::new();
 
         loop {
-            let condition = result.register(self.visit(node.condition_node.clone(), context));
+            let condition =
+                result.register(self.visit(node.condition_node.clone(), context.clone()));
 
             if result.should_return() {
                 return result;
@@ -407,7 +445,7 @@ impl Interpreter {
                 break;
             }
 
-            let _ = result.register(self.visit(node.body_node.clone(), context));
+            let _ = result.register(self.visit(node.body_node.clone(), context.clone()));
 
             if result.should_return()
                 && result.loop_should_continue == false
@@ -431,18 +469,24 @@ impl Interpreter {
     pub fn visit_try_except_node(
         &mut self,
         node: &TryExceptNode,
-        context: &mut Context,
+        context: Rc<RefCell<Context>>,
     ) -> RuntimeResult {
         let mut result = RuntimeResult::new();
 
-        let _ = result.register(self.visit(node.try_body_node.clone(), context));
+        let _ = result.register(self.visit(node.try_body_node.clone(), context.clone()));
         let try_error = result.error.clone();
 
         if try_error.is_some() {
-            context.symbol_table.as_mut().unwrap().borrow_mut().set(
-                node.error_name_token.value.to_owned().unwrap(),
-                Some(Str::from(&try_error.unwrap().text)),
-            );
+            context
+                .borrow_mut()
+                .symbol_table
+                .as_mut()
+                .unwrap()
+                .borrow_mut()
+                .set(
+                    node.error_name_token.value.to_owned().unwrap(),
+                    Some(Str::from(&try_error.unwrap().text)),
+                );
 
             let _ = result.register(self.visit(node.except_body_node.clone(), context));
 
@@ -462,9 +506,13 @@ impl Interpreter {
         result.success(Some(Number::null_value()))
     }
 
-    pub fn visit_import_node(&mut self, node: &ImportNode, context: &mut Context) -> RuntimeResult {
+    pub fn visit_import_node(
+        &mut self,
+        node: &ImportNode,
+        context: Rc<RefCell<Context>>,
+    ) -> RuntimeResult {
         let mut result = RuntimeResult::new();
-        let import = result.register(self.visit(node.node_to_import.to_owned(), context));
+        let import = result.register(self.visit(node.node_to_import.to_owned(), context.clone()));
 
         if result.should_return() {
             return result;
@@ -533,15 +581,20 @@ impl Interpreter {
         }
 
         let mut interpreter = Interpreter::new();
-        let mut module_context = Context::new("<module>".to_string(), None, None);
-        module_context.symbol_table = Some(self.global_symbol_table.clone());
-        let module_result = interpreter.visit(ast.node.unwrap(), &mut module_context);
+        let module_context = Rc::new(RefCell::new(Context::new(
+            "<module>".to_string(),
+            None,
+            None,
+        )));
+        module_context.borrow_mut().symbol_table = Some(self.global_symbol_table.clone());
+        let module_result = interpreter.visit(ast.node.unwrap(), module_context.clone());
 
         if module_result.error.is_some() {
             return result.failure(module_result.error);
         }
 
         let symbols: Vec<(String, Option<Value>)> = module_context
+            .borrow()
             .symbol_table
             .as_ref()
             .unwrap()
@@ -553,6 +606,7 @@ impl Interpreter {
 
         for (name, value) in symbols {
             context
+                .borrow_mut()
                 .symbol_table
                 .as_ref()
                 .unwrap()
@@ -566,7 +620,7 @@ impl Interpreter {
     pub fn visit_function_definition_node(
         &mut self,
         node: &FunctionDefinitionNode,
-        context: &mut Context,
+        context: Rc<RefCell<Context>>,
     ) -> RuntimeResult {
         let mut result = RuntimeResult::new();
 
@@ -599,6 +653,7 @@ impl Interpreter {
 
         if !&func_name.is_empty() {
             context
+                .borrow_mut()
                 .symbol_table
                 .as_mut()
                 .unwrap()
@@ -609,11 +664,15 @@ impl Interpreter {
         result.success(Some(func_value))
     }
 
-    pub fn visit_call_node(&mut self, node: &CallNode, context: &mut Context) -> RuntimeResult {
+    pub fn visit_call_node(
+        &mut self,
+        node: &CallNode,
+        context: Rc<RefCell<Context>>,
+    ) -> RuntimeResult {
         let mut result = RuntimeResult::new();
         let mut args: Vec<Value> = Vec::new();
 
-        let value_to_call = result.register(self.visit(node.node_to_call.clone(), context));
+        let value_to_call = result.register(self.visit(node.node_to_call.clone(), context.clone()));
 
         if result.should_return() {
             return result;
@@ -624,7 +683,7 @@ impl Interpreter {
             .set_position(node.pos_start.clone(), node.pos_end.clone());
 
         for arg_node in &node.arg_nodes {
-            let arg = result.register(self.visit(arg_node.to_owned(), context));
+            let arg = result.register(self.visit(arg_node.to_owned(), context.clone()));
 
             if result.should_return() {
                 return result;
@@ -663,10 +722,10 @@ impl Interpreter {
     pub fn visit_binary_operator_node(
         &mut self,
         node: &BinaryOperatorNode,
-        context: &mut Context,
+        context: Rc<RefCell<Context>>,
     ) -> RuntimeResult {
         let mut result = RuntimeResult::new();
-        let left = result.register(self.visit(node.left_node.clone(), context));
+        let left = result.register(self.visit(node.left_node.clone(), context.clone()));
 
         if result.should_return() {
             return result;
@@ -674,7 +733,7 @@ impl Interpreter {
 
         let mut left = left.unwrap();
 
-        let right = result.register(self.visit(node.right_node.clone(), context));
+        let right = result.register(self.visit(node.right_node.clone(), context.clone()));
 
         if result.should_return() {
             return result;
@@ -735,7 +794,7 @@ impl Interpreter {
     pub fn visit_unary_operator_node(
         &mut self,
         node: &UnaryOperatorNode,
-        context: &mut Context,
+        context: Rc<RefCell<Context>>,
     ) -> RuntimeResult {
         let mut result = RuntimeResult::new();
         let value = result.register(self.visit(node.node.clone(), context));
@@ -777,7 +836,11 @@ impl Interpreter {
         }
     }
 
-    pub fn visit_return_node(&mut self, node: &ReturnNode, context: &mut Context) -> RuntimeResult {
+    pub fn visit_return_node(
+        &mut self,
+        node: &ReturnNode,
+        context: Rc<RefCell<Context>>,
+    ) -> RuntimeResult {
         let mut result = RuntimeResult::new();
         let mut value: Option<Value> = None;
 
@@ -800,12 +863,16 @@ impl Interpreter {
     pub fn visit_continue_node(
         &mut self,
         node: &ContinueNode,
-        context: &mut Context,
+        context: Rc<RefCell<Context>>,
     ) -> RuntimeResult {
         RuntimeResult::new().success_continue()
     }
 
-    pub fn visit_break_node(&mut self, node: &BreakNode, context: &mut Context) -> RuntimeResult {
+    pub fn visit_break_node(
+        &mut self,
+        node: &BreakNode,
+        context: Rc<RefCell<Context>>,
+    ) -> RuntimeResult {
         RuntimeResult::new().success_break()
     }
 }

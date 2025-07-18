@@ -1,3 +1,5 @@
+use std::{cell::RefCell, rc::Rc};
+
 use crate::{
     errors::standard_error::StandardError, interpreting::context::Context,
     lexing::position::Position, values::value::Value,
@@ -6,7 +8,7 @@ use crate::{
 #[derive(Debug, Clone)]
 pub struct Number {
     pub value: f64,
-    pub context: Option<Context>,
+    pub context: Option<Rc<RefCell<Context>>>,
     pub pos_start: Option<Position>,
     pub pos_end: Option<Position>,
 }

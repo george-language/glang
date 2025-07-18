@@ -18,7 +18,7 @@ use std::{
 #[derive(Debug, Clone)]
 pub struct BuiltInFunction {
     pub name: String,
-    pub context: Option<Context>,
+    pub context: Option<Rc<RefCell<Context>>>,
     pub pos_start: Option<Position>,
     pub pos_end: Option<Position>,
 }
@@ -33,25 +33,24 @@ impl BuiltInFunction {
         }
     }
 
-    pub fn generate_new_context(&self) -> Context {
+    pub fn generate_new_context(&self) -> Rc<RefCell<Context>> {
         let mut new_context = Context::new(
             self.name.clone(),
-            Some(Rc::new(RefCell::new(
-                self.context.as_ref().unwrap().clone(),
-            ))),
+            Some(self.context.as_ref().unwrap().clone()),
             self.pos_start.clone(),
         );
         let parent_st = self
             .context
             .as_ref()
             .unwrap()
+            .borrow()
             .symbol_table
             .as_ref()
             .unwrap()
             .clone();
         new_context.symbol_table = Some(Rc::new(RefCell::new(SymbolTable::new(Some(parent_st)))));
 
-        new_context
+        Rc::new(RefCell::new(new_context))
     }
 
     pub fn check_args(&self, arg_names: &[String], args: &[Value]) -> RuntimeResult {
@@ -77,13 +76,19 @@ impl BuiltInFunction {
         result.success(None)
     }
 
-    pub fn populate_args(&self, arg_names: &[String], args: &[Value], exec_ctx: &mut Context) {
+    pub fn populate_args(
+        &self,
+        arg_names: &[String],
+        args: &[Value],
+        exec_ctx: Rc<RefCell<Context>>,
+    ) {
         for i in 0..args.len() {
             let arg_name = arg_names[i].clone();
             let mut arg_value = args[i].clone();
             arg_value.set_context(Some(exec_ctx.clone()));
 
             exec_ctx
+                .borrow_mut()
                 .symbol_table
                 .as_mut()
                 .unwrap()
@@ -96,7 +101,7 @@ impl BuiltInFunction {
         &self,
         arg_names: &[String],
         args: &[Value],
-        exec_ctx: &mut Context,
+        exec_ctx: Rc<RefCell<Context>>,
     ) -> RuntimeResult {
         let mut result = RuntimeResult::new();
         result.register(self.check_args(arg_names, args));
@@ -111,25 +116,25 @@ impl BuiltInFunction {
     }
 
     pub fn execute(&self, args: &[Value]) -> RuntimeResult {
-        let mut exec_context = self.generate_new_context();
+        let exec_context = self.generate_new_context();
 
         match self.name.as_str() {
-            "bark" => return self.execute_print(args, &mut exec_context),
-            "chew" => return self.execute_input(args, &mut exec_context),
-            "dig" => return self.execute_read(args, &mut exec_context),
-            "bury" => return self.execute_write(args, &mut exec_context),
-            "tostring" => return self.execute_tostring(args, &mut exec_context),
-            "tonumber" => return self.execute_tonumber(args, &mut exec_context),
-            "length" => return self.execute_length(args, &mut exec_context),
-            "uhoh" => return self.execute_error(args, &mut exec_context),
-            "type" => return self.execute_type(args, &mut exec_context),
-            "run" => return self.execute_exec(args, &mut exec_context),
-            "_env" => return self.execute_env(args, &mut exec_context),
+            "bark" => return self.execute_print(args, exec_context),
+            "chew" => return self.execute_input(args, exec_context),
+            "dig" => return self.execute_read(args, exec_context),
+            "bury" => return self.execute_write(args, exec_context),
+            "tostring" => return self.execute_tostring(args, exec_context),
+            "tonumber" => return self.execute_tonumber(args, exec_context),
+            "length" => return self.execute_length(args, exec_context),
+            "uhoh" => return self.execute_error(args, exec_context),
+            "type" => return self.execute_type(args, exec_context),
+            "run" => return self.execute_exec(args, exec_context),
+            "_env" => return self.execute_env(args, exec_context),
             _ => panic!("CRITICAL ERROR: BUILT IN NAME IS NOT DEFINED"),
         };
     }
 
-    pub fn execute_print(&self, args: &[Value], exec_ctx: &mut Context) -> RuntimeResult {
+    pub fn execute_print(&self, args: &[Value], exec_ctx: Rc<RefCell<Context>>) -> RuntimeResult {
         let mut result = RuntimeResult::new();
         result.register(self.check_and_populate_args(&["value".to_string()], args, exec_ctx));
 
@@ -142,7 +147,7 @@ impl BuiltInFunction {
         result.success(Some(Number::null_value()))
     }
 
-    pub fn execute_input(&self, args: &[Value], exec_ctx: &mut Context) -> RuntimeResult {
+    pub fn execute_input(&self, args: &[Value], exec_ctx: Rc<RefCell<Context>>) -> RuntimeResult {
         let mut result = RuntimeResult::new();
         result.register(self.check_and_populate_args(&["msg".to_string()], args, exec_ctx));
 
@@ -177,7 +182,7 @@ impl BuiltInFunction {
         result.success(Some(Str::from(input.trim())))
     }
 
-    pub fn execute_read(&self, args: &[Value], exec_ctx: &mut Context) -> RuntimeResult {
+    pub fn execute_read(&self, args: &[Value], exec_ctx: Rc<RefCell<Context>>) -> RuntimeResult {
         let mut result = RuntimeResult::new();
         result.register(self.check_and_populate_args(&["file".to_string()], args, exec_ctx));
 
@@ -225,7 +230,7 @@ impl BuiltInFunction {
         result.success(Some(Str::from(contents.as_str())))
     }
 
-    pub fn execute_write(&self, args: &[Value], exec_ctx: &mut Context) -> RuntimeResult {
+    pub fn execute_write(&self, args: &[Value], exec_ctx: Rc<RefCell<Context>>) -> RuntimeResult {
         let mut result = RuntimeResult::new();
         result.register(self.check_and_populate_args(
             &["file".to_string(), "contents".to_string()],
@@ -279,7 +284,11 @@ impl BuiltInFunction {
         result.success(Some(Number::null_value()))
     }
 
-    pub fn execute_tostring(&self, args: &[Value], exec_ctx: &mut Context) -> RuntimeResult {
+    pub fn execute_tostring(
+        &self,
+        args: &[Value],
+        exec_ctx: Rc<RefCell<Context>>,
+    ) -> RuntimeResult {
         let mut result = RuntimeResult::new();
         result.register(self.check_and_populate_args(&["value".to_string()], args, exec_ctx));
 
@@ -290,7 +299,11 @@ impl BuiltInFunction {
         result.success(Some(Str::from(args[0].as_string().as_str())))
     }
 
-    pub fn execute_tonumber(&self, args: &[Value], exec_ctx: &mut Context) -> RuntimeResult {
+    pub fn execute_tonumber(
+        &self,
+        args: &[Value],
+        exec_ctx: Rc<RefCell<Context>>,
+    ) -> RuntimeResult {
         let mut result = RuntimeResult::new();
         result.register(self.check_and_populate_args(&["value".to_string()], args, exec_ctx));
 
@@ -325,7 +338,7 @@ impl BuiltInFunction {
         result.success(Some(Number::from(value)))
     }
 
-    pub fn execute_length(&self, args: &[Value], exec_ctx: &mut Context) -> RuntimeResult {
+    pub fn execute_length(&self, args: &[Value], exec_ctx: Rc<RefCell<Context>>) -> RuntimeResult {
         let mut result = RuntimeResult::new();
         result.register(self.check_and_populate_args(&["value".to_string()], args, exec_ctx));
 
@@ -351,7 +364,7 @@ impl BuiltInFunction {
         result.success(Some(Number::from(length)))
     }
 
-    pub fn execute_error(&self, args: &[Value], exec_ctx: &mut Context) -> RuntimeResult {
+    pub fn execute_error(&self, args: &[Value], exec_ctx: Rc<RefCell<Context>>) -> RuntimeResult {
         let mut result = RuntimeResult::new();
         result.register(self.check_and_populate_args(&["msg".to_string()], args, exec_ctx));
 
@@ -381,7 +394,7 @@ impl BuiltInFunction {
         )))
     }
 
-    pub fn execute_type(&self, args: &[Value], exec_ctx: &mut Context) -> RuntimeResult {
+    pub fn execute_type(&self, args: &[Value], exec_ctx: Rc<RefCell<Context>>) -> RuntimeResult {
         let mut result = RuntimeResult::new();
         result.register(self.check_and_populate_args(&["value".to_string()], args, exec_ctx));
 
@@ -394,7 +407,7 @@ impl BuiltInFunction {
         )))
     }
 
-    pub fn execute_exec(&self, args: &[Value], exec_ctx: &mut Context) -> RuntimeResult {
+    pub fn execute_exec(&self, args: &[Value], exec_ctx: Rc<RefCell<Context>>) -> RuntimeResult {
         let mut result = RuntimeResult::new();
         result.register(self.check_and_populate_args(&["code".to_string()], args, exec_ctx));
 
@@ -431,9 +444,10 @@ impl BuiltInFunction {
         }
 
         let mut interpreter = Interpreter::new();
-        let mut external_context = Context::new("<exec>".to_string(), None, None);
-        external_context.symbol_table = Some(interpreter.global_symbol_table.clone());
-        let external_result = interpreter.visit(ast.node.unwrap(), &mut external_context);
+        let external_context =
+            Rc::new(RefCell::new(Context::new("<exec>".to_string(), None, None)));
+        external_context.borrow_mut().symbol_table = Some(interpreter.global_symbol_table.clone());
+        let external_result = interpreter.visit(ast.node.unwrap(), external_context.clone());
 
         if external_result.error.is_some() {
             return result.failure(external_result.error);
@@ -442,7 +456,7 @@ impl BuiltInFunction {
         result.success(Some(Number::null_value()))
     }
 
-    pub fn execute_env(&self, args: &[Value], exec_ctx: &mut Context) -> RuntimeResult {
+    pub fn execute_env(&self, args: &[Value], exec_ctx: Rc<RefCell<Context>>) -> RuntimeResult {
         let mut result = RuntimeResult::new();
         result.register(self.check_and_populate_args(&["var".to_string()], args, exec_ctx));
 

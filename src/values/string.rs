@@ -1,4 +1,4 @@
-use std::env::consts::OS;
+use std::{cell::RefCell, env::consts::OS, rc::Rc};
 
 use crate::{
     errors::standard_error::StandardError,
@@ -10,7 +10,7 @@ use crate::{
 #[derive(Debug, Clone)]
 pub struct Str {
     pub value: String,
-    pub context: Option<Context>,
+    pub context: Option<Rc<RefCell<Context>>>,
     pub pos_start: Option<Position>,
     pub pos_end: Option<Position>,
 }

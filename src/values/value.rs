@@ -1,3 +1,5 @@
+use std::{cell::RefCell, rc::Rc};
+
 use crate::{
     errors::standard_error::StandardError,
     interpreting::context::Context,
@@ -69,7 +71,7 @@ impl Value {
         self.clone()
     }
 
-    pub fn set_context(&mut self, context: Option<Context>) -> Value {
+    pub fn set_context(&mut self, context: Option<Rc<RefCell<Context>>>) -> Value {
         match self {
             Value::NumberValue(value) => value.context = context,
             Value::ListValue(value) => value.context = context,

@@ -4,12 +4,12 @@ use crate::{
     lexing::position::Position,
     values::{number::Number, value::Value},
 };
-use std::iter::zip;
+use std::{cell::RefCell, iter::zip, rc::Rc};
 
 #[derive(Debug, Clone)]
 pub struct List {
     pub elements: Vec<Value>,
-    pub context: Option<Context>,
+    pub context: Option<Rc<RefCell<Context>>>,
     pub pos_start: Option<Position>,
     pub pos_end: Option<Position>,
 }

@@ -16,9 +16,12 @@ pub use package_manager::packages::add_package;
 pub use package_manager::packages::package_installed;
 pub use package_manager::packages::remove_package;
 use simply_colored::*;
-use std::io::{Write, stdin, stdout};
-use std::time::Instant;
+use std::{
+    cell::RefCell,
+    io::{Write, stdin, stdout},
+};
 use std::{fs, path::Path};
+use std::{rc::Rc, time::Instant};
 
 pub fn run(filename: &str, code: Option<String>) -> Option<StandardError> {
     let contents = if filename == "<stdin>" {
@@ -51,17 +54,21 @@ pub fn run(filename: &str, code: Option<String>) -> Option<StandardError> {
     }
 
     let mut interpreter = Interpreter::new();
-    let mut context = Context::new("<program>".to_string(), None, None);
-    context.symbol_table = Some(interpreter.global_symbol_table.clone());
+    let mut context = Rc::new(RefCell::new(Context::new(
+        "<program>".to_string(),
+        None,
+        None,
+    )));
+    context.borrow_mut().symbol_table = Some(interpreter.global_symbol_table.clone());
 
     if let Some(e) = interpreter.evaluate(
         "fetch _env(\"GLANG_STD\") + \"/default/lib.glang\";",
-        &mut context,
+        context.clone(),
     ) {
         return Some(e);
     }
 
-    let result = interpreter.visit(ast.node.unwrap(), &mut context);
+    let result = interpreter.visit(ast.node.unwrap(), context.clone());
 
     if cfg!(feature = "benchmark") {
         println!("Time elapsed: {:?}ms", start.elapsed().as_millis());
