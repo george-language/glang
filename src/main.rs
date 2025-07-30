@@ -53,6 +53,8 @@ fn main() {
         env::set_var("GLANG_PKG", &pkg_path);
     }
 
+    glang::create_package_dir();
+
     let cli = Cli::parse();
 
     match (cli.command, cli.file) {
