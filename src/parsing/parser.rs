@@ -3,10 +3,10 @@ use crate::{
     lexing::{position::Position, token::Token, token_type::TokenType},
     nodes::{
         ast_node::AstNode, binary_operator_node::BinaryOperatorNode, break_node::BreakNode,
-        call_node::CallNode, continue_node::ContinueNode, for_node::ForNode,
-        function_definition_node::FunctionDefinitionNode, if_node::IfNode, import_node::ImportNode,
-        list_node::ListNode, number_node::NumberNode, return_node::ReturnNode,
-        string_node::StringNode, try_except_node::TryExceptNode,
+        call_node::CallNode, const_assign_node::ConstAssignNode, continue_node::ContinueNode,
+        for_node::ForNode, function_definition_node::FunctionDefinitionNode, if_node::IfNode,
+        import_node::ImportNode, list_node::ListNode, number_node::NumberNode,
+        return_node::ReturnNode, string_node::StringNode, try_except_node::TryExceptNode,
         unary_operator_node::UnaryOperatorNode, variable_access_node::VariableAccessNode,
         variable_assign_node::VariableAssignNode, while_node::WhileNode,
     },
@@ -856,6 +856,7 @@ impl Parser {
             }
 
             let var_name = self.current_token_copy();
+
             parse_result.register_advancement();
             self.advance();
 
@@ -867,7 +868,7 @@ impl Parser {
                     Some(
                         format!(
                             "add an '=' to set the value of the variable '{}'",
-                            var_name.value.unwrap().clone()
+                            &var_name.value.unwrap()
                         )
                         .as_str(),
                     ),
@@ -876,6 +877,7 @@ impl Parser {
 
             parse_result.register_advancement();
             self.advance();
+
             let expr = parse_result.register(self.expr());
 
             if parse_result.error.is_some() {
@@ -883,7 +885,55 @@ impl Parser {
             }
 
             return parse_result.success(Some(Box::new(AstNode::VariableAssign(
-                VariableAssignNode::new(var_name.clone(), expr.unwrap()),
+                VariableAssignNode::new(var_name, expr.unwrap()),
+            ))));
+        } else if self
+            .current_token_ref()
+            .matches(TokenType::TT_KEYWORD, "stay")
+        {
+            parse_result.register_advancement();
+            self.advance();
+
+            if self.current_token_copy().token_type != TokenType::TT_IDENTIFIER {
+                return parse_result.failure(Some(StandardError::new(
+                    "expected identifier",
+                    self.current_pos_start(),
+                    self.current_pos_end(),
+                    Some("add a name for this constant like 'HOT_DOG'"),
+                )));
+            }
+
+            let const_name = self.current_token_copy();
+
+            parse_result.register_advancement();
+            self.advance();
+
+            if self.current_token_copy().token_type != TokenType::TT_EQ {
+                return parse_result.failure(Some(StandardError::new(
+                    "expected '='",
+                    self.current_pos_start(),
+                    self.current_pos_end(),
+                    Some(
+                        format!(
+                            "add an '=' to set the value of the constant '{}'",
+                            &const_name.value.unwrap()
+                        )
+                        .as_str(),
+                    ),
+                )));
+            }
+
+            parse_result.register_advancement();
+            self.advance();
+
+            let expr = parse_result.register(self.expr());
+
+            if parse_result.error.is_some() {
+                return parse_result;
+            }
+
+            return parse_result.success(Some(Box::new(AstNode::ConstAssign(
+                ConstAssignNode::new(const_name, expr.unwrap()),
             ))));
         }
 

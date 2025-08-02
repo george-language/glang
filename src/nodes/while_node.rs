@@ -1,5 +1,4 @@
 use crate::{lexing::position::Position, nodes::ast_node::AstNode};
-use std::fmt::Display;
 
 #[derive(Debug, Clone)]
 pub struct WhileNode {
@@ -17,11 +16,5 @@ impl WhileNode {
             pos_start: condition_node.position_start(),
             pos_end: body_node.position_end(),
         }
-    }
-}
-
-impl Display for WhileNode {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "")
     }
 }

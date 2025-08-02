@@ -2,7 +2,6 @@ use crate::{
     lexing::{position::Position, token::Token},
     nodes::ast_node::AstNode,
 };
-use std::fmt::Display;
 
 #[derive(Debug, Clone)]
 pub struct ForNode {
@@ -32,11 +31,5 @@ impl ForNode {
             pos_start: var_name_token.pos_start,
             pos_end: var_name_token.pos_end,
         }
-    }
-}
-
-impl Display for ForNode {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "")
     }
 }

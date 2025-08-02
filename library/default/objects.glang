@@ -1,13 +1,13 @@
 # file objects.glang: boolean and return objects in glang
 
-obj true = 1;
-obj false = 0;
+stay true = 1;
+stay false = 0;
 
 # null/none values are just 0, which technically allows boolean operations on them:
 # ```
 # bark(not null);
 # ```
-obj null = 0;
+stay null = 0;
 
 # use on any unimplemented code:
 # ```
@@ -15,4 +15,4 @@ obj null = 0;
 #     skip;
 # }
 # ```
-obj skip = "unimplemented";
+stay skip = "unimplemented";

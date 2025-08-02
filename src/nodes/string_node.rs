@@ -1,5 +1,4 @@
 use crate::lexing::{position::Position, token::Token};
-use std::fmt::Display;
 
 #[derive(Debug, Clone)]
 pub struct StringNode {
@@ -15,11 +14,5 @@ impl StringNode {
             pos_start: token.pos_start,
             pos_end: token.pos_end,
         }
-    }
-}
-
-impl Display for StringNode {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.token)
     }
 }

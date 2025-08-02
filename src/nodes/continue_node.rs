@@ -1,5 +1,4 @@
 use crate::lexing::position::Position;
-use std::fmt::Display;
 
 #[derive(Debug, Clone)]
 pub struct ContinueNode {
@@ -13,11 +12,5 @@ impl ContinueNode {
             pos_start: pos_start,
             pos_end: pos_end,
         }
-    }
-}
-
-impl Display for ContinueNode {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "")
     }
 }

@@ -1,5 +1,4 @@
 use crate::{lexing::position::Position, nodes::ast_node::AstNode};
-use std::fmt::Display;
 
 #[derive(Debug, Clone)]
 pub struct CallNode {
@@ -21,11 +20,5 @@ impl CallNode {
                 node_to_call.position_end()
             },
         }
-    }
-}
-
-impl Display for CallNode {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "")
     }
 }

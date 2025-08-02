@@ -2,7 +2,6 @@ use crate::{
     lexing::{position::Position, token::Token},
     nodes::ast_node::AstNode,
 };
-use std::fmt::Display;
 
 #[derive(Debug, Clone)]
 pub struct BinaryOperatorNode {
@@ -25,15 +24,5 @@ impl BinaryOperatorNode {
             pos_start: pos_start,
             pos_end: pos_end,
         }
-    }
-}
-
-impl Display for BinaryOperatorNode {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "({}, {}, {})",
-            self.left_node, self.op_token, self.right_node
-        )
     }
 }

@@ -2,6 +2,7 @@ pub mod ast_node;
 pub mod binary_operator_node;
 pub mod break_node;
 pub mod call_node;
+pub mod const_assign_node;
 pub mod continue_node;
 pub mod for_node;
 pub mod function_definition_node;

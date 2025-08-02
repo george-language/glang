@@ -2,7 +2,7 @@ use crate::{
     lexing::position::Position,
     nodes::{
         binary_operator_node::BinaryOperatorNode, break_node::BreakNode, call_node::CallNode,
-        continue_node::ContinueNode, for_node::ForNode,
+        const_assign_node::ConstAssignNode, continue_node::ContinueNode, for_node::ForNode,
         function_definition_node::FunctionDefinitionNode, if_node::IfNode, import_node::ImportNode,
         list_node::ListNode, number_node::NumberNode, return_node::ReturnNode,
         string_node::StringNode, try_except_node::TryExceptNode,
@@ -10,13 +10,13 @@ use crate::{
         variable_assign_node::VariableAssignNode, while_node::WhileNode,
     },
 };
-use std::fmt::Display;
 
 #[derive(Debug, Clone)]
 pub enum AstNode {
     BinaryOperator(BinaryOperatorNode),
     Break(BreakNode),
     Call(CallNode),
+    ConstAssign(ConstAssignNode),
     Continue(ContinueNode),
     For(ForNode),
     FunctionDefinition(FunctionDefinitionNode),
@@ -39,6 +39,7 @@ impl AstNode {
             AstNode::BinaryOperator(node) => node.pos_start.clone(),
             AstNode::Break(node) => node.pos_start.clone(),
             AstNode::Call(node) => node.pos_start.clone(),
+            AstNode::ConstAssign(node) => node.pos_start.clone(),
             AstNode::Continue(node) => node.pos_start.clone(),
             AstNode::For(node) => node.pos_start.clone(),
             AstNode::FunctionDefinition(node) => node.pos_start.clone(),
@@ -61,6 +62,7 @@ impl AstNode {
             AstNode::BinaryOperator(node) => node.pos_end.clone(),
             AstNode::Break(node) => node.pos_end.clone(),
             AstNode::Call(node) => node.pos_end.clone(),
+            AstNode::ConstAssign(node) => node.pos_end.clone(),
             AstNode::Continue(node) => node.pos_end.clone(),
             AstNode::For(node) => node.pos_end.clone(),
             AstNode::FunctionDefinition(node) => node.pos_end.clone(),
@@ -76,11 +78,5 @@ impl AstNode {
             AstNode::VariableAssign(node) => node.pos_end.clone(),
             AstNode::While(node) => node.pos_end.clone(),
         }
-    }
-}
-
-impl Display for AstNode {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "")
     }
 }

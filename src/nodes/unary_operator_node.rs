@@ -2,7 +2,6 @@ use crate::{
     lexing::{position::Position, token::Token},
     nodes::ast_node::AstNode,
 };
-use std::fmt::Display;
 
 #[derive(Debug, Clone)]
 pub struct UnaryOperatorNode {
@@ -22,11 +21,5 @@ impl UnaryOperatorNode {
             pos_start: op_token.pos_start,
             pos_end: pos_end,
         }
-    }
-}
-
-impl Display for UnaryOperatorNode {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "({}, {})", self.op_token, self.node)
     }
 }
