@@ -2,7 +2,7 @@ use crate::{
     lexing::{position::Position, token::Token},
     nodes::ast_node::AstNode,
 };
-use std::{fmt::Display, sync::Arc};
+use std::sync::Arc;
 
 #[derive(Debug, Clone)]
 pub struct FunctionDefinitionNode {

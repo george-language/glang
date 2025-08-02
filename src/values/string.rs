@@ -1,4 +1,4 @@
-use std::{cell::RefCell, env::consts::OS, rc::Rc};
+use std::{cell::RefCell, rc::Rc};
 
 use crate::{
     errors::standard_error::StandardError,

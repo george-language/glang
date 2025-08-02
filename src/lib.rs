@@ -58,7 +58,7 @@ pub fn run(filename: &str, code: Option<String>) -> Option<StandardError> {
     }
 
     let mut interpreter = Interpreter::new();
-    let mut context = Rc::new(RefCell::new(Context::new(
+    let context = Rc::new(RefCell::new(Context::new(
         "<program>".to_string(),
         None,
         None,
