@@ -3,6 +3,7 @@ use reqwest::blocking::get;
 use serde::Deserialize;
 use simply_colored::*;
 use std::{fs, fs::File, io::Cursor, io::Read};
+use stringcase::snake_case;
 use toml::Table;
 use zip::ZipArchive;
 
@@ -10,12 +11,6 @@ use zip::ZipArchive;
 struct PackageRegistry {
     name: String,
     url: String,
-}
-
-fn is_snake_case(s: &str) -> bool {
-    !s.is_empty()
-        && s.chars()
-            .all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || c == '_')
 }
 
 pub fn is_package_installed(package: &str) -> bool {
@@ -172,9 +167,11 @@ pub fn add_package(name: &str) {
             .as_str()
             .parse::<Table>()
             .expect("Error parsing 'kennel.toml'");
-    let name = package_toml["name"]
-        .as_str()
-        .expect("'name' field of 'kennel.toml' must be a string");
+    let name = snake_case(
+        package_toml["name"]
+            .as_str()
+            .expect("'name' field of 'kennel.toml' must be a string"),
+    );
     let description = package_toml["description"]
         .as_str()
         .unwrap_or("No description");
@@ -188,25 +185,8 @@ pub fn add_package(name: &str) {
         .as_array()
         .expect("'requires' field of 'kennel.toml' must be an array of external kennel names");
 
-    if !is_snake_case(&name) {
-        println!(
-            "{DIM_RED}'name' field of {}'s 'kennel.toml' must be a proper snake case name{RESET}",
-            package.name
-        );
-
-        return;
-    }
-
     for requirement in requirements {
         let pkg_name = requirement.as_str().unwrap_or("");
-
-        if !is_snake_case(&pkg_name) {
-            println!(
-                "{DIM_RED}'name' field of {pkg_name}'s 'kennel.toml' must be a proper snake case name{RESET}"
-            );
-
-            return;
-        }
 
         if pkg_name == name {
             println!(
