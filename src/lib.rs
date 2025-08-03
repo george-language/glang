@@ -108,8 +108,11 @@ pub fn launch_repl(version: &str) {
     }
 }
 
-pub fn new_project(dir_name: &Path) {
-    fs::create_dir(&dir_name).expect("Cannot create directory (invalid name)");
+pub fn new_project(dir_name: &Path, init: bool) {
+    if !init {
+        fs::create_dir(&dir_name).expect("Cannot create directory (invalid name)");
+    }
+
     fs::create_dir(&dir_name.join("src")).expect("'src/' directory already exists");
 
     let _ = fs::write(

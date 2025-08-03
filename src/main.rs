@@ -59,10 +59,10 @@ fn main() {
 
     match (cli.command, cli.file) {
         (Some(Commands::New { name }), _) => {
-            glang::new_project(Path::new(&name));
+            glang::new_project(Path::new(&name), false);
         }
         (Some(Commands::Init), _) => {
-            glang::new_project(Path::new("."));
+            glang::new_project(Path::new("."), true);
         }
         (Some(Commands::Install { name }), _) => {
             glang::add_package(&name);
