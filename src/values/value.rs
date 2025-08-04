@@ -92,14 +92,12 @@ impl Value {
             Value::NumberValue(value) => value.perform_operation(operator, other),
             Value::ListValue(value) => value.to_owned().perform_operation(operator, other),
             Value::StringValue(value) => value.perform_operation(operator, other),
-            _ => {
-                Err(StandardError::new(
-                    format!("type doesn't support the '{operator}' operator").as_str(),
-                    self.position_start().unwrap(),
-                    self.position_end().unwrap(),
-                    None,
-                ))
-            }
+            _ => Err(StandardError::new(
+                format!("type doesn't support the '{operator}' operator").as_str(),
+                self.position_start().unwrap(),
+                self.position_end().unwrap(),
+                None,
+            )),
         }
     }
 
