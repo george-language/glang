@@ -33,3 +33,19 @@ func os_path() {
         bark(error);
     };
 }
+
+# get the user dir
+# returns the full user dir
+func os_user_dir() {
+    obj dir = "";
+
+    unsafe {
+        # windows
+        obj dir = _env("USERPROFILE");
+    } safe _ {
+        # macos
+        obj dir = _env("HOME");
+    }
+
+    give dir;
+}

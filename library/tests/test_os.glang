@@ -4,3 +4,4 @@ fetch std_os;
 
 bark(os_type());
 bark(os_path());
+bark(os_user_dir());
