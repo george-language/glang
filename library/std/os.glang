@@ -31,9 +31,11 @@ func os_env(var) {
     }
 
     unsafe {
-        _env(var);
+        give _env(var);
     } safe error {
         bark("OSError: unable to access environment variable " + error);
+
+        give "";
     }
 }
 
