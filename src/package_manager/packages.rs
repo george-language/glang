@@ -1,3 +1,4 @@
+use crate::package_manager::logs::{log_error, log_header, log_message, log_package_status};
 use crate::package_manager::paths::get_package_path;
 use reqwest::blocking::get;
 use serde::Deserialize;
@@ -13,18 +14,6 @@ struct PackageRegistry {
     url: String,
 }
 
-fn log_header(msg: &str) {
-    println!("  {BOLD}{}{RESET}", msg);
-}
-
-fn log_message(msg: &str) {
-    println!("    {DIM_GREEN}{BOLD}->{RESET} {}", msg);
-}
-
-fn log_error(msg: &str) {
-    println!("{DIM_RED}{BOLD}error:{RESET} {}", msg);
-}
-
 pub fn is_package_installed(package: &str) -> bool {
     let package_path = get_package_path().join(&package);
 
@@ -38,7 +27,7 @@ pub fn create_package_dir() {
         match fs::create_dir_all(&package_dir) {
             Ok(_) => {}
             Err(e) => {
-                log_error("Error creating 'kennels' dir: {e}");
+                log_error(&format!("Failed to create 'kennels' directory: {}", e));
 
                 return;
             }
@@ -76,7 +65,7 @@ pub fn add_package(name: &str) {
     let mut registry_json = String::new();
 
     if let Err(e) = resp.read_to_string(&mut registry_json) {
-        println!("{DIM_RED}Failed to read registry data: {}{RESET}", e);
+        log_error(&format!("Failed to read registry data: {}", e));
 
         return;
     }
@@ -102,11 +91,7 @@ pub fn add_package(name: &str) {
     let package_path = get_package_path().join(&package.name);
 
     if package_path.exists() {
-        log_message(&format!("Kennel '{}' is already installed", package.name));
-        log_message(&format!(
-            "To update, use {BOLD}`glang update {}`{RESET}",
-            package.name
-        ));
+        log_package_status(&package.name, true);
 
         return;
     }
@@ -138,7 +123,7 @@ pub fn add_package(name: &str) {
     let mut archive = match ZipArchive::new(reader) {
         Ok(archive) => archive,
         Err(e) => {
-            println!("{DIM_RED}Failed to open zip archive: {}{RESET}", e);
+            log_error(&format!("Failed to open zip archive: {}", e));
 
             return;
         }
@@ -225,25 +210,23 @@ pub fn add_package(name: &str) {
     );
     let _ = fs::write(&imports_file, imports);
 
-    println!(
+    log_message(&format!(
         "Kennel '{} {}' installed successfully!",
         &package.name, &version
-    );
+    ));
 }
 
 pub fn remove_package(package: &str) {
     create_package_dir();
+
+    log_header(&format!("Removing '{}'", &package));
 
     let package_path = get_package_path().join(&package);
 
     if package_path.exists() {
         let _ = fs::remove_dir_all(&package_path);
     } else {
-        log_header(&format!("Kennel '{}' is already installed", &package));
-        log_message(&format!(
-            "To update, use {BOLD}`glang update {}`{RESET}",
-            &package
-        ));
+        log_package_status(&package, false);
 
         return;
     }

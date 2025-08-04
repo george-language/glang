@@ -75,7 +75,7 @@ fn main() {
                 glang::remove_package(&name);
                 glang::add_package(&name);
             } else {
-                glang::package_not_installed(&name);
+                glang::log_package_status(&name, false);
             }
         }
         (None, Some(file)) => {

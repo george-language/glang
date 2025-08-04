@@ -1,9 +1,31 @@
 use simply_colored::*;
 
-pub fn package_not_installed(package: &str) {
-    println!("🤔 Kennel '{}' not installed", &package);
-    println!(
-        "💡 To install, try {BOLD}`glang install {}`{RESET}",
+pub fn log_header(msg: &str) {
+    println!("  {BOLD}{}{RESET}", msg);
+}
+
+pub fn log_message(msg: &str) {
+    println!("    {DIM_GREEN}{BOLD}->{RESET} {}", msg);
+}
+
+pub fn log_error(msg: &str) {
+    println!("{DIM_RED}{BOLD}error:{RESET} {}", msg);
+}
+
+pub fn log_package_status(package: &str, installed: bool) {
+    log_message(&format!(
+        "Kennel '{}' is {}",
+        package,
+        if installed {
+            "already installed"
+        } else {
+            "not installed"
+        }
+    ));
+    log_message(&format!(
+        "To {}, try {BOLD}`glang {} {}`{RESET}",
+        if installed { "update" } else { "install" },
+        if installed { "update" } else { "install" },
         &package
-    );
+    ));
 }
