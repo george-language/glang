@@ -14,7 +14,9 @@ use crate::{
 };
 pub use package_manager::{
     logs::{log_error, log_header, log_message, log_package_status},
-    packages::{add_package, create_package_dir, is_package_installed, remove_package},
+    packages::{
+        add_package, create_package_dir, is_package_installed, remove_package, update_package,
+    },
     paths::get_package_path,
 };
 use simply_colored::*;

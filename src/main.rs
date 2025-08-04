@@ -70,12 +70,7 @@ fn main() {
             glang::remove_package(&name);
         }
         (Some(Commands::Update { name }), _) => {
-            if glang::is_package_installed(&name) {
-                glang::remove_package(&name);
-                glang::add_package(&name);
-            } else {
-                glang::log_package_status(&name, false);
-            }
+            glang::update_package(&name);
         }
         (None, Some(file)) => {
             let error = glang::run(&file, None);

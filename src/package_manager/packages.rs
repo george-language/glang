@@ -242,3 +242,13 @@ pub fn remove_package(package: &str) {
 
     println!("{DIM_YELLOW}{BOLD}Kennel '{}' removed{RESET}", &package);
 }
+
+pub fn update_package(package: &str) {
+    if is_package_installed(&package) {
+        remove_package(&package);
+        add_package(&package);
+    } else {
+        log_header(&format!("Updating '{}'", &package));
+        log_package_status(&package, false);
+    }
+}
