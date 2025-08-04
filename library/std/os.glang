@@ -23,6 +23,20 @@ func os_type() {
     give os;
 }
 
+# safe wrapper over the built-in '_env' function
+# returns the output of the environment variable
+func os_env(var) {
+    if type(var) != "string" {
+        uhoh("expected type string in 'os_env'");
+    }
+
+    unsafe {
+        _env(var);
+    } safe error {
+        bark("OSError: unable to access environment variable " + error);
+    }
+}
+
 # get the system PATH variable
 # returns the full system PATH
 func os_path() {
