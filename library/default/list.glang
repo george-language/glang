@@ -52,11 +52,13 @@ func retrieve(list, index) {
     give list ^ index;
 }
 
-# reverse a list
-# returns the list with it's elements reversed
+# reverse a list (supports the string type as well)
+# returns the type with it's elements or characters reversed
 func reverse(list) {
     if type(list) != "list" {
-        uhoh("expected type list in 'reverse'");
+        uhoh("expected type list or string in 'reverse'");
+    } alsoif type(list) != "string" {
+        uhoh("expected type list or string in 'reverse'");
     }
 
     give list ^ -1;
