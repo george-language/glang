@@ -2,5 +2,9 @@
   {
     "name": "fancy-terminal",
     "url": "https://github.com/ktechhydle/fancy-terminal/archive/refs/heads/main.zip"
+  },
+  {
+    "name": "dirs",
+    "url": "https://github.com/ktechhydle/dirs/archive/refs/heads/main.zip"
   }
 ]
