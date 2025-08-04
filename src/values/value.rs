@@ -93,12 +93,12 @@ impl Value {
             Value::ListValue(value) => value.to_owned().perform_operation(operator, other),
             Value::StringValue(value) => value.perform_operation(operator, other),
             _ => {
-                return Err(StandardError::new(
-                    format!("type doesn't support the '{}' operator", operator).as_str(),
+                Err(StandardError::new(
+                    format!("type doesn't support the '{operator}' operator").as_str(),
                     self.position_start().unwrap(),
                     self.position_end().unwrap(),
                     None,
-                ));
+                ))
             }
         }
     }

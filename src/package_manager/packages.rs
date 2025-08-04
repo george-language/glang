@@ -15,7 +15,7 @@ struct PackageRegistry {
 }
 
 pub fn is_package_installed(package: &str) -> bool {
-    let package_path = get_package_path().join(&package);
+    let package_path = get_package_path().join(package);
 
     package_path.exists()
 }
@@ -27,7 +27,7 @@ pub fn create_package_dir() {
         match fs::create_dir_all(&package_dir) {
             Ok(_) => {}
             Err(e) => {
-                log_error(&format!("Failed to create 'kennels' directory: {}", e));
+                log_error(&format!("Failed to create 'kennels' directory: {e}"));
 
                 return;
             }
@@ -56,7 +56,7 @@ pub fn add_package(name: &str) {
     ) {
         Ok(r) => r,
         Err(e) => {
-            log_error(&format!("Failed to retrieve registry: {}", e));
+            log_error(&format!("Failed to retrieve registry: {e}"));
 
             return;
         }
@@ -65,7 +65,7 @@ pub fn add_package(name: &str) {
     let mut registry_json = String::new();
 
     if let Err(e) = resp.read_to_string(&mut registry_json) {
-        log_error(&format!("Failed to read registry data: {}", e));
+        log_error(&format!("Failed to read registry data: {e}"));
 
         return;
     }
@@ -73,7 +73,7 @@ pub fn add_package(name: &str) {
     let packages: Vec<PackageRegistry> = match serde_json::from_str(&registry_json) {
         Ok(p) => p,
         Err(e) => {
-            log_error(&format!("Failed to parse registry JSON: {}", e));
+            log_error(&format!("Failed to parse registry JSON: {e}"));
 
             return;
         }
@@ -82,7 +82,7 @@ pub fn add_package(name: &str) {
     let package = match packages.iter().find(|p| p.name == name) {
         Some(p) => p,
         None => {
-            log_error(&format!("Kennel '{}' not found in registry", name));
+            log_error(&format!("Kennel '{name}' not found in registry"));
 
             return;
         }
@@ -102,13 +102,13 @@ pub fn add_package(name: &str) {
         Ok(r) => match r.bytes() {
             Ok(b) => b,
             Err(e) => {
-                log_error(&format!("Failed to get zip content: {}", e));
+                log_error(&format!("Failed to get zip content: {e}"));
 
                 return;
             }
         },
         Err(e) => {
-            log_error(&format!("Failed to download zip: {}", e));
+            log_error(&format!("Failed to download zip: {e}"));
 
             return;
         }
@@ -116,14 +116,14 @@ pub fn add_package(name: &str) {
 
     log_message(&format!(
         "Moving kennel to '{}'",
-        package_path.to_string_lossy().to_string()
+        package_path.to_string_lossy()
     ));
 
     let reader = Cursor::new(zip_bytes);
     let mut archive = match ZipArchive::new(reader) {
         Ok(archive) => archive,
         Err(e) => {
-            log_error(&format!("Failed to open zip archive: {}", e));
+            log_error(&format!("Failed to open zip archive: {e}"));
 
             return;
         }
@@ -144,12 +144,12 @@ pub fn add_package(name: &str) {
 
         if file.name().ends_with('/') {
             fs::create_dir_all(&path).unwrap_or_else(|e| {
-                log_error(&format!("Failed to create dir {:?}: {}", path, e));
+                log_error(&format!("Failed to create dir {path:?}: {e}"));
             });
         } else {
             if let Some(parent) = path.parent() {
                 fs::create_dir_all(parent).unwrap_or_else(|e| {
-                    log_error(&format!("Failed to create dir {:?}: {}", parent, e));
+                    log_error(&format!("Failed to create dir {parent:?}: {e}"));
                 });
             }
 
@@ -219,14 +219,13 @@ pub fn add_package(name: &str) {
 pub fn remove_package(package: &str) {
     create_package_dir();
 
-    log_header(&format!("Removing '{}'", &package));
-
-    let package_path = get_package_path().join(&package);
+    let package_path = get_package_path().join(package);
 
     if package_path.exists() {
         let _ = fs::remove_dir_all(&package_path);
     } else {
-        log_package_status(&package, false);
+        log_header(&format!("Removing '{}'", &package));
+        log_package_status(package, false);
 
         return;
     }
@@ -235,7 +234,7 @@ pub fn remove_package(package: &str) {
     let contents = fs::read_to_string(&kennels_file)
         .expect("Error reading 'kennels.glang'")
         .lines()
-        .filter(|line| !line.contains(&package))
+        .filter(|line| !line.contains(package))
         .collect::<Vec<_>>()
         .join("\n");
 

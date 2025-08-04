@@ -16,7 +16,7 @@ pub struct Number {
 impl Number {
     pub fn new(value: f64) -> Self {
         Self {
-            value: value,
+            value,
             context: None,
             pos_start: None,
             pos_end: None,

@@ -15,7 +15,7 @@ impl ConstAssignNode {
     pub fn new(var_name_token: Token, value_node: Box<AstNode>) -> Self {
         Self {
             const_name_token: var_name_token.to_owned(),
-            value_node: value_node,
+            value_node,
             pos_start: var_name_token.pos_start,
             pos_end: var_name_token.pos_end,
         }

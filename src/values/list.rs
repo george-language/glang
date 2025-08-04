@@ -17,7 +17,7 @@ pub struct List {
 impl List {
     pub fn new(elements: Vec<Value>) -> Self {
         Self {
-            elements: elements,
+            elements,
             context: None,
             pos_start: None,
             pos_end: None,
@@ -29,15 +29,12 @@ impl List {
     }
 
     pub fn perform_operation(self, operator: &str, other: Value) -> Result<Value, StandardError> {
-        match operator {
-            "*" => return Ok(self.push(other.clone())),
-            _ => {}
-        }
+        if operator == "*" { return Ok(self.push(other.clone())) }
 
         match other {
             Value::ListValue(ref right) => match operator {
                 "+" => {
-                    return Ok(self.append(&mut right.elements.clone()));
+                    Ok(self.append(&mut right.elements.clone()))
                 }
                 "==" => {
                     let mut is_eq = Number::null_value();
@@ -52,7 +49,7 @@ impl List {
                         is_eq = result.ok().unwrap();
                     }
 
-                    return Ok(is_eq.set_context(self.context.clone()));
+                    Ok(is_eq.set_context(self.context.clone()))
                 }
                 "!=" => {
                     let mut is_neq = Number::null_value();
@@ -67,21 +64,21 @@ impl List {
                         is_neq = result.ok().unwrap();
                     }
 
-                    return Ok(is_neq.set_context(self.context.clone()));
+                    Ok(is_neq.set_context(self.context.clone()))
                 }
                 "and" => {
-                    return Ok(Value::NumberValue(Number::new(
+                    Ok(Value::NumberValue(Number::new(
                         (!self.elements.is_empty() && !right.elements.is_empty()) as u8 as f64,
                     ))
-                    .set_context(self.context.clone()));
+                    .set_context(self.context.clone()))
                 }
                 "or" => {
-                    return Ok(Value::NumberValue(Number::new(
+                    Ok(Value::NumberValue(Number::new(
                         (!self.elements.is_empty() || !right.elements.is_empty()) as u8 as f64,
                     ))
-                    .set_context(self.context.clone()));
+                    .set_context(self.context.clone()))
                 }
-                _ => return Err(self.illegal_operation(Some(other))),
+                _ => Err(self.illegal_operation(Some(other))),
             },
             Value::NumberValue(ref right) => match operator {
                 "^" => {
@@ -109,7 +106,7 @@ impl List {
                         ));
                     }
 
-                    return Ok(self.retrieve(right.value as usize));
+                    Ok(self.retrieve(right.value as usize))
                 }
                 "-" => {
                     if right.value < 0.0 {
@@ -130,12 +127,12 @@ impl List {
                         ));
                     }
 
-                    return Ok(self.remove(right.value as usize));
+                    Ok(self.remove(right.value as usize))
                 }
-                _ => return Err(self.illegal_operation(Some(other))),
+                _ => Err(self.illegal_operation(Some(other))),
             },
             _ => {
-                return Err(self.illegal_operation(Some(other)));
+                Err(self.illegal_operation(Some(other)))
             }
         }
     }
@@ -189,6 +186,6 @@ impl List {
             .collect::<Vec<_>>()
             .join(", ");
 
-        format!("[{}]", output).to_string()
+        format!("[{output}]").to_string()
     }
 }

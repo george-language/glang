@@ -65,7 +65,7 @@ impl Parser {
     }
 
     pub fn current_token_ref(&mut self) -> &Token {
-        &self.current_token.as_ref().unwrap()
+        self.current_token.as_ref().unwrap()
     }
 
     pub fn current_pos_start(&self) -> Position {
@@ -382,7 +382,7 @@ impl Parser {
                     "expected keyword",
                     self.current_pos_start(),
                     self.current_pos_end(),
-                    Some(format!("add the '{}' keyword", keyword).as_str()),
+                    Some(format!("add the '{keyword}' keyword").as_str()),
                 ))),
                 Vec::new(),
                 None,
@@ -453,7 +453,7 @@ impl Parser {
         else_case = else_clause;
         cases.append(&mut all_cases.clone());
 
-        return (parse_result, cases, else_case);
+        (parse_result, cases, else_case)
     }
 
     pub fn for_expr(&mut self) -> ParseResult {
@@ -678,10 +678,10 @@ impl Parser {
         parse_result.register_advancement();
         self.advance();
 
-        return parse_result.success(Some(Box::new(AstNode::While(WhileNode::new(
+        parse_result.success(Some(Box::new(AstNode::While(WhileNode::new(
             condition.unwrap(),
             body.unwrap(),
-        )))));
+        )))))
     }
 
     pub fn try_expr(&mut self) -> ParseResult {
@@ -797,11 +797,11 @@ impl Parser {
         parse_result.register_advancement();
         self.advance();
 
-        return parse_result.success(Some(Box::new(AstNode::TryExcept(TryExceptNode::new(
+        parse_result.success(Some(Box::new(AstNode::TryExcept(TryExceptNode::new(
             try_body.unwrap(),
             except_body.unwrap(),
             error_name_token,
-        )))));
+        )))))
     }
 
     pub fn import_expr(&mut self) -> ParseResult {
@@ -831,9 +831,9 @@ impl Parser {
         parse_result.register_advancement();
         self.advance();
 
-        return parse_result.success(Some(Box::new(AstNode::Import(ImportNode::new(
+        parse_result.success(Some(Box::new(AstNode::Import(ImportNode::new(
             import.unwrap(),
-        )))));
+        )))))
     }
 
     pub fn expr(&mut self) -> ParseResult {
@@ -1081,11 +1081,11 @@ impl Parser {
             statements.push(statement.unwrap());
         }
 
-        return parse_result.success(Some(Box::new(AstNode::List(ListNode::new(
+        parse_result.success(Some(Box::new(AstNode::List(ListNode::new(
             &statements,
             Some(pos_start),
             Some(self.current_pos_end()),
-        )))));
+        )))))
     }
 
     pub fn call(&mut self) -> ParseResult {
@@ -1283,7 +1283,7 @@ impl Parser {
             ))));
         }
 
-        return self.power();
+        self.power()
     }
 
     pub fn term(&mut self) -> ParseResult {
@@ -1382,15 +1382,13 @@ impl Parser {
                     Some("add a ',' followed by the function argument or complete the function with ')'"),
                 )));
             }
-        } else {
-            if self.current_token_ref().token_type != TokenType::TT_RPAREN {
-                return parse_result.failure(Some(StandardError::new(
-                    "expected indentifier or ')'",
-                    self.current_pos_start(),
-                    self.current_pos_end(),
-                    Some("add a name for the function arguments like 'name' or complete the function with ')'"),
-                )));
-            }
+        } else if self.current_token_ref().token_type != TokenType::TT_RPAREN {
+            return parse_result.failure(Some(StandardError::new(
+                "expected indentifier or ')'",
+                self.current_pos_start(),
+                self.current_pos_end(),
+                Some("add a name for the function arguments like 'name' or complete the function with ')'"),
+            )));
         }
 
         parse_result.register_advancement();
@@ -1439,7 +1437,7 @@ impl Parser {
         ops: &[(TokenType, &str)],
         func_b: Option<&str>,
     ) -> ParseResult {
-        let func_b = func_b.unwrap_or_else(|| func_a);
+        let func_b = func_b.unwrap_or(func_a);
 
         let mut parse_result = ParseResult::new();
         let mut left = parse_result.register(match func_a {
@@ -1461,7 +1459,7 @@ impl Parser {
                 .clone()
                 .unwrap()
                 .value
-                .unwrap_or_else(|| "".to_string())
+                .unwrap_or_default()
                 .as_str(),
         )) || ops.contains(&(self.current_token.clone().unwrap().token_type, ""))
         {

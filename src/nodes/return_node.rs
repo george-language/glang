@@ -15,8 +15,8 @@ impl ReturnNode {
     ) -> Self {
         Self {
             node_to_return: node,
-            pos_start: pos_start,
-            pos_end: pos_end,
+            pos_start,
+            pos_end,
         }
     }
 }

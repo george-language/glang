@@ -207,7 +207,7 @@ impl Lexer {
                     self.advance();
 
                     return Err(StandardError::new(
-                        format!("unkown character '{}'", unknown_char).as_str(),
+                        format!("unkown character '{unknown_char}'").as_str(),
                         pos_start,
                         self.position.clone(),
                         Some("replace this character with one known by glang"),
@@ -447,12 +447,12 @@ impl Lexer {
 
         self.advance();
 
-        return Err(StandardError::new(
+        Err(StandardError::new(
             "expected '=' after '!'",
             pos_start,
             self.position.clone(),
             Some("add a '=' after the '!' character"),
-        ));
+        ))
     }
 
     pub fn make_less_than(&mut self) -> Token {

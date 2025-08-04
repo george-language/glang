@@ -21,7 +21,7 @@ impl TryExceptNode {
         Self {
             try_body_node: try_body_node.to_owned(),
             except_body_node: except_body_node.to_owned(),
-            error_name_token: error_name_token,
+            error_name_token,
             pos_start: try_body_node.position_start(),
             pos_end: except_body_node.position_end(),
         }

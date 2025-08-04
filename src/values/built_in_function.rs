@@ -119,19 +119,19 @@ impl BuiltInFunction {
         let exec_context = self.generate_new_context();
 
         match self.name.as_str() {
-            "bark" => return self.execute_print(args, exec_context),
-            "chew" => return self.execute_input(args, exec_context),
-            "dig" => return self.execute_read(args, exec_context),
-            "bury" => return self.execute_write(args, exec_context),
-            "tostring" => return self.execute_tostring(args, exec_context),
-            "tonumber" => return self.execute_tonumber(args, exec_context),
-            "length" => return self.execute_length(args, exec_context),
-            "uhoh" => return self.execute_error(args, exec_context),
-            "type" => return self.execute_type(args, exec_context),
-            "run" => return self.execute_exec(args, exec_context),
-            "_env" => return self.execute_env(args, exec_context),
+            "bark" => self.execute_print(args, exec_context),
+            "chew" => self.execute_input(args, exec_context),
+            "dig" => self.execute_read(args, exec_context),
+            "bury" => self.execute_write(args, exec_context),
+            "tostring" => self.execute_tostring(args, exec_context),
+            "tonumber" => self.execute_tonumber(args, exec_context),
+            "length" => self.execute_length(args, exec_context),
+            "uhoh" => self.execute_error(args, exec_context),
+            "type" => self.execute_type(args, exec_context),
+            "run" => self.execute_exec(args, exec_context),
+            "_env" => self.execute_env(args, exec_context),
             _ => panic!("CRITICAL ERROR: BUILT IN NAME IS NOT DEFINED"),
-        };
+        }
     }
 
     pub fn execute_print(&self, args: &[Value], exec_ctx: Rc<RefCell<Context>>) -> RuntimeResult {
@@ -169,7 +169,7 @@ impl BuiltInFunction {
             }
         };
 
-        print!("{}", message);
+        print!("{message}");
 
         let mut input = String::new();
 
@@ -204,7 +204,7 @@ impl BuiltInFunction {
             }
         };
 
-        if !fs::exists(&filename).is_ok() {
+        if fs::exists(&filename).is_err() {
             return result.failure(Some(StandardError::new(
                 "file doesn't exist",
                 file_arg.position_start().unwrap().clone(),
@@ -318,7 +318,7 @@ impl BuiltInFunction {
                 Ok(number) => number,
                 Err(e) => {
                     return result.failure(Some(StandardError::new(
-                        format!("string couldn't be converted to number {}", e).as_str(),
+                        format!("string couldn't be converted to number {e}").as_str(),
                         string_to_convert.position_start().unwrap().clone(),
                         string_to_convert.position_end().unwrap().clone(),
                         Some("make sure the string is represented as a valid number like '1.0'"),
@@ -403,7 +403,7 @@ impl BuiltInFunction {
         }
 
         result.success(Some(Str::from(
-            format!("{}", args[0].object_type()).as_str(),
+            args[0].object_type().to_string().as_str(),
         )))
     }
 
@@ -480,15 +480,15 @@ impl BuiltInFunction {
 
         match env::var(&variable) {
             Ok(var) => {
-                return result.success(Some(Str::from(&var)));
+                result.success(Some(Str::from(&var)))
             }
             Err(_) => {
-                return result.failure(Some(StandardError::new(
+                result.failure(Some(StandardError::new(
                     "unable to access environment variable",
                     env_arg.position_start().unwrap().clone(),
                     env_arg.position_end().unwrap().clone(),
                     None,
-                )));
+                )))
             }
         }
     }

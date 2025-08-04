@@ -16,8 +16,8 @@ impl ListNode {
     ) -> Self {
         Self {
             element_nodes: Arc::from(element_nodes),
-            pos_start: pos_start,
-            pos_end: pos_end,
+            pos_start,
+            pos_end,
         }
     }
 }

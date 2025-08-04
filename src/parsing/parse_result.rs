@@ -37,7 +37,7 @@ impl ParseResult {
     }
 
     pub fn try_register(&mut self, parse_result: ParseResult) -> Option<Box<AstNode>> {
-        if let Some(_) = parse_result.error {
+        if parse_result.error.is_some() {
             self.to_reverse_count = parse_result.advance_count;
 
             return None;

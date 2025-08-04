@@ -16,9 +16,9 @@ impl Position {
         file_contents: &str,
     ) -> Self {
         Self {
-            index: index,
-            line_num: line_num,
-            column_num: column_num,
+            index,
+            line_num,
+            column_num,
             filename: filename.to_string(),
             file_contents: file_contents.to_string(),
         }
@@ -28,14 +28,11 @@ impl Position {
         self.index += 1;
         self.column_num += 1;
 
-        match current_char {
-            Some(character) => {
-                if character == '\n' {
-                    self.line_num += 1;
-                    self.column_num = 0;
-                }
+        if let Some(character) = current_char {
+            if character == '\n' {
+                self.line_num += 1;
+                self.column_num = 0;
             }
-            None => {}
         }
 
         self.clone()

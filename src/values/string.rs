@@ -18,7 +18,7 @@ pub struct Str {
 impl Str {
     pub fn new(value: String) -> Self {
         Str {
-            value: value,
+            value,
             context: None,
             pos_start: None,
             pos_end: None,
@@ -40,38 +40,38 @@ impl Str {
                     let mut copy = self.clone();
                     copy.value.push_str(&value.value);
 
-                    return Ok(Value::StringValue(copy));
+                    Ok(Value::StringValue(copy))
                 }
                 "-" => {
                     let mut copy = self.clone();
                     copy.value.clear();
                     copy.value.push_str(&value.value);
 
-                    return Ok(Value::StringValue(copy));
+                    Ok(Value::StringValue(copy))
                 }
                 "==" => {
-                    return Ok(Value::NumberValue(Number::new(
+                    Ok(Value::NumberValue(Number::new(
                         (self.value == value.value) as u8 as f64,
                     ))
-                    .set_context(self.context.clone()));
+                    .set_context(self.context.clone()))
                 }
                 "!=" => {
-                    return Ok(Value::NumberValue(Number::new(
+                    Ok(Value::NumberValue(Number::new(
                         (self.value != value.value) as u8 as f64,
                     ))
-                    .set_context(self.context.clone()));
+                    .set_context(self.context.clone()))
                 }
                 "and" => {
-                    return Ok(Value::NumberValue(Number::new(
+                    Ok(Value::NumberValue(Number::new(
                         (!self.value.is_empty() && !value.value.is_empty()) as u8 as f64,
                     ))
-                    .set_context(self.context.clone()));
+                    .set_context(self.context.clone()))
                 }
                 "or" => {
-                    return Ok(Value::NumberValue(Number::new(
+                    Ok(Value::NumberValue(Number::new(
                         (!self.value.is_empty() || !value.value.is_empty()) as u8 as f64,
                     ))
-                    .set_context(self.context.clone()));
+                    .set_context(self.context.clone()))
                 }
                 _ => Err(self.illegal_operation(Some(&other))),
             },
@@ -89,7 +89,7 @@ impl Str {
                     let mut copy = self.clone();
                     copy.value = self.value.repeat(value.value as usize);
 
-                    return Ok(Value::StringValue(copy));
+                    Ok(Value::StringValue(copy))
                 }
                 "^" => {
                     if value.value < -1.0 {
@@ -118,14 +118,14 @@ impl Str {
                         ));
                     }
 
-                    return Ok(Str::from(
+                    Ok(Str::from(
                         self.value
                             .chars()
                             .nth(value.value as usize)
                             .unwrap()
                             .to_string()
                             .as_str(),
-                    ));
+                    ))
                 }
                 _ => Err(self.illegal_operation(Some(&other))),
             },

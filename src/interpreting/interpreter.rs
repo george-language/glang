@@ -67,63 +67,62 @@ impl Interpreter {
     pub fn visit(&mut self, node: Box<AstNode>, context: Rc<RefCell<Context>>) -> RuntimeResult {
         match node.as_ref() {
             AstNode::List(node) => {
-                return self.visit_list_node(&node, context);
+                self.visit_list_node(node, context)
             }
             AstNode::Number(node) => {
-                return self.visit_number_node(&node, context);
+                self.visit_number_node(node, context)
             }
             AstNode::Strings(node) => {
-                return self.visit_string_node(&node, context);
+                self.visit_string_node(node, context)
             }
             AstNode::VariableAssign(node) => {
-                return self.visit_variable_assign_node(&node, context);
+                self.visit_variable_assign_node(node, context)
             }
             AstNode::ConstAssign(node) => {
-                return self.visit_const_assign_node(&node, context);
+                self.visit_const_assign_node(node, context)
             }
             AstNode::VariableAccess(node) => {
-                return self.visit_variable_access_node(&node, context);
+                self.visit_variable_access_node(node, context)
             }
             AstNode::If(node) => {
-                return self.visit_if_node(&node, context);
+                self.visit_if_node(node, context)
             }
             AstNode::Import(node) => {
-                return self.visit_import_node(&node, context);
+                self.visit_import_node(node, context)
             }
             AstNode::For(node) => {
-                return self.visit_for_node(&node, context);
+                self.visit_for_node(node, context)
             }
             AstNode::While(node) => {
-                return self.visit_while_node(&node, context);
+                self.visit_while_node(node, context)
             }
             AstNode::TryExcept(node) => {
-                return self.visit_try_except_node(&node, context);
+                self.visit_try_except_node(node, context)
             }
             AstNode::FunctionDefinition(node) => {
-                return self.visit_function_definition_node(&node, context);
+                self.visit_function_definition_node(node, context)
             }
             AstNode::Call(node) => {
-                return self.visit_call_node(&node, context);
+                self.visit_call_node(node, context)
             }
             AstNode::BinaryOperator(node) => {
-                return self.visit_binary_operator_node(&node, context);
+                self.visit_binary_operator_node(node, context)
             }
             AstNode::UnaryOperator(node) => {
-                return self.visit_unary_operator_node(&node, context);
+                self.visit_unary_operator_node(node, context)
             }
             AstNode::Return(node) => {
-                return self.visit_return_node(&node, context);
+                self.visit_return_node(node, context)
             }
             AstNode::Continue(node) => {
-                return self.visit_continue_node(&node, context);
+                self.visit_continue_node(node, context)
             }
             AstNode::Break(node) => {
-                return self.visit_break_node(&node, context);
+                self.visit_break_node(node, context)
             }
             _ => {
                 panic!(
-                    "CRITICAL ERROR: NO METHOD DEFINED FOR NODE TYPE:\n {:#?}",
-                    node
+                    "CRITICAL ERROR: NO METHOD DEFINED FOR NODE TYPE:\n {node:#?}"
                 );
             }
         }
@@ -263,7 +262,7 @@ impl Interpreter {
 
         if value.is_none() {
             return result.failure(Some(StandardError::new(
-                format!("variable name '{}' is undefined", var_name).as_str(),
+                format!("variable name '{var_name}' is undefined").as_str(),
                 node.pos_start.as_ref().unwrap().clone(),
                 node.pos_end.as_ref().unwrap().clone(),
                 None,
@@ -418,8 +417,8 @@ impl Interpreter {
                 let _ = result.register(self.visit(node.body_node.clone(), context.clone()));
 
                 if result.should_return()
-                    && result.loop_should_continue == false
-                    && result.loop_should_break == false
+                    && !result.loop_should_continue
+                    && !result.loop_should_break
                 {
                     return result;
                 }
@@ -449,8 +448,8 @@ impl Interpreter {
                 let _ = result.register(self.visit(node.body_node.clone(), context.clone()));
 
                 if result.should_return()
-                    && result.loop_should_continue == false
-                    && result.loop_should_break == false
+                    && !result.loop_should_continue
+                    && !result.loop_should_break
                 {
                     return result;
                 }
@@ -492,8 +491,8 @@ impl Interpreter {
             let _ = result.register(self.visit(node.body_node.clone(), context.clone()));
 
             if result.should_return()
-                && result.loop_should_continue == false
-                && result.loop_should_break == false
+                && !result.loop_should_continue
+                && !result.loop_should_break
             {
                 return result;
             }
@@ -541,10 +540,8 @@ impl Interpreter {
             if result.should_return() {
                 return result;
             }
-        } else {
-            if result.should_return() {
-                return result;
-            }
+        } else if result.should_return() {
+            return result;
         }
 
         result.success(Some(Number::null_value()))
@@ -575,7 +572,7 @@ impl Interpreter {
             }
         };
 
-        if !fs::exists(&file_to_import).is_ok() || !&file_to_import.ends_with(".glang") {
+        if fs::exists(&file_to_import).is_err() || !&file_to_import.ends_with(".glang") {
             return result.failure(Some(StandardError::new(
                 "file doesn't exist or isn't valid",
                 import.position_start().unwrap(),
@@ -584,7 +581,7 @@ impl Interpreter {
             )));
         }
 
-        if &file_to_import == &import.position_start().unwrap().filename {
+        if file_to_import == import.position_start().unwrap().filename {
             return result.failure(Some(StandardError::new(
                 "circular import",
                 import.position_start().unwrap(),
@@ -600,8 +597,7 @@ impl Interpreter {
             Err(_) => {
                 return result.failure(Some(StandardError::new(
                     &format!(
-                        "file contents couldn't be read properly on {}",
-                        file_to_import
+                        "file contents couldn't be read properly on {file_to_import}"
                     ),
                     import.position_start().unwrap(),
                     import.position_end().unwrap(),
@@ -820,18 +816,16 @@ impl Interpreter {
         }
 
         if operation_result.is_err() {
-            return result.failure(operation_result.err());
+            result.failure(operation_result.err())
+        } else if operation_result.is_ok() {
+            return result.success(Some(
+                operation_result
+                    .ok()
+                    .unwrap()
+                    .set_position(node.pos_start.clone(), node.pos_end.clone()),
+            ));
         } else {
-            if operation_result.is_ok() {
-                return result.success(Some(
-                    operation_result
-                        .ok()
-                        .unwrap()
-                        .set_position(node.pos_start.clone(), node.pos_end.clone()),
-                ));
-            } else {
-                return result.success(Some(Number::null_value()));
-            }
+            return result.success(Some(Number::null_value()));
         }
     }
 
@@ -865,18 +859,16 @@ impl Interpreter {
         }
 
         if operation_result.is_err() {
-            return result.failure(operation_result.err());
+            result.failure(operation_result.err())
+        } else if operation_result.is_ok() {
+            return result.success(Some(
+                operation_result
+                    .ok()
+                    .unwrap()
+                    .set_position(node.pos_start.clone(), node.pos_end.clone()),
+            ));
         } else {
-            if operation_result.is_ok() {
-                return result.success(Some(
-                    operation_result
-                        .ok()
-                        .unwrap()
-                        .set_position(node.pos_start.clone(), node.pos_end.clone()),
-                ));
-            } else {
-                return result.success(Some(Number::null_value()));
-            }
+            return result.success(Some(Number::null_value()));
         }
     }
 

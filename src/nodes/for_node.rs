@@ -24,10 +24,10 @@ impl ForNode {
     ) -> Self {
         Self {
             var_name_token: var_name_token.to_owned(),
-            start_value_node: start_value_node,
-            end_value_node: end_value_node,
-            step_value_node: step_value_node,
-            body_node: body_node,
+            start_value_node,
+            end_value_node,
+            step_value_node,
+            body_node,
             pos_start: var_name_token.pos_start,
             pos_end: var_name_token.pos_end,
         }

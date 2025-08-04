@@ -30,10 +30,10 @@ impl Function {
         should_auto_return: bool,
     ) -> Self {
         Self {
-            name: name,
-            body_node: body_node,
+            name,
+            body_node,
             arg_names: Arc::from(arg_names),
-            should_auto_return: should_auto_return,
+            should_auto_return,
             context: None,
             pos_start: None,
             pos_end: None,

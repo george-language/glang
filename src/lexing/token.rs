@@ -27,8 +27,8 @@ impl Token {
         }
 
         Self {
-            token_type: token_type,
-            value: value,
+            token_type,
+            value,
             pos_start: start,
             pos_end: end,
         }

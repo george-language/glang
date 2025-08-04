@@ -11,7 +11,7 @@ impl SymbolTable {
     pub fn new(parent: Option<Rc<RefCell<SymbolTable>>>) -> Self {
         Self {
             symbols: HashMap::new(),
-            parent: parent,
+            parent,
         }
     }
 

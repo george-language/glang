@@ -14,7 +14,7 @@ impl CallNode {
             node_to_call: node_to_call.to_owned(),
             arg_nodes: arg_nodes.to_owned(),
             pos_start: node_to_call.position_start(),
-            pos_end: if arg_nodes.len() > 0 {
+            pos_end: if !arg_nodes.is_empty() {
                 arg_nodes[arg_nodes.len() - 1].position_end()
             } else {
                 node_to_call.position_end()

@@ -17,9 +17,9 @@ impl UnaryOperatorNode {
 
         Self {
             op_token: op_token.to_owned(),
-            node: node,
+            node,
             pos_start: op_token.pos_start,
-            pos_end: pos_end,
+            pos_end,
         }
     }
 }

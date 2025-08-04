@@ -16,9 +16,9 @@ impl Context {
         parent_entry_pos: Option<Position>,
     ) -> Self {
         Self {
-            display_name: display_name,
-            parent: parent,
-            parent_entry_pos: parent_entry_pos,
+            display_name,
+            parent,
+            parent_entry_pos,
             symbol_table: None,
         }
     }

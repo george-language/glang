@@ -101,7 +101,7 @@ pub fn launch_repl(version: &str) {
         let error = run("<stdin>", Some(code));
 
         if let Some(e) = error {
-            println!("{}", e);
+            println!("{e}");
 
             continue;
         }
@@ -110,17 +110,17 @@ pub fn launch_repl(version: &str) {
 
 pub fn new_project(dir_name: &Path, init: bool) {
     if !init {
-        fs::create_dir(&dir_name).expect("Cannot create directory (invalid name)");
+        fs::create_dir(dir_name).expect("Cannot create directory (invalid name)");
     }
 
-    fs::create_dir(&dir_name.join("src")).expect("'src/' directory already exists");
+    fs::create_dir(dir_name.join("src")).expect("'src/' directory already exists");
 
     let _ = fs::write(
-        &dir_name.join("main.glang"),
+        dir_name.join("main.glang"),
         "func main() {\n    bark(\"Hello world!\");\n}\n\nmain();",
     );
     let _ = fs::write(
-        &dir_name.join("README.md"),
+        dir_name.join("README.md"),
         "# Welcome to GLang!\nTo get started, see our documentation [here](https://sites.google.com/view/george-lang/documentation).",
     );
 }

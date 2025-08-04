@@ -14,8 +14,8 @@ impl StandardError {
     pub fn new(text: &str, pos_start: Position, pos_end: Position, help: Option<&str>) -> Self {
         Self {
             text: text.to_string(),
-            pos_start: pos_start,
-            pos_end: pos_end,
+            pos_start,
+            pos_end,
             help: if help.is_some() {
                 Some(help.unwrap().to_string())
             } else {
@@ -95,7 +95,7 @@ impl Display for StandardError {
         );
 
         if let Some(msg) = &self.help {
-            output.push_str(format!("\n   + - > {DIM_GREEN}{ITALIC}help:{RESET} {}", msg).as_str());
+            output.push_str(format!("\n   + - > {DIM_GREEN}{ITALIC}help:{RESET} {msg}").as_str());
         } else {
             output.push_str("\n   + ");
         }
@@ -108,6 +108,6 @@ impl Display for StandardError {
             .as_str(),
         );
 
-        write!(f, "{}{RESET}", output)
+        write!(f, "{output}{RESET}")
     }
 }

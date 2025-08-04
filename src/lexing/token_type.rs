@@ -68,6 +68,6 @@ impl Display for TokenType {
             TokenType::TT_NEWLINE => "NEWLINE",
             TokenType::TT_EOF => "EOF",
         };
-        write!(f, "{}", text)
+        write!(f, "{text}")
     }
 }

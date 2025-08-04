@@ -1,5 +1,4 @@
 use clap::{Parser, Subcommand};
-use glang;
 use std::env;
 use std::path::Path;
 
@@ -82,7 +81,7 @@ fn main() {
             let error = glang::run(&file, None);
 
             if let Some(err) = error {
-                println!("{}", err);
+                println!("{err}");
             }
         }
         (None, None) => {

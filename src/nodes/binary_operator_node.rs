@@ -18,11 +18,11 @@ impl BinaryOperatorNode {
         let pos_end = right_node.position_end();
 
         Self {
-            left_node: left_node,
-            op_token: op_token,
-            right_node: right_node,
-            pos_start: pos_start,
-            pos_end: pos_end,
+            left_node,
+            op_token,
+            right_node,
+            pos_start,
+            pos_end,
         }
     }
 }
