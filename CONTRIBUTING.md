@@ -7,7 +7,8 @@ Hey there! 👋 Thanks for your interest in contributing to **GLang**, whether y
 The best way to get started is by joining the conversations in our [Developer Discussions](https://github.com/mpsoftwarefoundation/GeorgeLanguage/discussions/categories/developers-discussion).
 Ask questions, share ideas, or just see what others are working on (it's a great way to plug in!)
 
-> Note: We don’t have full developer docs **yet**. Right now, we're focusing on **building** before we focus on **documenting**. GLang always has a team that will actively work on it.
+> [!NOTE]
+> We don’t have full developer docs _yet_. Right now, we're focusing on **building** before we focus on **documenting**. GLang will always have a team behind it to keep it running.
 
 ## Want to Help Test?
 
