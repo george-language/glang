@@ -1,26 +1,41 @@
 # Contributing to GeorgeLanguage
 
-Thank you for your interest in contributing to GLang! There are many ways to contribute
-and we appreciate all of them🙏
+Hey there! 👋 Thanks for your interest in contributing to **GLang**, whether you're here to test, build, or just hang out, we're glad to have you on board. Every little bit helps, and we appreciate it all 🙏
 
-The best way to get started is by asking for help in our [developers discussion](https://github.com/mpsoftwarefoundation/GeorgeLanguage/discussions/categories/developers-discussion) to see what developers are up to and how you can help.
+## New Around Here?
 
-We don't have developer documentation (yet) as we are in focus of _creating_ not _relying on the community_.
+The best way to get started is by joining the conversations in our [Developer Discussions](https://github.com/mpsoftwarefoundation/GeorgeLanguage/discussions/categories/developers-discussion).
+Ask questions, share ideas, or just see what others are working on (it's a great way to plug in!)
 
-## Wanting To Help Test?
+> Note: We don’t have full developer docs **yet**. Right now, we're focusing on **building** before we focus on **documenting**. GLang always has a team that will actively work on it.
 
-We update GLang on the regular, which means there are always new versions to try out. You can test GLang with the `library/tests/` folder included with GLang, or create your own projects pushing the limits!
+## Want to Help Test?
 
-If you find an issue, see more info below.
+GLang is updated regularly, so there’s always something new to explore!
 
-## Wanting To Develop Kennels?
+You can:
+- Run the built-in tests in `library/tests/`
+- Build your own projects and push GLang to its limits
 
-Kennels is GLang's package system implemented in 2.3, you can learn more [here](https://sites.google.com/view/george-lang/documentation/standard-docs/kennels/about-kennels?authuser=0) or learn how to create your own [here](https://sites.google.com/view/george-lang/documentation/standard-docs/kennels/creating-kennels?authuser=0).
+If you run into any bugs or quirks, check out the ["Issues" section](<CONTRIBUTING#Issues Section>) below to learn how to report them.
 
-Even though it may not be contributing to the project directly, kennels **you create** help us strengthen GLang and grow it bigger 👍
+## Want to Develop Kennels?
 
-## "Issues" Section
+**Kennels** are GLang’s package system, introduced in version 2.3. Think of them as little doghouses full of awesome code!
 
-Found a bug or issue? You can report them [here](https://github.com/mpsoftwarefoundation/GeorgeLanguage/issues).
+- Learn what Kennels are: [About Kennels](https://sites.google.com/view/george-lang/documentation/standard-docs/kennels/about-kennels)
+- Build your own: [Creating Kennels](https://sites.google.com/view/george-lang/documentation/standard-docs/kennels/creating-kennels)
 
-We also have issue templates for documentation updates and feature requests!
+Even if you're not contributing directly to the main repo, creating Kennels helps the ecosystem grow and that’s a **huge** help!
+
+## Issues Section
+
+Found a bug? Got an idea? Want to tweak some docs?
+
+- Report issues here: [GLang Issues](https://github.com/mpsoftwarefoundation/GeorgeLanguage/issues)
+
+We’ve also got templates to help with:
+- 📝 Documentation updates
+- 💡 Feature requests
+
+Thanks again for helping make GLang better! Let’s build something cool together 👊
