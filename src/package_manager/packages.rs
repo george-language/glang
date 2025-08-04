@@ -13,6 +13,18 @@ struct PackageRegistry {
     url: String,
 }
 
+fn log_header(msg: &str) {
+    println!("  {BOLD}{}{RESET}", msg);
+}
+
+fn log_message(msg: &str) {
+    println!("    {DIM_GREEN}{BOLD}->{RESET} {}", msg);
+}
+
+fn log_error(msg: &str) {
+    println!("{DIM_RED}{BOLD}error:{RESET} {}", msg);
+}
+
 pub fn is_package_installed(package: &str) -> bool {
     let package_path = get_package_path().join(&package);
 
@@ -26,7 +38,7 @@ pub fn create_package_dir() {
         match fs::create_dir_all(&package_dir) {
             Ok(_) => {}
             Err(e) => {
-                println!("Error creating 'kennels' dir: {}", e);
+                log_error("Error creating 'kennels' dir: {e}");
 
                 return;
             }
@@ -48,12 +60,14 @@ obj std_math = _env(\"GLANG_STD\") + \"/std/math.glang\";",
 pub fn add_package(name: &str) {
     create_package_dir();
 
+    log_header("Checking kennels registry");
+
     let mut resp = match get(
         "https://raw.githubusercontent.com/mpsoftwarefoundation/GeorgeLanguage/main/registry.json",
     ) {
         Ok(r) => r,
         Err(e) => {
-            println!("{DIM_RED}Failed to retrieve registry: {}{RESET}", e);
+            log_error(&format!("Failed to retrieve registry: {}", e));
 
             return;
         }
@@ -70,7 +84,7 @@ pub fn add_package(name: &str) {
     let packages: Vec<PackageRegistry> = match serde_json::from_str(&registry_json) {
         Ok(p) => p,
         Err(e) => {
-            println!("{DIM_RED}Failed to parse registry JSON: {}{RESET}", e);
+            log_error(&format!("Failed to parse registry JSON: {}", e));
 
             return;
         }
@@ -79,7 +93,7 @@ pub fn add_package(name: &str) {
     let package = match packages.iter().find(|p| p.name == name) {
         Some(p) => p,
         None => {
-            println!("{DIM_RED}Kennel '{}' not found in registry{RESET}", name);
+            log_error(&format!("Kennel '{}' not found in registry", name));
 
             return;
         }
@@ -88,37 +102,37 @@ pub fn add_package(name: &str) {
     let package_path = get_package_path().join(&package.name);
 
     if package_path.exists() {
-        println!("✅ Kennel '{}' is already installed", package.name);
-        println!(
-            "💡 To update, use {BOLD}`glang update {}`{RESET}",
+        log_message(&format!("Kennel '{}' is already installed", package.name));
+        log_message(&format!(
+            "To update, use {BOLD}`glang update {}`{RESET}",
             package.name
-        );
+        ));
 
         return;
     }
 
-    println!("📁 Downloading kennel from '{}'", package.url);
+    log_message(&format!("Downloading kennel from '{}'", package.url));
 
     let zip_bytes = match get(&package.url) {
         Ok(r) => match r.bytes() {
             Ok(b) => b,
             Err(e) => {
-                println!("{DIM_RED}Failed to get zip content: {}", e);
+                log_error(&format!("Failed to get zip content: {}", e));
 
                 return;
             }
         },
         Err(e) => {
-            println!("{DIM_RED}Failed to download zip: {}", e);
+            log_error(&format!("Failed to download zip: {}", e));
 
             return;
         }
     };
 
-    println!(
-        "🎯 Extracting kennel to '{}'",
+    log_message(&format!(
+        "Moving kennel to '{}'",
         package_path.to_string_lossy().to_string()
-    );
+    ));
 
     let reader = Cursor::new(zip_bytes);
     let mut archive = match ZipArchive::new(reader) {
@@ -145,12 +159,12 @@ pub fn add_package(name: &str) {
 
         if file.name().ends_with('/') {
             fs::create_dir_all(&path).unwrap_or_else(|e| {
-                println!("{DIM_RED}Failed to create dir {:?}: {}{RESET}", path, e);
+                log_error(&format!("Failed to create dir {:?}: {}", path, e));
             });
         } else {
             if let Some(parent) = path.parent() {
                 fs::create_dir_all(parent).unwrap_or_else(|e| {
-                    println!("{DIM_RED}Failed to create dir {:?}: {}{RESET}", parent, e);
+                    log_error(&format!("Failed to create dir {:?}: {}", parent, e));
                 });
             }
 
@@ -159,7 +173,7 @@ pub fn add_package(name: &str) {
         }
     }
 
-    println!("👍 Updating 'kennels.glang'");
+    log_message("Updating 'kennels.glang'");
 
     let package_toml =
         fs::read_to_string(get_package_path().join(&package.name).join("kennel.toml"))
@@ -189,8 +203,8 @@ pub fn add_package(name: &str) {
         let pkg_name = requirement.as_str().unwrap_or("");
 
         if pkg_name == name {
-            println!(
-                "{DIM_RED}Cannot require the Kennel dependency of another Kennel (circular requirements){RESET}"
+            log_error(
+                "Cannot require the Kennel dependency of another Kennel (circular requirements)",
             );
 
             return;
@@ -212,7 +226,7 @@ pub fn add_package(name: &str) {
     let _ = fs::write(&imports_file, imports);
 
     println!(
-        "✅ Kennel '{} {}' installed successfully!",
+        "Kennel '{} {}' installed successfully!",
         &package.name, &version
     );
 }
@@ -225,11 +239,11 @@ pub fn remove_package(package: &str) {
     if package_path.exists() {
         let _ = fs::remove_dir_all(&package_path);
     } else {
-        println!("🤔 Kennel '{}' not installed", &package);
-        println!(
-            "💡 To install, try {BOLD}`glang install {}`{RESET}",
+        log_header(&format!("Kennel '{}' is already installed", &package));
+        log_message(&format!(
+            "To update, use {BOLD}`glang update {}`{RESET}",
             &package
-        );
+        ));
 
         return;
     }
@@ -244,5 +258,5 @@ pub fn remove_package(package: &str) {
 
     let _ = fs::write(&kennels_file, contents);
 
-    println!("🗑️  Kennel '{}' removed", &package);
+    println!("{DIM_YELLOW}{BOLD}Kennel '{}' removed{RESET}", &package);
 }
