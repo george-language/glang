@@ -72,8 +72,7 @@ You can download GLang [here](https://sites.google.com/view/george-lang/install/
 
 ## Wanna Help Out?
 
-GLang is a growing pup — we’re always looking for contributors, testers, and idea-sharers.
-Check out [CONTRIBUTING.md](./CONTRIBUTING.md) or bark at us via Issues!
+GLang is a growing pup - contributors, testers, and idea-sharers like you can feed it! Check out [CONTRIBUTING.md](./CONTRIBUTING.md) or bark at us via Issues.
 
 ## License
 
