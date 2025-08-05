@@ -41,10 +41,10 @@ jobs:
       - name: Create zip file
         run: |
           cd dist
-          zip -r GeorgeLanguage_+macos.zip GeorgeLanguage
+          zip -r GeorgeLanguage+macos_setup.zip GeorgeLanguage
 
       - name: Upload zip artifact
         uses: actions/upload-artifact@v4
         with:
-          name: GeorgeLanguage_+macos
-          path: dist/GeorgeLanguage_+macos.zip
+          name: GeorgeLanguage+macos_setup
+          path: dist/GeorgeLanguage+macos_setup.zip
