@@ -17,7 +17,7 @@ use crate::{
         string::Str, value::Value,
     },
 };
-use std::{cell::RefCell, fs, rc::Rc};
+use std::{cell::RefCell, fs, path::Path, rc::Rc};
 
 pub struct Interpreter {
     pub global_symbol_table: Rc<RefCell<SymbolTable>>,
@@ -66,64 +66,26 @@ impl Interpreter {
 
     pub fn visit(&mut self, node: Box<AstNode>, context: Rc<RefCell<Context>>) -> RuntimeResult {
         match node.as_ref() {
-            AstNode::List(node) => {
-                self.visit_list_node(node, context)
-            }
-            AstNode::Number(node) => {
-                self.visit_number_node(node, context)
-            }
-            AstNode::Strings(node) => {
-                self.visit_string_node(node, context)
-            }
-            AstNode::VariableAssign(node) => {
-                self.visit_variable_assign_node(node, context)
-            }
-            AstNode::ConstAssign(node) => {
-                self.visit_const_assign_node(node, context)
-            }
-            AstNode::VariableAccess(node) => {
-                self.visit_variable_access_node(node, context)
-            }
-            AstNode::If(node) => {
-                self.visit_if_node(node, context)
-            }
-            AstNode::Import(node) => {
-                self.visit_import_node(node, context)
-            }
-            AstNode::For(node) => {
-                self.visit_for_node(node, context)
-            }
-            AstNode::While(node) => {
-                self.visit_while_node(node, context)
-            }
-            AstNode::TryExcept(node) => {
-                self.visit_try_except_node(node, context)
-            }
-            AstNode::FunctionDefinition(node) => {
-                self.visit_function_definition_node(node, context)
-            }
-            AstNode::Call(node) => {
-                self.visit_call_node(node, context)
-            }
-            AstNode::BinaryOperator(node) => {
-                self.visit_binary_operator_node(node, context)
-            }
-            AstNode::UnaryOperator(node) => {
-                self.visit_unary_operator_node(node, context)
-            }
-            AstNode::Return(node) => {
-                self.visit_return_node(node, context)
-            }
-            AstNode::Continue(node) => {
-                self.visit_continue_node(node, context)
-            }
-            AstNode::Break(node) => {
-                self.visit_break_node(node, context)
-            }
+            AstNode::List(node) => self.visit_list_node(node, context),
+            AstNode::Number(node) => self.visit_number_node(node, context),
+            AstNode::Strings(node) => self.visit_string_node(node, context),
+            AstNode::VariableAssign(node) => self.visit_variable_assign_node(node, context),
+            AstNode::ConstAssign(node) => self.visit_const_assign_node(node, context),
+            AstNode::VariableAccess(node) => self.visit_variable_access_node(node, context),
+            AstNode::If(node) => self.visit_if_node(node, context),
+            AstNode::Import(node) => self.visit_import_node(node, context),
+            AstNode::For(node) => self.visit_for_node(node, context),
+            AstNode::While(node) => self.visit_while_node(node, context),
+            AstNode::TryExcept(node) => self.visit_try_except_node(node, context),
+            AstNode::FunctionDefinition(node) => self.visit_function_definition_node(node, context),
+            AstNode::Call(node) => self.visit_call_node(node, context),
+            AstNode::BinaryOperator(node) => self.visit_binary_operator_node(node, context),
+            AstNode::UnaryOperator(node) => self.visit_unary_operator_node(node, context),
+            AstNode::Return(node) => self.visit_return_node(node, context),
+            AstNode::Continue(node) => self.visit_continue_node(node, context),
+            AstNode::Break(node) => self.visit_break_node(node, context),
             _ => {
-                panic!(
-                    "CRITICAL ERROR: NO METHOD DEFINED FOR NODE TYPE:\n {node:#?}"
-                );
+                panic!("CRITICAL ERROR: NO METHOD DEFINED FOR NODE TYPE:\n {node:#?}");
             }
         }
     }
@@ -490,10 +452,7 @@ impl Interpreter {
 
             let _ = result.register(self.visit(node.body_node.clone(), context.clone()));
 
-            if result.should_return()
-                && !result.loop_should_continue
-                && !result.loop_should_break
-            {
+            if result.should_return() && !result.loop_should_continue && !result.loop_should_break {
                 return result;
             }
 
@@ -559,33 +518,45 @@ impl Interpreter {
             return result;
         }
 
-        let import = import.unwrap();
-        let file_to_import = match import {
+        let import_value = import.unwrap();
+        let import_position_path = import_value.position_start().unwrap().filename.clone();
+
+        let importing_dir = Path::new(&import_position_path)
+            .parent()
+            .unwrap_or_else(|| Path::new(""))
+            .to_path_buf();
+
+        let file_to_import = match import_value {
             Value::StringValue(ref string) => string.as_string(),
             _ => {
                 return result.failure(Some(StandardError::new(
                     "expected type string",
-                    import.position_start().unwrap(),
-                    import.position_end().unwrap(),
+                    import_value.position_start().unwrap(),
+                    import_value.position_end().unwrap(),
                     Some("add the '.glang' file you would like to import"),
                 )));
             }
         };
 
+        let file_to_import = importing_dir
+            .join(&file_to_import)
+            .to_string_lossy()
+            .into_owned();
+
         if fs::exists(&file_to_import).is_err() || !&file_to_import.ends_with(".glang") {
             return result.failure(Some(StandardError::new(
                 "file doesn't exist or isn't valid",
-                import.position_start().unwrap(),
-                import.position_end().unwrap(),
+                import_value.position_start().unwrap(),
+                import_value.position_end().unwrap(),
                 Some("add the '.glang' file you would like to import"),
             )));
         }
 
-        if file_to_import == import.position_start().unwrap().filename {
+        if file_to_import == import_position_path {
             return result.failure(Some(StandardError::new(
                 "circular import",
-                import.position_start().unwrap(),
-                import.position_end().unwrap(),
+                import_value.position_start().unwrap(),
+                import_value.position_end().unwrap(),
                 None,
             )));
         }
@@ -596,11 +567,9 @@ impl Interpreter {
             Ok(extra) => contents.push_str(&extra),
             Err(_) => {
                 return result.failure(Some(StandardError::new(
-                    &format!(
-                        "file contents couldn't be read properly on {file_to_import}"
-                    ),
-                    import.position_start().unwrap(),
-                    import.position_end().unwrap(),
+                    &format!("file contents couldn't be read properly on {file_to_import}"),
+                    import_value.position_start().unwrap(),
+                    import_value.position_end().unwrap(),
                     Some("add a UTF-8 encoded '.glang' file you would like to import"),
                 )));
             }
