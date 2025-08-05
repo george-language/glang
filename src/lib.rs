@@ -43,8 +43,9 @@ pub fn run(filename: &str, code: Option<String>) -> Option<StandardError> {
         }
     };
 
-    let start = Instant::now();
+    let total_time = Instant::now();
 
+    let lexing_time = Instant::now();
     let mut lexer = Lexer::new(filename, contents.clone());
     let token_result = lexer.make_tokens();
 
@@ -52,6 +53,9 @@ pub fn run(filename: &str, code: Option<String>) -> Option<StandardError> {
         return token_result.err();
     }
 
+    let lexing_time = lexing_time.elapsed();
+
+    let parsing_time = Instant::now();
     let mut parser = Parser::new(&token_result.ok().unwrap());
     let ast = parser.parse();
 
@@ -59,6 +63,9 @@ pub fn run(filename: &str, code: Option<String>) -> Option<StandardError> {
         return ast.error;
     }
 
+    let parsing_time = parsing_time.elapsed();
+
+    let interpreting_time = Instant::now();
     let mut interpreter = Interpreter::new();
     let context = Rc::new(RefCell::new(Context::new(
         "<program>".to_string(),
@@ -76,8 +83,16 @@ pub fn run(filename: &str, code: Option<String>) -> Option<StandardError> {
 
     let result = interpreter.visit(ast.node.unwrap(), context.clone());
 
+    let interpreting_time = interpreting_time.elapsed();
+
     if cfg!(feature = "benchmark") {
-        println!("Time elapsed: {:?}ms", start.elapsed().as_millis());
+        println!(
+            "Total time elapsed: {:?}ms",
+            total_time.elapsed().as_millis()
+        );
+        println!("Time to lex: {:?}ms", lexing_time.as_millis());
+        println!("Time to parse: {:?}ms", parsing_time.as_millis());
+        println!("Time to interpret: {:?}ms", interpreting_time.as_millis());
     }
 
     result.error
