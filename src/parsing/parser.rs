@@ -264,6 +264,7 @@ impl Parser {
     pub fn if_expr_c(&mut self) -> (ParseResult, Option<(Box<AstNode>, bool)>) {
         let mut parse_result = ParseResult::new();
         let mut else_case: Option<(Box<AstNode>, bool)> = None;
+        let (pos_start, pos_end) = self.current_pos_range();
 
         if self
             .current_token_ref()
@@ -276,8 +277,8 @@ impl Parser {
                 return (
                     parse_result.failure(Some(StandardError::new(
                         "expected '{'",
-                        self.current_pos_start(),
-                        self.current_pos_end(),
+                        pos_start,
+                        pos_end,
                         Some("add a '{' to define the body"),
                     ))),
                     None,
@@ -301,8 +302,8 @@ impl Parser {
                 return (
                     parse_result.failure(Some(StandardError::new(
                         "expected '}'",
-                        self.current_pos_start(),
-                        self.current_pos_end(),
+                        pos_start,
+                        pos_end,
                         Some("add a '}' to close the body"),
                     ))),
                     None,
