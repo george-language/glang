@@ -59,9 +59,8 @@ impl Interpreter {
             return ast.error;
         }
 
-        self.visit(ast.node.unwrap(), context);
-
-        None
+        let result = self.visit(ast.node.unwrap(), context);
+        result.error
     }
 
     pub fn visit(&mut self, node: Box<AstNode>, context: Rc<RefCell<Context>>) -> RuntimeResult {
