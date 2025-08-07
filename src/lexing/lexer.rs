@@ -45,7 +45,7 @@ impl Lexer {
 
         while let Some(current_char) = self.current_char {
             let token = match current_char {
-                ' ' | '\t' => {
+                ' ' | '\t' | '\n' => {
                     self.advance();
 
                     continue;
@@ -55,13 +55,14 @@ impl Lexer {
 
                     continue;
                 }
-                ';' | '\n' => {
+                ';' => {
                     let token = Token::new(
-                        TokenType::TT_NEWLINE,
+                        TokenType::TT_SEMICOLON,
                         None,
                         Some(self.position.clone()),
                         None,
                     );
+
                     self.advance();
 
                     Some(token)

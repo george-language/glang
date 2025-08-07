@@ -46,14 +46,6 @@ impl Parser {
         self.current_token.clone()
     }
 
-    #[inline]
-    pub fn skip_newlines(&mut self, parse_result: &mut ParseResult) {
-        while self.current_token_ref().token_type == TokenType::TT_NEWLINE {
-            parse_result.register_advancement();
-            self.advance();
-        }
-    }
-
     pub fn update_current_token(&mut self) {
         if self.token_index >= 0 && self.token_index < self.tokens.len() as isize {
             self.current_token = Some(self.tokens[self.token_index as usize].clone());
@@ -86,6 +78,25 @@ impl Parser {
             .as_ref()
             .unwrap()
             .clone()
+    }
+
+    pub fn current_pos_range(&self) -> (Position, Position) {
+        (
+            self.current_token
+                .as_ref()
+                .unwrap()
+                .pos_start
+                .as_ref()
+                .unwrap()
+                .clone(),
+            self.current_token
+                .as_ref()
+                .unwrap()
+                .pos_end
+                .as_ref()
+                .unwrap()
+                .clone(),
+        )
     }
 
     pub fn parse(&mut self) -> ParseResult {
@@ -165,21 +176,19 @@ impl Parser {
     pub fn list_expr(&mut self) -> ParseResult {
         let mut parse_result = ParseResult::new();
         let mut element_nodes: Vec<Box<AstNode>> = Vec::new();
-        let pos_start = self.current_token_ref().pos_start.clone();
+        let pos_start = self.current_pos_start();
 
         if self.current_token_ref().token_type != TokenType::TT_LSQUARE {
             return parse_result.failure(Some(StandardError::new(
                 "expected list initializing bracket",
-                self.current_token_copy().pos_start.unwrap(),
-                self.current_token_copy().pos_end.unwrap(),
+                self.current_pos_start(),
+                self.current_pos_end(),
                 Some("add a '[' to start the list"),
             )));
         }
 
         parse_result.register_advancement();
         self.advance();
-
-        self.skip_newlines(&mut parse_result);
 
         if self.current_token_ref().token_type == TokenType::TT_RSQUARE {
             parse_result.register_advancement();
@@ -202,8 +211,6 @@ impl Parser {
                 parse_result.register_advancement();
                 self.advance();
 
-                self.skip_newlines(&mut parse_result);
-
                 let element = parse_result.register(self.expr());
 
                 if parse_result.error.is_some() {
@@ -213,13 +220,11 @@ impl Parser {
                 element_nodes.push(element.unwrap());
             }
 
-            self.skip_newlines(&mut parse_result);
-
             if self.current_token_ref().token_type != TokenType::TT_RSQUARE {
                 return parse_result.failure(Some(StandardError::new(
                     "expected closing bracket or next list element",
-                    self.current_token_copy().pos_start.unwrap(),
-                    self.current_token_copy().pos_end.unwrap(),
+                    self.current_pos_start(),
+                    self.current_pos_end(),
                     Some("add a ']' to close the list or add a list element followed by a comma"),
                 )));
             }
@@ -230,7 +235,7 @@ impl Parser {
 
         parse_result.success(Some(Box::new(AstNode::List(ListNode::new(
             &element_nodes,
-            pos_start,
+            Some(pos_start),
             self.current_token_copy().pos_end,
         )))))
     }
@@ -266,8 +271,6 @@ impl Parser {
         {
             parse_result.register_advancement();
             self.advance();
-
-            self.skip_newlines(&mut parse_result);
 
             if self.current_token_ref().token_type != TokenType::TT_LBRACKET {
                 return (
@@ -370,6 +373,7 @@ impl Parser {
         Option<(Box<AstNode>, bool)>,
     ) {
         let mut parse_result = ParseResult::new();
+        let (pos_start, pos_end) = self.current_pos_range();
         let mut cases: Vec<(Box<AstNode>, Box<AstNode>, bool)> = Vec::new();
         let mut else_case: Option<(Box<AstNode>, bool)> = None;
 
@@ -380,8 +384,8 @@ impl Parser {
             return (
                 parse_result.failure(Some(StandardError::new(
                     "expected keyword",
-                    self.current_pos_start(),
-                    self.current_pos_end(),
+                    pos_start,
+                    pos_end,
                     Some(format!("add the '{keyword}' keyword").as_str()),
                 ))),
                 Vec::new(),
@@ -398,14 +402,12 @@ impl Parser {
             return (parse_result, Vec::new(), None);
         }
 
-        self.skip_newlines(&mut parse_result);
-
         if self.current_token_ref().token_type != TokenType::TT_LBRACKET {
             return (
                 parse_result.failure(Some(StandardError::new(
                     "expected '{'",
-                    self.current_pos_start(),
-                    self.current_pos_end(),
+                    pos_start,
+                    pos_end,
                     Some("add a '{' to define the body"),
                 ))),
                 Vec::new(),
@@ -432,8 +434,8 @@ impl Parser {
             return (
                 parse_result.failure(Some(StandardError::new(
                     "expected '}'",
-                    self.current_pos_start(),
-                    self.current_pos_end(),
+                    pos_start,
+                    pos_end,
                     Some("add a '}' to close the body"),
                 ))),
                 Vec::new(),
@@ -459,14 +461,17 @@ impl Parser {
     pub fn for_expr(&mut self) -> ParseResult {
         let mut parse_result = ParseResult::new();
 
+        // We clone these two so the error output doesn't skip with 'walk' token (fixed output of errors)
+        let (pos_start, pos_end) = self.current_pos_range();
+
         if !self
             .current_token_ref()
             .matches(TokenType::TT_KEYWORD, "walk")
         {
             return parse_result.failure(Some(StandardError::new(
                 "expected keyword",
-                self.current_pos_start(),
-                self.current_pos_end(),
+                pos_start,
+                pos_end,
                 Some("add the 'walk' keyword to represent a for loop"),
             )));
         }
@@ -477,21 +482,22 @@ impl Parser {
         if self.current_token_ref().token_type != TokenType::TT_IDENTIFIER {
             return parse_result.failure(Some(StandardError::new(
                 "expected identifier",
-                self.current_pos_start(),
-                self.current_pos_end(),
+                pos_start,
+                pos_end,
                 Some("add an object name like 'i' to represent a for loop's iterator"),
             )));
         }
 
         let var_name = self.current_token_copy();
+
         parse_result.register_advancement();
         self.advance();
 
         if self.current_token_ref().token_type != TokenType::TT_EQ {
             return parse_result.failure(Some(StandardError::new(
                 "expected '='",
-                self.current_pos_start(),
-                self.current_pos_end(),
+                pos_start,
+                pos_end,
                 Some(
                     format!(
                         "add an '=' to set the value of the variable '{}'",
@@ -517,8 +523,8 @@ impl Parser {
         {
             return parse_result.failure(Some(StandardError::new(
                 "expected 'through'",
-                self.current_pos_start(),
-                self.current_pos_end(),
+                pos_start,
+                pos_end,
                 Some("add the 'through' keyword to define a range 'n through n'"),
             )));
         }
@@ -544,8 +550,8 @@ impl Parser {
             if self.current_token_ref().token_type != TokenType::TT_EQ {
                 return parse_result.failure(Some(StandardError::new(
                     "expected '='",
-                    self.current_pos_start(),
-                    self.current_pos_end(),
+                    pos_start,
+                    pos_end,
                     Some("add an '=' to set the step amount"),
                 )));
             }
@@ -562,97 +568,11 @@ impl Parser {
             step_value = None;
         }
 
-        self.skip_newlines(&mut parse_result);
-
         if self.current_token_ref().token_type != TokenType::TT_LBRACKET {
             return parse_result.failure(Some(StandardError::new(
                 "expected '{'",
-                self.current_pos_start(),
-                self.current_pos_end(),
-                Some("add a '{' to define the body"),
-            )));
-        }
-
-        parse_result.register_advancement();
-        self.advance();
-
-        if self.current_token_ref().token_type == TokenType::TT_NEWLINE {
-            parse_result.register_advancement();
-            self.advance();
-
-            let body = parse_result.register(self.statements());
-
-            if parse_result.error.is_some() {
-                return parse_result;
-            }
-
-            if self.current_token_ref().token_type != TokenType::TT_RBRACKET {
-                return parse_result.failure(Some(StandardError::new(
-                    "expected '}'",
-                    self.current_pos_start(),
-                    self.current_pos_end(),
-                    Some("add a '}' to close the body"),
-                )));
-            }
-
-            parse_result.register_advancement();
-            self.advance();
-
-            return parse_result.success(Some(Box::new(AstNode::For(ForNode::new(
-                var_name,
-                start_value.unwrap(),
-                end_value.unwrap(),
-                step_value,
-                body.unwrap(),
-            )))));
-        }
-
-        let body = parse_result.register(self.statement());
-
-        if parse_result.error.is_some() {
-            return parse_result;
-        }
-
-        parse_result.success(Some(Box::new(AstNode::For(ForNode::new(
-            var_name,
-            start_value.unwrap(),
-            end_value.unwrap(),
-            step_value,
-            body.unwrap(),
-        )))))
-    }
-
-    pub fn while_expr(&mut self) -> ParseResult {
-        let mut parse_result = ParseResult::new();
-
-        if !self
-            .current_token_ref()
-            .matches(TokenType::TT_KEYWORD, "while")
-        {
-            return parse_result.failure(Some(StandardError::new(
-                "expected keyword",
-                self.current_pos_start(),
-                self.current_pos_end(),
-                Some("add the 'while' keyword to represent a while loop"),
-            )));
-        }
-
-        parse_result.register_advancement();
-        self.advance();
-
-        let condition = parse_result.register(self.expr());
-
-        if parse_result.error.is_some() {
-            return parse_result;
-        }
-
-        self.skip_newlines(&mut parse_result);
-
-        if self.current_token_ref().token_type != TokenType::TT_LBRACKET {
-            return parse_result.failure(Some(StandardError::new(
-                "expected '{'",
-                self.current_pos_start(),
-                self.current_pos_end(),
+                pos_start,
+                pos_end,
                 Some("add a '{' to define the body"),
             )));
         }
@@ -669,8 +589,72 @@ impl Parser {
         if self.current_token_ref().token_type != TokenType::TT_RBRACKET {
             return parse_result.failure(Some(StandardError::new(
                 "expected '}'",
-                self.current_pos_start(),
-                self.current_pos_end(),
+                pos_start,
+                pos_end,
+                Some("add a '}' to close the body"),
+            )));
+        }
+
+        parse_result.register_advancement();
+        self.advance();
+
+        return parse_result.success(Some(Box::new(AstNode::For(ForNode::new(
+            var_name,
+            start_value.unwrap(),
+            end_value.unwrap(),
+            step_value,
+            body.unwrap(),
+        )))));
+    }
+
+    pub fn while_expr(&mut self) -> ParseResult {
+        let mut parse_result = ParseResult::new();
+        let (pos_start, pos_end) = self.current_pos_range();
+
+        if !self
+            .current_token_ref()
+            .matches(TokenType::TT_KEYWORD, "while")
+        {
+            return parse_result.failure(Some(StandardError::new(
+                "expected keyword",
+                pos_start,
+                pos_end,
+                Some("add the 'while' keyword to represent a while loop"),
+            )));
+        }
+
+        parse_result.register_advancement();
+        self.advance();
+
+        let condition = parse_result.register(self.expr());
+
+        if parse_result.error.is_some() {
+            return parse_result;
+        }
+
+        if self.current_token_ref().token_type != TokenType::TT_LBRACKET {
+            return parse_result.failure(Some(StandardError::new(
+                "expected '{'",
+                pos_start,
+                pos_end,
+                Some("add a '{' to define the body"),
+            )));
+        }
+
+        parse_result.register_advancement();
+        self.advance();
+
+        let body = parse_result.register(self.statements());
+
+        if parse_result.error.is_some() {
+            return parse_result;
+        }
+
+        if self.current_token_ref().token_type != TokenType::TT_RBRACKET {
+            return parse_result.failure(Some(StandardError::new(
+                "expected '}'",
+                pos_start,
+                pos_end,
                 Some("add a '}' to close the body"),
             )));
         }
@@ -686,6 +670,7 @@ impl Parser {
 
     pub fn try_expr(&mut self) -> ParseResult {
         let mut parse_result = ParseResult::new();
+        let (pos_start, pos_end) = self.current_pos_range();
 
         if !self
             .current_token_ref()
@@ -693,22 +678,20 @@ impl Parser {
         {
             return parse_result.failure(Some(StandardError::new(
                 "expected keyword",
-                self.current_pos_start(),
-                self.current_pos_end(),
-                Some("add the 'unsafe' keyword to represent try/except behaviour"),
+                pos_start,
+                pos_end,
+                Some("add the 'unsafe' keyword to represent the block of code that is dangerous"),
             )));
         }
 
         parse_result.register_advancement();
         self.advance();
 
-        self.skip_newlines(&mut parse_result);
-
         if self.current_token_ref().token_type != TokenType::TT_LBRACKET {
             return parse_result.failure(Some(StandardError::new(
                 "expected '{'",
-                self.current_pos_start(),
-                self.current_pos_end(),
+                pos_start,
+                pos_end,
                 Some("add a '{' to define the body"),
             )));
         }
@@ -725,8 +708,8 @@ impl Parser {
         if self.current_token_ref().token_type != TokenType::TT_RBRACKET {
             return parse_result.failure(Some(StandardError::new(
                 "expected '}'",
-                self.current_pos_start(),
-                self.current_pos_end(),
+                pos_start,
+                pos_end,
                 Some("add a '}' to close the body"),
             )));
         }
@@ -734,7 +717,7 @@ impl Parser {
         parse_result.register_advancement();
         self.advance();
 
-        self.skip_newlines(&mut parse_result);
+        let (pos_start, pos_end) = self.current_pos_range();
 
         if !self
             .current_token_ref()
@@ -742,22 +725,20 @@ impl Parser {
         {
             return parse_result.failure(Some(StandardError::new(
                 "expected keyword",
-                self.current_pos_start(),
-                self.current_pos_end(),
-                Some("add the 'ok' keyword to represent try/except behaviour"),
+                pos_start,
+                pos_end,
+                Some("add the 'safe' keyword to represent the block of code to fall back to if the 'unsafe' block fails"),
             )));
         }
 
         parse_result.register_advancement();
         self.advance();
 
-        self.skip_newlines(&mut parse_result);
-
         if self.current_token_ref().token_type != TokenType::TT_IDENTIFIER {
             return parse_result.failure(Some(StandardError::new(
                 "expected identifier",
-                self.current_pos_start(),
-                self.current_pos_end(),
+                pos_start,
+                pos_end,
                 Some("add a name for the exception error like 'error'"),
             )));
         }
@@ -770,8 +751,8 @@ impl Parser {
         if self.current_token_ref().token_type != TokenType::TT_LBRACKET {
             return parse_result.failure(Some(StandardError::new(
                 "expected '{'",
-                self.current_pos_start(),
-                self.current_pos_end(),
+                pos_start,
+                pos_end,
                 Some("add a '{' to define the body"),
             )));
         }
@@ -788,8 +769,8 @@ impl Parser {
         if self.current_token_ref().token_type != TokenType::TT_RBRACKET {
             return parse_result.failure(Some(StandardError::new(
                 "expected '}'",
-                self.current_pos_start(),
-                self.current_pos_end(),
+                pos_start,
+                pos_end,
                 Some("add a '}' to close the body"),
             )));
         }
@@ -1023,11 +1004,6 @@ impl Parser {
         let mut statements: Vec<Box<AstNode>> = Vec::new();
         let pos_start = self.current_pos_start();
 
-        while self.current_token_ref().token_type == TokenType::TT_NEWLINE {
-            parse_result.register_advancement();
-            self.advance();
-        }
-
         if self.current_token_ref().token_type == TokenType::TT_EOF {
             return parse_result.success(Some(Box::new(AstNode::List(ListNode::new(
                 &[],
@@ -1044,32 +1020,15 @@ impl Parser {
 
         statements.push(statement.unwrap());
 
-        let mut more_statements = true;
-
         loop {
-            let mut newline_count: usize = 0;
-
-            while self.current_token_ref().token_type == TokenType::TT_NEWLINE {
+            if self.current_token_ref().token_type == TokenType::TT_SEMICOLON {
                 parse_result.register_advancement();
                 self.advance();
-
-                newline_count += 1;
             }
 
-            if newline_count == 0 {
-                more_statements = false;
-            }
-
-            if !more_statements {
-                break;
-            }
-
-            if self.current_token_ref().token_type == TokenType::TT_EOF {
-                break;
-            }
-
-            if self.current_token_ref().token_type == TokenType::TT_RBRACKET {
-                break;
+            match self.current_token_ref().token_type {
+                TokenType::TT_EOF | TokenType::TT_RBRACKET => break,
+                _ => {}
             }
 
             let statement = parse_result.register(self.statement());
@@ -1393,8 +1352,6 @@ impl Parser {
 
         parse_result.register_advancement();
         self.advance();
-
-        self.skip_newlines(&mut parse_result);
 
         if self.current_token_ref().token_type != TokenType::TT_LBRACKET {
             return parse_result.failure(Some(StandardError::new(

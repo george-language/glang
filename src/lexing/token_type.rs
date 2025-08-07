@@ -31,7 +31,7 @@ pub enum TokenType {
     TT_GTE,
     TT_COMMA,
     TT_ARROW,
-    TT_NEWLINE,
+    TT_SEMICOLON,
     TT_EOF,
 }
 
@@ -65,7 +65,7 @@ impl Display for TokenType {
             TokenType::TT_GTE => "GTE",
             TokenType::TT_COMMA => "COMMA",
             TokenType::TT_ARROW => "ARROW",
-            TokenType::TT_NEWLINE => "NEWLINE",
+            TokenType::TT_SEMICOLON => "SEMICOLON",
             TokenType::TT_EOF => "EOF",
         };
         write!(f, "{text}")
