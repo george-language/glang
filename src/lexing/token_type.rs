@@ -1,8 +1,7 @@
-#![warn(non_camel_case_types)]
-
 use std::fmt::{Display, Formatter, Result};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[allow(non_camel_case_types)]
 pub enum TokenType {
     TT_INT,
     TT_FLOAT,
@@ -16,7 +15,6 @@ pub enum TokenType {
     TT_POW,
     TT_MOD,
     TT_EQ,
-    TT_AT,
     TT_LPAREN,
     TT_RPAREN,
     TT_LSQUARE,
@@ -50,7 +48,6 @@ impl Display for TokenType {
             TokenType::TT_POW => "POW",
             TokenType::TT_MOD => "MOD",
             TokenType::TT_EQ => "EQ",
-            TokenType::TT_AT => "AT",
             TokenType::TT_LPAREN => "LPAREN",
             TokenType::TT_RPAREN => "RPAREN",
             TokenType::TT_LSQUARE => "LSQUARE",
