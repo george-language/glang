@@ -402,9 +402,7 @@ impl BuiltInFunction {
             return result;
         }
 
-        result.success(Some(Str::from(
-            args[0].object_type().to_string().as_str(),
-        )))
+        result.success(Some(Str::from(args[0].object_type().to_string().as_str())))
     }
 
     pub fn execute_exec(&self, args: &[Value], exec_ctx: Rc<RefCell<Context>>) -> RuntimeResult {
@@ -479,17 +477,13 @@ impl BuiltInFunction {
         };
 
         match env::var(&variable) {
-            Ok(var) => {
-                result.success(Some(Str::from(&var)))
-            }
-            Err(_) => {
-                result.failure(Some(StandardError::new(
-                    "unable to access environment variable",
-                    env_arg.position_start().unwrap().clone(),
-                    env_arg.position_end().unwrap().clone(),
-                    None,
-                )))
-            }
+            Ok(var) => result.success(Some(Str::from(&var))),
+            Err(_) => result.failure(Some(StandardError::new(
+                "unable to access environment variable",
+                env_arg.position_start().unwrap().clone(),
+                env_arg.position_end().unwrap().clone(),
+                None,
+            ))),
         }
     }
 

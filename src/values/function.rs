@@ -1,5 +1,3 @@
-use std::{cell::RefCell, rc::Rc, sync::Arc};
-
 use crate::{
     errors::standard_error::StandardError,
     interpreting::{
@@ -10,6 +8,7 @@ use crate::{
     nodes::ast_node::AstNode,
     values::{number::Number, value::Value},
 };
+use std::{cell::RefCell, rc::Rc, sync::Arc};
 
 #[derive(Debug, Clone)]
 pub struct Function {

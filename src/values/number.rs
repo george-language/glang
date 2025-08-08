@@ -1,9 +1,8 @@
-use std::{cell::RefCell, rc::Rc};
-
 use crate::{
     errors::standard_error::StandardError, interpreting::context::Context,
     lexing::position::Position, values::value::Value,
 };
+use std::{cell::RefCell, rc::Rc};
 
 #[derive(Debug, Clone)]
 pub struct Number {

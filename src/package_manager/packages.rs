@@ -195,7 +195,7 @@ pub fn add_package(name: &str) {
             return;
         }
 
-        if is_package_installed(&pkg_name) {
+        if is_package_installed(pkg_name) {
             log_message(&format!("Requirement '{}' is already installed", &pkg_name));
 
             continue;

@@ -1,5 +1,3 @@
-use std::{cell::RefCell, rc::Rc};
-
 use crate::{
     errors::standard_error::StandardError,
     interpreting::context::Context,
@@ -9,6 +7,7 @@ use crate::{
         string::Str,
     },
 };
+use std::{cell::RefCell, rc::Rc};
 
 #[derive(Debug, Clone)]
 pub enum Value {

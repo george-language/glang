@@ -1,11 +1,10 @@
-use std::{cell::RefCell, rc::Rc};
-
 use crate::{
     errors::standard_error::StandardError,
     interpreting::context::Context,
     lexing::position::Position,
     values::{number::Number, value::Value},
 };
+use std::{cell::RefCell, rc::Rc};
 
 #[derive(Debug, Clone)]
 pub struct Str {
@@ -49,30 +48,22 @@ impl Str {
 
                     Ok(Value::StringValue(copy))
                 }
-                "==" => {
-                    Ok(Value::NumberValue(Number::new(
-                        (self.value == value.value) as u8 as f64,
-                    ))
-                    .set_context(self.context.clone()))
-                }
-                "!=" => {
-                    Ok(Value::NumberValue(Number::new(
-                        (self.value != value.value) as u8 as f64,
-                    ))
-                    .set_context(self.context.clone()))
-                }
-                "and" => {
-                    Ok(Value::NumberValue(Number::new(
-                        (!self.value.is_empty() && !value.value.is_empty()) as u8 as f64,
-                    ))
-                    .set_context(self.context.clone()))
-                }
-                "or" => {
-                    Ok(Value::NumberValue(Number::new(
-                        (!self.value.is_empty() || !value.value.is_empty()) as u8 as f64,
-                    ))
-                    .set_context(self.context.clone()))
-                }
+                "==" => Ok(Value::NumberValue(Number::new(
+                    (self.value == value.value) as u8 as f64,
+                ))
+                .set_context(self.context.clone())),
+                "!=" => Ok(Value::NumberValue(Number::new(
+                    (self.value != value.value) as u8 as f64,
+                ))
+                .set_context(self.context.clone())),
+                "and" => Ok(Value::NumberValue(Number::new(
+                    (!self.value.is_empty() && !value.value.is_empty()) as u8 as f64,
+                ))
+                .set_context(self.context.clone())),
+                "or" => Ok(Value::NumberValue(Number::new(
+                    (!self.value.is_empty() || !value.value.is_empty()) as u8 as f64,
+                ))
+                .set_context(self.context.clone())),
                 _ => Err(self.illegal_operation(Some(&other))),
             },
             Value::NumberValue(ref value) => match operator {

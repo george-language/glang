@@ -599,13 +599,13 @@ impl Parser {
         parse_result.register_advancement();
         self.advance();
 
-        return parse_result.success(Some(Box::new(AstNode::For(ForNode::new(
+        parse_result.success(Some(Box::new(AstNode::For(ForNode::new(
             var_name,
             start_value.unwrap(),
             end_value.unwrap(),
             step_value,
             body.unwrap(),
-        )))));
+        )))))
     }
 
     pub fn while_expr(&mut self) -> ParseResult {
