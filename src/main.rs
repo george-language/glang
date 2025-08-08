@@ -2,7 +2,7 @@ use clap::{Parser, Subcommand};
 use std::env;
 use std::path::Path;
 
-const VERSION: &str = "3.0";
+const VERSION: &str = "3.1";
 
 #[derive(Parser)]
 #[command(name = "glang", version = VERSION, about = "The George Programming Language")]
