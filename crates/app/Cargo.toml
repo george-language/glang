@@ -11,6 +11,7 @@ glang-parser = { path = "../glang-parser" }
 glang-interpreter = { path = "../glang-interpreter" }
 glang-package-manager = { path = "../glang-package-manager" }
 glang-attributes = { path = "../glang-attributes" }
+glang-logging = { path = "../glang-logging" }
 clap = { version = "4.5.40", features = ["derive"] }
 dirs = "6.0.0"
 

@@ -512,6 +512,7 @@ dependencies = [
  "glang-attributes",
  "glang-interpreter",
  "glang-lexer",
+ "glang-logging",
  "glang-package-manager",
  "glang-parser",
 ]
@@ -540,10 +541,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "glang-logging"
+version = "3.1.0"
+dependencies = [
+ "simply_colored",
+]
+
+[[package]]
 name = "glang-package-manager"
 version = "3.1.0"
 dependencies = [
  "dirs",
+ "glang-logging",
  "reqwest",
  "serde",
  "serde_json",

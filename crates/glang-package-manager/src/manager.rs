@@ -1,5 +1,5 @@
-use crate::logs::{log_error, log_header, log_message, log_package_status};
 use crate::package_path::get_package_path;
+use glang_logging::{log_error, log_header, log_message, log_package_status};
 use reqwest::blocking::get;
 use serde::Deserialize;
 use simply_colored::*;
@@ -29,7 +29,7 @@ pub fn create_package_dir() {
         match fs::create_dir_all(&config_path) {
             Ok(_) => {}
             Err(e) => log_error(&format!(
-                "Unable to build '.glang' configuration directory: {e}"
+                "unable to build '.glang' configuration directory ({e})"
             )),
         }
     }
@@ -40,7 +40,7 @@ pub fn create_package_dir() {
         match fs::create_dir_all(&package_dir) {
             Ok(_) => {}
             Err(e) => {
-                log_error(&format!("Failed to create 'kennels' directory: {e}"));
+                log_error(&format!("failed to create 'kennels' directory ({e})"));
 
                 return;
             }
@@ -69,7 +69,7 @@ pub fn add_package(name: &str) {
     ) {
         Ok(r) => r,
         Err(e) => {
-            log_error(&format!("Failed to retrieve registry: {e}"));
+            log_error(&format!("failed to retrieve registry ({e})"));
 
             return;
         }
@@ -78,7 +78,7 @@ pub fn add_package(name: &str) {
     let mut registry_json = String::new();
 
     if let Err(e) = resp.read_to_string(&mut registry_json) {
-        log_error(&format!("Failed to read registry data: {e}"));
+        log_error(&format!("failed to read registry data ({e})"));
 
         return;
     }
@@ -86,7 +86,7 @@ pub fn add_package(name: &str) {
     let packages: Vec<PackageRegistry> = match serde_json::from_str(&registry_json) {
         Ok(p) => p,
         Err(e) => {
-            log_error(&format!("Failed to parse registry JSON: {e}"));
+            log_error(&format!("failed to parse registry JSON ({e})"));
 
             return;
         }
@@ -95,7 +95,7 @@ pub fn add_package(name: &str) {
     let package = match packages.iter().find(|p| p.name == name) {
         Some(p) => p,
         None => {
-            log_error(&format!("Kennel '{name}' not found in registry"));
+            log_error(&format!("kennel '{name}' not found in registry"));
 
             return;
         }
@@ -115,13 +115,13 @@ pub fn add_package(name: &str) {
         Ok(r) => match r.bytes() {
             Ok(b) => b,
             Err(e) => {
-                log_error(&format!("Failed to get zip content: {e}"));
+                log_error(&format!("failed to get zip content ({e})"));
 
                 return;
             }
         },
         Err(e) => {
-            log_error(&format!("Failed to download zip: {e}"));
+            log_error(&format!("failed to download zip ({e})"));
 
             return;
         }
@@ -136,7 +136,7 @@ pub fn add_package(name: &str) {
     let mut archive = match ZipArchive::new(reader) {
         Ok(archive) => archive,
         Err(e) => {
-            log_error(&format!("Failed to open zip archive: {e}"));
+            log_error(&format!("failed to open zip archive ({e})"));
 
             return;
         }
@@ -157,12 +157,12 @@ pub fn add_package(name: &str) {
 
         if file.name().ends_with('/') {
             fs::create_dir_all(&path).unwrap_or_else(|e| {
-                log_error(&format!("Failed to create dir {path:?}: {e}"));
+                log_error(&format!("failed to create dir {path:?} ({e})"));
             });
         } else {
             if let Some(parent) = path.parent() {
                 fs::create_dir_all(parent).unwrap_or_else(|e| {
-                    log_error(&format!("Failed to create dir {parent:?}: {e}"));
+                    log_error(&format!("Failed to create dir {parent:?} ({e})"));
                 });
             }
 
@@ -202,7 +202,7 @@ pub fn add_package(name: &str) {
 
         if pkg_name == name {
             log_error(
-                "Cannot require the Kennel dependency of another Kennel (circular requirements)",
+                "cannot require the kennel dependency of another kennel (circular requirements)",
             );
 
             return;

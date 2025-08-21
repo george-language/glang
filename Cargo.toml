@@ -6,6 +6,7 @@ members = [
     "crates/glang-interpreter",
     "crates/glang-package-manager",
     "crates/glang-attributes",
+    "crates/glang-logging",
 ]
 resolver = "3"
 
