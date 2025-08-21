@@ -2,8 +2,8 @@ use clap::{Parser as ClapParser, Subcommand};
 use glang_attributes::StandardError;
 use glang_interpreter::{Context, Interpreter};
 use glang_lexer::Lexer;
+use glang_package_manager::log_error;
 use glang_parser::Parser;
-use simply_colored::*;
 use std::cell::RefCell;
 use std::{
     env, fs,
@@ -56,10 +56,14 @@ fn main() {
             .to_string_lossy()
             .replace("\\", "/");
 
+        // these variables are set so that we can use them inside glang
+        // GLANG_STD is the path to the standard library ('library')
+        // GLANG_PKG is the path to the 'kennels' directory
         env::set_var("GLANG_STD", &std_path);
         env::set_var("GLANG_PKG", &pkg_path);
     }
 
+    // We have to run this everytime the glang executable is ran to double check 'kennels/' always exists
     glang_package_manager::create_package_dir();
 
     let cli = Cli::parse();
@@ -81,18 +85,48 @@ fn main() {
             glang_package_manager::update_package(&name);
         }
         (None, Some(file)) => {
+            if !file.ends_with(".glang") {
+                log_error("failed to read provided file (not a '.glang' file)");
+
+                return;
+            }
+
+            // if the file argument is valid, pass it on to the run function
             let error = run(&file, None);
 
             if let Some(err) = error {
-                println!("{err}");
+                log_error(&format!("{err}"));
             }
         }
         (None, None) => {
-            launch_repl(VERSION);
+            // 'glang' by itself will just run the REPL, similar to python
+            launch_repl();
         }
     }
 }
 
+/// Run a '.glang' file or raw glang source code
+///
+/// ```rust
+/// let result = run("example.glang", None);
+///
+/// if let Some(err) = result {
+///     println!("{err}");
+/// }
+/// ```
+///
+/// Running raw glang code:
+///
+/// ```rust
+/// let result = run("<stdin>", Some("bark(1 + 1);".to_string()));
+///
+/// if let Some(err) = result {
+///     println!("{err}");
+/// }
+/// ```
+///
+/// If the binary is built with the `benchmark` feature enabled, e.g. `cargo build --features benchmark`,
+/// this function will automatically time the lexing -> parsing -> interpreting process and display the result
 fn run(filename: &str, code: Option<String>) -> Option<StandardError> {
     let contents = if filename == "<stdin>" {
         code.unwrap_or_default()
@@ -100,7 +134,7 @@ fn run(filename: &str, code: Option<String>) -> Option<StandardError> {
         match fs::read_to_string(filename) {
             Ok(s) => s,
             Err(e) => {
-                println!("{DIM_RED}Failed to read provided '.glang' file: {e}{RESET}");
+                log_error(&format!("failed to read provided '.glang' file ({e})"));
 
                 return None;
             }
@@ -150,6 +184,7 @@ fn run(filename: &str, code: Option<String>) -> Option<StandardError> {
     let interpreting_time = interpreting_time.elapsed();
 
     if cfg!(feature = "benchmark") {
+        // only display benchmarking if feature is enabled
         println!(
             "Total time elapsed: {:?}ms",
             total_time.elapsed().as_millis()
@@ -162,8 +197,15 @@ fn run(filename: &str, code: Option<String>) -> Option<StandardError> {
     result.error
 }
 
-fn launch_repl(version: &str) {
-    println!("George Language {version}\nType '/exit' to exit");
+/// Starts the glang REPL using stdio
+///
+/// ```rust
+/// launch_repl();
+/// ```
+///
+/// Effectively just a infinite loop running code and evaluating it
+fn launch_repl() {
+    println!("George Language {VERSION}\nType '/exit' to exit");
 
     loop {
         let mut code = String::new();
@@ -184,12 +226,22 @@ fn launch_repl(version: &str) {
         if let Some(e) = error {
             println!("{e}");
 
-            continue;
+            continue; // keep evaluating more code
         }
     }
 }
 
-pub fn new_project(dir_name: &Path, init: bool) {
+/// Creates a glang project folder
+/// - adds the `src/` folder
+/// - adds the `main.glang` file with a "hello world" program already written inside
+/// - adds a `README.md` for instructions and info
+///
+/// ```rust
+/// new_project(&Path::from("example_project"), false));
+/// ```
+///
+/// If `init` is set to true, glang will initialize a project in the current directory
+fn new_project(dir_name: &Path, init: bool) {
     if !init {
         fs::create_dir(dir_name).expect("Cannot create directory (invalid name)");
     }

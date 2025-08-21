@@ -514,7 +514,6 @@ dependencies = [
  "glang-lexer",
  "glang-package-manager",
  "glang-parser",
- "simply_colored",
 ]
 
 [[package]]
