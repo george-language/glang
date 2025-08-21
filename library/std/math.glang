@@ -1,16 +1,23 @@
 # file math.glang: math functions and objects
 
+# close approximations of both E and Pi
 obj math_pi = 3.141592653589793;
 obj math_e = 2.718281828459045;
 
+# convert degrees to radians
+# returns the value of degrees converted to radians
 func math_radians(degrees) {
     give degrees * (math_pi / 180.0);
 }
 
+# convert radians to degrees
+# returns the value of radians converted to degrees
 func math_degrees(radians) {
     give radians * (180.0 / math_pi);
 }
 
+# get absolute value
+# returns the absolute value of 'x'
 func math_abs(x) {
     if x >= 0 {
         give x;
@@ -19,6 +26,8 @@ func math_abs(x) {
     };
 }
 
+# get square root
+# returns the square root of 'x'
 func math_sqrt(x) {
     if x < 0 {
         uhoh("cannot compute square root of negative number");
