@@ -32,27 +32,27 @@ impl Parser {
         parser
     }
 
-    pub fn advance(&mut self) -> Option<Token> {
+    fn advance(&mut self) -> Option<Token> {
         self.token_index += 1;
         self.update_current_token();
 
         self.current_token.clone()
     }
 
-    pub fn reverse(&mut self, amount: usize) -> Option<Token> {
+    fn reverse(&mut self, amount: usize) -> Option<Token> {
         self.token_index -= amount as isize;
         self.update_current_token();
 
         self.current_token.clone()
     }
 
-    pub fn update_current_token(&mut self) {
+    fn update_current_token(&mut self) {
         if self.token_index >= 0 && self.token_index < self.tokens.len() as isize {
             self.current_token = Some(self.tokens[self.token_index as usize].clone());
         }
     }
 
-    pub fn current_token_copy(&mut self) -> Token {
+    fn current_token_copy(&mut self) -> Token {
         self.current_token.as_ref().unwrap().clone()
     }
 
@@ -60,7 +60,7 @@ impl Parser {
         self.current_token.as_ref().unwrap()
     }
 
-    pub fn current_pos_start(&self) -> Position {
+    fn current_pos_start(&self) -> Position {
         self.current_token
             .as_ref()
             .unwrap()
@@ -70,7 +70,7 @@ impl Parser {
             .clone()
     }
 
-    pub fn current_pos_end(&self) -> Position {
+    fn current_pos_end(&self) -> Position {
         self.current_token
             .as_ref()
             .unwrap()
@@ -80,7 +80,7 @@ impl Parser {
             .clone()
     }
 
-    pub fn current_pos_range(&self) -> (Position, Position) {
+    fn current_pos_range(&self) -> (Position, Position) {
         (
             self.current_token
                 .as_ref()
@@ -105,17 +105,17 @@ impl Parser {
         if parse_result.error.is_some() && self.current_token_copy().token_type != TokenType::TT_EOF
         {
             return parse_result.failure(Some(StandardError::new(
-                "expected operator or bracket",
+                "expected keyword, object, function, expression",
                 self.current_pos_start(),
                 self.current_pos_end(),
-                Some("add one of the following: '+', '-', '*', '/', or '}'"),
+                None,
             )));
         }
 
         parse_result
     }
 
-    pub fn comparison_expr(&mut self) -> ParseResult {
+    fn comparison_expr(&mut self) -> ParseResult {
         let mut parse_result = ParseResult::new();
 
         if self
@@ -165,7 +165,7 @@ impl Parser {
         parse_result.success(node)
     }
 
-    pub fn arithmetic_expr(&mut self) -> ParseResult {
+    fn arithmetic_expr(&mut self) -> ParseResult {
         self.binary_operator(
             "term",
             &[(TokenType::TT_PLUS, ""), (TokenType::TT_MINUS, "")],
@@ -173,7 +173,7 @@ impl Parser {
         )
     }
 
-    pub fn list_expr(&mut self) -> ParseResult {
+    fn list_expr(&mut self) -> ParseResult {
         let mut parse_result = ParseResult::new();
         let mut element_nodes: Vec<Box<AstNode>> = Vec::new();
         let pos_start = self.current_pos_start();
@@ -240,7 +240,7 @@ impl Parser {
         )))))
     }
 
-    pub fn if_expr(&mut self) -> ParseResult {
+    fn if_expr(&mut self) -> ParseResult {
         let mut parse_result = ParseResult::new();
         let (if_parse_result, cases, else_case) = self.if_expr_cases("if");
 
@@ -251,7 +251,7 @@ impl Parser {
         parse_result.success(Some(Box::new(AstNode::If(IfNode::new(&cases, else_case)))))
     }
 
-    pub fn if_expr_b(
+    fn if_expr_b(
         &mut self,
     ) -> (
         ParseResult,
@@ -261,7 +261,7 @@ impl Parser {
         self.if_expr_cases("alsoif")
     }
 
-    pub fn if_expr_c(&mut self) -> (ParseResult, Option<(Box<AstNode>, bool)>) {
+    fn if_expr_c(&mut self) -> (ParseResult, Option<(Box<AstNode>, bool)>) {
         let mut parse_result = ParseResult::new();
         let mut else_case: Option<(Box<AstNode>, bool)> = None;
         let (pos_start, pos_end) = self.current_pos_range();
@@ -317,7 +317,7 @@ impl Parser {
         (parse_result, else_case)
     }
 
-    pub fn if_expr_b_or_c(
+    fn if_expr_b_or_c(
         &mut self,
     ) -> (
         ParseResult,
@@ -365,7 +365,7 @@ impl Parser {
         (parse_result, cases, else_case)
     }
 
-    pub fn if_expr_cases(
+    fn if_expr_cases(
         &mut self,
         keyword: &str,
     ) -> (
@@ -459,7 +459,7 @@ impl Parser {
         (parse_result, cases, else_case)
     }
 
-    pub fn for_expr(&mut self) -> ParseResult {
+    fn for_expr(&mut self) -> ParseResult {
         let mut parse_result = ParseResult::new();
 
         // We clone these two so the error output doesn't skip with 'walk' token (fixed output of errors)
@@ -608,7 +608,7 @@ impl Parser {
         )))))
     }
 
-    pub fn while_expr(&mut self) -> ParseResult {
+    fn while_expr(&mut self) -> ParseResult {
         let mut parse_result = ParseResult::new();
         let (pos_start, pos_end) = self.current_pos_range();
 
@@ -669,7 +669,7 @@ impl Parser {
         )))))
     }
 
-    pub fn try_expr(&mut self) -> ParseResult {
+    fn try_expr(&mut self) -> ParseResult {
         let mut parse_result = ParseResult::new();
         let (pos_start, pos_end) = self.current_pos_range();
 
@@ -786,7 +786,7 @@ impl Parser {
         )))))
     }
 
-    pub fn import_expr(&mut self) -> ParseResult {
+    fn import_expr(&mut self) -> ParseResult {
         let mut parse_result = ParseResult::new();
 
         if !self
@@ -818,7 +818,7 @@ impl Parser {
         )))))
     }
 
-    pub fn expr(&mut self) -> ParseResult {
+    fn expr(&mut self) -> ParseResult {
         let mut parse_result = ParseResult::new();
 
         if self
@@ -940,7 +940,7 @@ impl Parser {
         parse_result.success(node)
     }
 
-    pub fn statement(&mut self) -> ParseResult {
+    fn statement(&mut self) -> ParseResult {
         let mut parse_result = ParseResult::new();
         let pos_start = self.current_pos_start();
 
@@ -1000,7 +1000,7 @@ impl Parser {
         parse_result.success(expr)
     }
 
-    pub fn statements(&mut self) -> ParseResult {
+    fn statements(&mut self) -> ParseResult {
         let mut parse_result = ParseResult::new();
         let mut statements: Vec<Box<AstNode>> = Vec::new();
         let pos_start = self.current_pos_start();
@@ -1048,7 +1048,7 @@ impl Parser {
         )))))
     }
 
-    pub fn call(&mut self) -> ParseResult {
+    fn call(&mut self) -> ParseResult {
         let mut parse_result = ParseResult::new();
         let atom = parse_result.register(self.atom());
 
@@ -1112,7 +1112,7 @@ impl Parser {
         parse_result.success(atom)
     }
 
-    pub fn atom(&mut self) -> ParseResult {
+    fn atom(&mut self) -> ParseResult {
         let mut parse_result = ParseResult::new();
         let token = self.current_token_copy();
 
@@ -1221,11 +1221,11 @@ impl Parser {
         )))
     }
 
-    pub fn power(&mut self) -> ParseResult {
+    fn power(&mut self) -> ParseResult {
         self.binary_operator("call", &[(TokenType::TT_POW, "")], Some("factor"))
     }
 
-    pub fn factor(&mut self) -> ParseResult {
+    fn factor(&mut self) -> ParseResult {
         let mut parse_result = ParseResult::new();
         let token = self.current_token_copy();
 
@@ -1246,7 +1246,7 @@ impl Parser {
         self.power()
     }
 
-    pub fn term(&mut self) -> ParseResult {
+    fn term(&mut self) -> ParseResult {
         self.binary_operator(
             "factor",
             &[
@@ -1258,7 +1258,7 @@ impl Parser {
         )
     }
 
-    pub fn func_definition(&mut self) -> ParseResult {
+    fn func_definition(&mut self) -> ParseResult {
         let mut parse_result = ParseResult::new();
 
         if !self
@@ -1389,7 +1389,7 @@ impl Parser {
         ))))
     }
 
-    pub fn binary_operator(
+    fn binary_operator(
         &mut self,
         func_a: &str,
         ops: &[(TokenType, &str)],
