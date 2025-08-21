@@ -1,7 +1,7 @@
 <div align="center">
   <picture>
     <img
-         src="resources/icons/george_language_icon.svg"
+         src="assets/george_language_icon.svg"
          width="25%">
   </picture>
 
@@ -43,8 +43,7 @@ bark("We have reached the end of our program. I hope you enjoyed!");
 
 ## Why George Language?
 
-It all started as a joke. 😆
-One of our team members has a pug named George. He's adorable, stubborn, and full of personality. One day, someone asked:
+It all started as a joke. One of our team members has a pug named George. He's adorable, stubborn, and full of personality. One day, someone asked:
 
 _"What if we made a language named after George? Something cute, funny, but also powerful and easy to learn?"_
 
