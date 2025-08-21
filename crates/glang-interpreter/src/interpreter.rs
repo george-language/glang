@@ -85,17 +85,10 @@ impl Interpreter {
             AstNode::Return(node) => self.visit_return_node(node, context),
             AstNode::Continue(node) => self.visit_continue_node(node, context),
             AstNode::Break(node) => self.visit_break_node(node, context),
-            _ => {
-                panic!("CRITICAL ERROR: NO METHOD DEFINED FOR NODE TYPE:\n {node:#?}");
-            }
         }
     }
 
-    pub fn visit_number_node(
-        &self,
-        node: &NumberNode,
-        context: Rc<RefCell<Context>>,
-    ) -> RuntimeResult {
+    fn visit_number_node(&self, node: &NumberNode, context: Rc<RefCell<Context>>) -> RuntimeResult {
         let value: f64 = node.token.value.as_ref().unwrap().parse().unwrap();
 
         RuntimeResult::new().success(Some(
@@ -105,11 +98,7 @@ impl Interpreter {
         ))
     }
 
-    pub fn visit_list_node(
-        &mut self,
-        node: &ListNode,
-        context: Rc<RefCell<Context>>,
-    ) -> RuntimeResult {
+    fn visit_list_node(&mut self, node: &ListNode, context: Rc<RefCell<Context>>) -> RuntimeResult {
         let mut result = RuntimeResult::new();
         let mut elements: Vec<Value> = Vec::new();
 
@@ -130,7 +119,7 @@ impl Interpreter {
         ))
     }
 
-    pub fn visit_string_node(
+    fn visit_string_node(
         &mut self,
         node: &StringNode,
         context: Rc<RefCell<Context>>,
@@ -142,7 +131,7 @@ impl Interpreter {
         ))
     }
 
-    pub fn visit_variable_assign_node(
+    fn visit_variable_assign_node(
         &mut self,
         node: &VariableAssignNode,
         context: Rc<RefCell<Context>>,
@@ -166,7 +155,7 @@ impl Interpreter {
         result.success(value)
     }
 
-    pub fn visit_const_assign_node(
+    fn visit_const_assign_node(
         &mut self,
         node: &ConstAssignNode,
         context: Rc<RefCell<Context>>,
@@ -207,7 +196,7 @@ impl Interpreter {
         result.success(value)
     }
 
-    pub fn visit_variable_access_node(
+    fn visit_variable_access_node(
         &mut self,
         node: &VariableAccessNode,
         context: Rc<RefCell<Context>>,
@@ -243,7 +232,7 @@ impl Interpreter {
         result.success(value)
     }
 
-    pub fn visit_if_node(&mut self, node: &IfNode, context: Rc<RefCell<Context>>) -> RuntimeResult {
+    fn visit_if_node(&mut self, node: &IfNode, context: Rc<RefCell<Context>>) -> RuntimeResult {
         let mut result = RuntimeResult::new();
 
         for (condition, expr, should_return_null) in node.cases.iter() {
@@ -288,11 +277,7 @@ impl Interpreter {
         result.success(Some(Number::null_value()))
     }
 
-    pub fn visit_for_node(
-        &mut self,
-        node: &ForNode,
-        context: Rc<RefCell<Context>>,
-    ) -> RuntimeResult {
+    fn visit_for_node(&mut self, node: &ForNode, context: Rc<RefCell<Context>>) -> RuntimeResult {
         let mut result = RuntimeResult::new();
 
         let start_value = match result
@@ -430,7 +415,7 @@ impl Interpreter {
         result.success(Some(Number::null_value()))
     }
 
-    pub fn visit_while_node(
+    fn visit_while_node(
         &mut self,
         node: &WhileNode,
         context: Rc<RefCell<Context>>,
@@ -469,7 +454,7 @@ impl Interpreter {
         result.success(Some(Number::null_value()))
     }
 
-    pub fn visit_try_except_node(
+    fn visit_try_except_node(
         &mut self,
         node: &TryExceptNode,
         context: Rc<RefCell<Context>>,
@@ -507,7 +492,7 @@ impl Interpreter {
         result.success(Some(Number::null_value()))
     }
 
-    pub fn visit_import_node(
+    fn visit_import_node(
         &mut self,
         node: &ImportNode,
         context: Rc<RefCell<Context>>,
@@ -627,7 +612,7 @@ impl Interpreter {
         result.success(Some(Number::null_value()))
     }
 
-    pub fn visit_function_definition_node(
+    fn visit_function_definition_node(
         &mut self,
         node: &FunctionDefinitionNode,
         context: Rc<RefCell<Context>>,
@@ -674,11 +659,7 @@ impl Interpreter {
         result.success(Some(func_value))
     }
 
-    pub fn visit_call_node(
-        &mut self,
-        node: &CallNode,
-        context: Rc<RefCell<Context>>,
-    ) -> RuntimeResult {
+    fn visit_call_node(&mut self, node: &CallNode, context: Rc<RefCell<Context>>) -> RuntimeResult {
         let mut result = RuntimeResult::new();
         let mut args: Vec<Value> = Vec::new();
 
@@ -729,7 +710,7 @@ impl Interpreter {
         result.success(Some(return_value))
     }
 
-    pub fn visit_binary_operator_node(
+    fn visit_binary_operator_node(
         &mut self,
         node: &BinaryOperatorNode,
         context: Rc<RefCell<Context>>,
@@ -799,7 +780,7 @@ impl Interpreter {
         }
     }
 
-    pub fn visit_unary_operator_node(
+    fn visit_unary_operator_node(
         &mut self,
         node: &UnaryOperatorNode,
         context: Rc<RefCell<Context>>,
@@ -842,7 +823,7 @@ impl Interpreter {
         }
     }
 
-    pub fn visit_return_node(
+    fn visit_return_node(
         &mut self,
         node: &ReturnNode,
         context: Rc<RefCell<Context>>,
@@ -866,7 +847,7 @@ impl Interpreter {
         result.success_return(Some(value))
     }
 
-    pub fn visit_continue_node(
+    fn visit_continue_node(
         &mut self,
         node: &ContinueNode,
         context: Rc<RefCell<Context>>,
@@ -874,7 +855,7 @@ impl Interpreter {
         RuntimeResult::new().success_continue()
     }
 
-    pub fn visit_break_node(
+    fn visit_break_node(
         &mut self,
         node: &BreakNode,
         context: Rc<RefCell<Context>>,

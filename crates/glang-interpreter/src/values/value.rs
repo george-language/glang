@@ -106,7 +106,6 @@ impl Value {
             Value::StringValue(_) => "string",
             Value::FunctionValue(_) => "function",
             Value::BuiltInFunction(_) => "built-in-function",
-            _ => "null",
         }
     }
 
@@ -117,7 +116,6 @@ impl Value {
             Value::StringValue(value) => value.value.is_empty(),
             Value::FunctionValue(value) => value.name.is_empty(),
             Value::BuiltInFunction(value) => value.name.is_empty(),
-            _ => false,
         }
     }
 
@@ -128,7 +126,6 @@ impl Value {
             Value::StringValue(value) => value.as_string(),
             Value::FunctionValue(value) => value.as_string(),
             Value::BuiltInFunction(value) => value.as_string(),
-            _ => "".to_string(),
         }
     }
 }
