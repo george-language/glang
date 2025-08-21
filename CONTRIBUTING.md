@@ -1,6 +1,6 @@
 # Contributing to GeorgeLanguage
 
-Hey there! 👋 Thanks for your interest in contributing to **GLang**, whether you're here to test, build, or just hang out, we're glad to have you on board. Every little bit helps, and we appreciate it all 🙏
+Hi there! Thanks for your interest in contributing to **GLang**, whether you're here to test, build, or just hang out, we're glad to have you on board. Every little bit helps, and we appreciate it all 🙏
 
 ## New Around Here?
 
@@ -18,7 +18,7 @@ You can:
 - Run the built-in tests in `library/tests/`
 - Build your own projects and push GLang to its limits
 
-If you run into any bugs or quirks, check out the ["Issues" section](<CONTRIBUTING#Issues Section>) below to learn how to report them.
+If you run into any bugs or quirks, check out the [Issues section](#-issues-section) below to learn how to report them.
 
 ## Want to Develop Kennels?
 
@@ -34,9 +34,5 @@ Even if you're not contributing directly to the main repo, creating Kennels help
 Found a bug? Got an idea? Want to tweak some docs?
 
 - Report issues here: [GLang Issues](https://github.com/mpsoftwarefoundation/GeorgeLanguage/issues)
-
-We’ve also got templates to help with:
-- 📝 Documentation updates
-- 💡 Feature requests
 
 Thanks again for helping make GLang better! Let’s build something cool together 👊
