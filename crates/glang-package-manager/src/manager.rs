@@ -1,5 +1,5 @@
 use crate::logs::{log_error, log_header, log_message, log_package_status};
-use crate::paths::get_package_path;
+use crate::package_path::get_package_path;
 use reqwest::blocking::get;
 use serde::Deserialize;
 use simply_colored::*;
@@ -21,6 +21,19 @@ pub fn is_package_installed(package: &str) -> bool {
 }
 
 pub fn create_package_dir() {
+    let config_path = dirs::home_dir()
+        .expect("Unable to retrieve user home directory")
+        .join(".glang");
+
+    if !config_path.exists() {
+        match fs::create_dir_all(&config_path) {
+            Ok(_) => {}
+            Err(e) => log_error(&format!(
+                "Unable to build '.glang' configuration directory: {e}"
+            )),
+        }
+    }
+
     let package_dir = get_package_path();
 
     if !package_dir.exists() {

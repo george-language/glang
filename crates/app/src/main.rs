@@ -40,7 +40,7 @@ enum Commands {
 fn main() {
     unsafe {
         let std_path = env::current_exe()
-            .expect("Unable to retrieve current exe")
+            .expect("Unable to retrieve executable path")
             .parent()
             .unwrap()
             .join("library")
@@ -49,15 +49,12 @@ fn main() {
             .replace("target/debug/", "")
             .replace("target/release/", "");
 
-        let pkg_path = env::current_exe()
-            .expect("Unable to retrieve current exe")
-            .parent()
-            .unwrap()
+        let pkg_path = dirs::home_dir()
+            .expect("Unable to retrieve user home directory")
+            .join(".glang")
             .join("kennels")
             .to_string_lossy()
-            .replace("\\", "/")
-            .replace("target/debug/", "")
-            .replace("target/release/", "");
+            .replace("\\", "/");
 
         env::set_var("GLANG_STD", &std_path);
         env::set_var("GLANG_PKG", &pkg_path);
