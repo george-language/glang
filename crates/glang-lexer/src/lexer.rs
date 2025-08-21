@@ -30,7 +30,7 @@ impl Lexer {
         lexer
     }
 
-    pub fn advance(&mut self) {
+    fn advance(&mut self) {
         self.position.advance(self.current_char);
 
         if self.position.index >= 0 && (self.position.index as usize) < self.chars.len() {
@@ -231,7 +231,7 @@ impl Lexer {
         Ok(tokens)
     }
 
-    pub fn make_number(&mut self) -> Result<Token, StandardError> {
+    fn make_number(&mut self) -> Result<Token, StandardError> {
         let mut num_str = String::new();
         let mut dot_count = 0;
         let pos_start = self.position.clone();
@@ -273,7 +273,7 @@ impl Lexer {
         ))
     }
 
-    pub fn make_identifier(&mut self) -> Token {
+    fn make_identifier(&mut self) -> Token {
         let mut id_string = String::new();
         let pos_start = self.position.clone();
 
@@ -298,7 +298,7 @@ impl Lexer {
         Token::new(token_type, Some(id_string), Some(pos_start), Some(pos_end))
     }
 
-    pub fn make_string(&mut self) -> Result<Token, StandardError> {
+    fn make_string(&mut self) -> Result<Token, StandardError> {
         let mut string = String::new();
         let pos_start = self.position.clone();
         let mut escape_char = false;
@@ -389,7 +389,7 @@ impl Lexer {
         ))
     }
 
-    pub fn make_minus_or_arrow(&mut self) -> Token {
+    fn make_minus_or_arrow(&mut self) -> Token {
         let mut token_type = TokenType::TT_MINUS;
         let pos_start = self.position.clone();
         self.advance();
@@ -409,7 +409,7 @@ impl Lexer {
         )
     }
 
-    pub fn make_equals(&mut self) -> Token {
+    fn make_equals(&mut self) -> Token {
         let mut token_type = TokenType::TT_EQ;
         let pos_start = self.position.clone();
         self.advance();
@@ -429,7 +429,7 @@ impl Lexer {
         )
     }
 
-    pub fn make_not_equals(&mut self) -> Result<Token, StandardError> {
+    fn make_not_equals(&mut self) -> Result<Token, StandardError> {
         let pos_start = self.position.clone();
         self.advance();
 
@@ -456,7 +456,7 @@ impl Lexer {
         ))
     }
 
-    pub fn make_less_than(&mut self) -> Token {
+    fn make_less_than(&mut self) -> Token {
         let mut token_type = TokenType::TT_LT;
         let pos_start = self.position.clone();
         self.advance();
@@ -476,7 +476,7 @@ impl Lexer {
         )
     }
 
-    pub fn make_greater_than(&mut self) -> Token {
+    fn make_greater_than(&mut self) -> Token {
         let mut token_type = TokenType::TT_GT;
         let pos_start = self.position.clone();
         self.advance();
@@ -496,7 +496,7 @@ impl Lexer {
         )
     }
 
-    pub fn skip_comment(&mut self) {
+    fn skip_comment(&mut self) {
         self.advance();
 
         while let Some(character) = self.current_char {
