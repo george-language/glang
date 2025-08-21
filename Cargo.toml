@@ -1,21 +1,30 @@
-[package]
-name = "glang"
+[workspace]
+members = [
+    "crates/app",
+    "crates/glang-lexer",
+    "crates/glang-parser",
+    "crates/glang-interpreter",
+    "crates/glang-package-manager",
+    "crates/glang-attributes",
+]
+resolver = "3"
+
+[workspace.package]
+version = "3.1.0"
+edition = "2024"
 repository = "https://github.com/mpsoftwarefoundation/GeorgeLanguage.git"
 description = "The George Programming Language"
 authors = ["MP Software Foundation"]
-version = "0.0.0"
-edition = "2024"
+license = "GPL v3"
 
-[dependencies]
-reqwest = { version = "0.12.22", features = ["blocking", "json"] }
-clap = { version = "4.5.40", features = ["derive"] }
-serde = { version = "1.0.219", features = ["derive"] }
-serde_json = "1.0.140"
-simply_colored = "0.1.0"
-zip = "4.3.0"
-toml = "0.9.2"
-stringcase = "0.4.0"
+[workspace.dependencies]
+glang = { path = "crates/app" }
+glang-attributes = { path = "crates/glang-attributes" }
+glang-lexer = { path = "crates/glang-lexer" }
+glang-parser = { path = "crates/glang-parser" }
+glang-interpreter = { path = "crates/glang-interpreter" }
+glang-package-manager = { path = "crates/glang-package-manager" }
 
-[features]
+[workspace.features]
 default = []
-benchmark = []
+benchmark = ["glang/benchmark"]

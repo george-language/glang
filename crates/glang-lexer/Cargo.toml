@@ -1,0 +1,9 @@
+[package]
+name = "glang-lexer"
+version = { workspace = true }
+edition = { workspace = true }
+authors = { workspace = true }
+license = { workspace = true }
+
+[dependencies]
+glang-attributes = { path = "../glang-attributes" }

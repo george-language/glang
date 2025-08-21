@@ -1,0 +1,10 @@
+[package]
+name = "glang-parser"
+version = { workspace = true }
+edition = { workspace = true }
+authors = { workspace = true }
+license = { workspace = true }
+
+[dependencies]
+glang-attributes = { path = "../glang-attributes" }
+glang-lexer = { path = "../glang-lexer" }
