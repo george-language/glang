@@ -9,7 +9,6 @@ use crate::{
 };
 use glang_attributes::StandardError;
 use glang_lexer::{Lexer, TokenType};
-use glang_parser::Parser;
 use glang_parser::nodes::{
     ast_node::AstNode, binary_operator_node::BinaryOperatorNode, break_node::BreakNode,
     call_node::CallNode, const_assign_node::ConstAssignNode, continue_node::ContinueNode,
@@ -19,6 +18,7 @@ use glang_parser::nodes::{
     unary_operator_node::UnaryOperatorNode, variable_access_node::VariableAccessNode,
     variable_assign_node::VariableAssignNode, while_node::WhileNode,
 };
+use glang_parser::{Parser, nodes::variable_reassign_node::VariableRessignNode};
 use std::{cell::RefCell, fs, path::Path, rc::Rc};
 
 pub struct Interpreter {
@@ -71,6 +71,7 @@ impl Interpreter {
             AstNode::Number(node) => self.visit_number_node(node, context),
             AstNode::Strings(node) => self.visit_string_node(node, context),
             AstNode::VariableAssign(node) => self.visit_variable_assign_node(node, context),
+            AstNode::VariableReassign(node) => self.visit_variable_reassign_node(node, context),
             AstNode::ConstAssign(node) => self.visit_const_assign_node(node, context),
             AstNode::VariableAccess(node) => self.visit_variable_access_node(node, context),
             AstNode::If(node) => self.visit_if_node(node, context),
@@ -138,6 +139,83 @@ impl Interpreter {
     ) -> RuntimeResult {
         let mut result = RuntimeResult::new();
         let var_name = node.var_name_token.value.as_ref().unwrap().clone();
+
+        let constant = context
+            .borrow()
+            .symbol_table
+            .as_ref()
+            .unwrap()
+            .borrow()
+            .get(&var_name);
+
+        if constant.is_some() && constant.unwrap().is_const() {
+            return result.failure(Some(StandardError::new(
+                "cannot reassign the value of a constant",
+                node.pos_start.as_ref().unwrap().to_owned(),
+                node.pos_end.as_ref().unwrap().to_owned(),
+                None,
+            )));
+        }
+
+        let value = result.register(self.visit(node.value_node.clone(), context.clone()));
+
+        if result.should_return() {
+            return result;
+        }
+
+        context
+            .borrow_mut()
+            .symbol_table
+            .as_mut()
+            .unwrap()
+            .borrow_mut()
+            .set(var_name, value.clone());
+
+        result.success(value)
+    }
+
+    fn visit_variable_reassign_node(
+        &mut self,
+        node: &VariableRessignNode,
+        context: Rc<RefCell<Context>>,
+    ) -> RuntimeResult {
+        let mut result = RuntimeResult::new();
+        let var_name = node.var_name_token.value.as_ref().unwrap().clone();
+
+        let constant = context
+            .borrow()
+            .symbol_table
+            .as_ref()
+            .unwrap()
+            .borrow()
+            .get(&var_name);
+
+        if constant.is_some() && constant.unwrap().is_const() {
+            return result.failure(Some(StandardError::new(
+                "cannot reassign the value of a constant",
+                node.pos_start.as_ref().unwrap().to_owned(),
+                node.pos_end.as_ref().unwrap().to_owned(),
+                None,
+            )));
+        }
+
+        if context
+            .borrow()
+            .symbol_table
+            .as_ref()
+            .unwrap()
+            .borrow()
+            .get(&var_name)
+            .is_none()
+        {
+            return result.failure(Some(StandardError::new(
+                format!("variable name '{var_name}' is undefined").as_str(),
+                node.pos_start.as_ref().unwrap().clone(),
+                node.pos_end.as_ref().unwrap().clone(),
+                Some("you can define a variable like 'obj my_variable = 1;'"),
+            )));
+        }
+
         let value = result.register(self.visit(node.value_node.clone(), context.clone()));
 
         if result.should_return() {
@@ -162,21 +240,16 @@ impl Interpreter {
     ) -> RuntimeResult {
         let mut result = RuntimeResult::new();
         let const_name = node.const_name_token.value.as_ref().unwrap().clone();
-        let value = result.register(self.visit(node.value_node.clone(), context.clone()));
 
-        if result.should_return() {
-            return result;
-        }
-
-        if context
+        let constant = context
             .borrow()
             .symbol_table
             .as_ref()
             .unwrap()
             .borrow()
-            .get(&const_name)
-            .is_some()
-        {
+            .get(&const_name);
+
+        if constant.is_some() && constant.unwrap().is_const() {
             return result.failure(Some(StandardError::new(
                 "cannot reassign the value of a constant",
                 node.pos_start.as_ref().unwrap().to_owned(),
@@ -184,6 +257,14 @@ impl Interpreter {
                 None,
             )));
         }
+
+        let mut value = result.register(self.visit(node.value_node.clone(), context.clone()));
+
+        if result.should_return() {
+            return result;
+        }
+
+        value.as_mut().unwrap().set_const(true);
 
         context
             .borrow_mut()
@@ -217,7 +298,7 @@ impl Interpreter {
                 format!("variable name '{var_name}' is undefined").as_str(),
                 node.pos_start.as_ref().unwrap().clone(),
                 node.pos_end.as_ref().unwrap().clone(),
-                None,
+                Some("you can define a variable like 'obj my_variable = 1;'"),
             )));
         }
 

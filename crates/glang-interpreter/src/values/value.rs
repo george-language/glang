@@ -81,6 +81,18 @@ impl Value {
         self.clone()
     }
 
+    pub fn set_const(&mut self, is_const: bool) -> Value {
+        match self {
+            Value::NumberValue(value) => value.is_const = is_const,
+            Value::ListValue(value) => value.is_const = is_const,
+            Value::StringValue(value) => value.is_const = is_const,
+            Value::FunctionValue(value) => value.is_const = is_const,
+            Value::BuiltInFunction(value) => value.is_const = is_const,
+        }
+
+        self.clone()
+    }
+
     pub fn perform_operation(
         &mut self,
         operator: &str,
@@ -116,6 +128,16 @@ impl Value {
             Value::StringValue(value) => value.value.is_empty(),
             Value::FunctionValue(value) => value.name.is_empty(),
             Value::BuiltInFunction(value) => value.name.is_empty(),
+        }
+    }
+
+    pub fn is_const(&self) -> bool {
+        match self {
+            Value::NumberValue(value) => value.is_const,
+            Value::ListValue(value) => value.is_const,
+            Value::StringValue(value) => value.is_const,
+            Value::FunctionValue(value) => value.is_const,
+            Value::BuiltInFunction(value) => value.is_const,
         }
     }
 

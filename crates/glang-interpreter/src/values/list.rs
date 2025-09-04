@@ -9,6 +9,7 @@ use std::{cell::RefCell, iter::zip, rc::Rc};
 pub struct List {
     pub elements: Vec<Value>,
     pub context: Option<Rc<RefCell<Context>>>,
+    pub is_const: bool,
     pub pos_start: Option<Position>,
     pub pos_end: Option<Position>,
 }
@@ -18,6 +19,7 @@ impl List {
         Self {
             elements,
             context: None,
+            is_const: false,
             pos_start: None,
             pos_end: None,
         }

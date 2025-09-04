@@ -16,4 +16,5 @@ pub mod try_except_node;
 pub mod unary_operator_node;
 pub mod variable_access_node;
 pub mod variable_assign_node;
+pub mod variable_reassign_node;
 pub mod while_node;
