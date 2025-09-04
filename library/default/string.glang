@@ -58,8 +58,8 @@ func endswith(str, chars) {
     }
 
     # we have to reverse each string because we can't iterate backwards through a string
-    obj str = reverse_str(str);
-    obj chars = reverse_str(chars);
+    str = reverse_str(str);
+    chars = reverse_str(chars);
 
     walk i = 0 through length(chars) {
         if charat(str, i) != charat(chars, i) {

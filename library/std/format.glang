@@ -17,7 +17,7 @@ func format(str, value) {
                 obj closing = charat(str, i + 1);
 
                 if closing == "}" {
-                    obj result = join(result, tostring(value));
+                    result = join(result, tostring(value));
                 } otherwise {
                     uhoh("'format' expects string with closing brackets '{}'");
                 }
@@ -29,7 +29,7 @@ func format(str, value) {
                 next;
             }
 
-            obj result = join(result, char);
+            result = join(result, char);
         }
     }
 

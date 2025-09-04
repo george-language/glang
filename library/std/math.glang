@@ -43,11 +43,11 @@ func math_wrap_pi(x) {
     obj y = x;
 
     while y > math_pi {
-        obj y = y - (2.0 * math_pi);
+        y = y - (2.0 * math_pi);
     }
 
     while y < -math_pi {
-        obj y = y + (2.0 * math_pi);
+        y = y + (2.0 * math_pi);
     }
 
     give y;

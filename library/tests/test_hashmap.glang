@@ -3,8 +3,8 @@
 fetch std_hashmap;
 
 obj test_hm = hashmap(); # create a new hashmap
-obj test_hm = hashmap_set(test_hm, "key1", "value1");
-obj test_hm = hashmap_set(test_hm, "key2", "value2");
+test_hm = hashmap_set(test_hm, "key1", "value1");
+test_hm = hashmap_set(test_hm, "key2", "value2");
 
 bark_hashmap(test_hm);
 
@@ -12,5 +12,5 @@ bark_hashmap(test_hm);
 bark(hashmap_get(test_hm, "key1"));
 
 # remove a value
-obj test_hm = hashmap_remove(test_hm, "key2");
+test_hm = hashmap_remove(test_hm, "key2");
 bark_hashmap(test_hm);
