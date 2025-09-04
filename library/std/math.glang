@@ -1,8 +1,8 @@
 # file math.glang: math functions and objects
 
 # close approximations of both E and Pi
-obj math_pi = 3.141592653589793;
-obj math_e = 2.718281828459045;
+stay math_pi = 3.141592653589793;
+stay math_e = 2.718281828459045;
 
 # convert degrees to radians
 # returns the value of degrees converted to radians
@@ -43,11 +43,11 @@ func math_wrap_pi(x) {
     obj y = x;
 
     while y > math_pi {
-        obj y = y - (2.0 * math_pi);
+        y = y - (2.0 * math_pi);
     }
 
     while y < -math_pi {
-        obj y = y + (2.0 * math_pi);
+        y = y + (2.0 * math_pi);
     }
 
     give y;

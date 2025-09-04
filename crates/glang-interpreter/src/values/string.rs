@@ -9,6 +9,7 @@ use std::{cell::RefCell, rc::Rc};
 pub struct Str {
     pub value: String,
     pub context: Option<Rc<RefCell<Context>>>,
+    pub is_const: bool,
     pub pos_start: Option<Position>,
     pub pos_end: Option<Position>,
 }
@@ -18,6 +19,7 @@ impl Str {
         Str {
             value,
             context: None,
+            is_const: false,
             pos_start: None,
             pos_end: None,
         }

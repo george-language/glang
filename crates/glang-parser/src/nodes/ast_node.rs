@@ -5,7 +5,7 @@ use crate::nodes::{
     list_node::ListNode, number_node::NumberNode, return_node::ReturnNode, string_node::StringNode,
     try_except_node::TryExceptNode, unary_operator_node::UnaryOperatorNode,
     variable_access_node::VariableAccessNode, variable_assign_node::VariableAssignNode,
-    while_node::WhileNode,
+    variable_reassign_node::VariableRessignNode, while_node::WhileNode,
 };
 use glang_attributes::Position;
 
@@ -28,6 +28,7 @@ pub enum AstNode {
     UnaryOperator(UnaryOperatorNode),
     VariableAccess(VariableAccessNode),
     VariableAssign(VariableAssignNode),
+    VariableReassign(VariableRessignNode),
     While(WhileNode),
 }
 
@@ -51,6 +52,7 @@ impl AstNode {
             AstNode::UnaryOperator(node) => node.pos_start.clone(),
             AstNode::VariableAccess(node) => node.pos_start.clone(),
             AstNode::VariableAssign(node) => node.pos_start.clone(),
+            AstNode::VariableReassign(node) => node.pos_start.clone(),
             AstNode::While(node) => node.pos_start.clone(),
         }
     }
@@ -74,6 +76,7 @@ impl AstNode {
             AstNode::UnaryOperator(node) => node.pos_end.clone(),
             AstNode::VariableAccess(node) => node.pos_end.clone(),
             AstNode::VariableAssign(node) => node.pos_end.clone(),
+            AstNode::VariableReassign(node) => node.pos_end.clone(),
             AstNode::While(node) => node.pos_end.clone(),
         }
     }

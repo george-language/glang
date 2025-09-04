@@ -95,7 +95,7 @@ fn main() {
             let error = run(&file, None);
 
             if let Some(err) = error {
-                log_error(&format!("{err}"));
+                println!("{err}");
             }
         }
         (None, None) => {

@@ -6,7 +6,8 @@ use crate::{
         import_node::ImportNode, list_node::ListNode, number_node::NumberNode,
         return_node::ReturnNode, string_node::StringNode, try_except_node::TryExceptNode,
         unary_operator_node::UnaryOperatorNode, variable_access_node::VariableAccessNode,
-        variable_assign_node::VariableAssignNode, while_node::WhileNode,
+        variable_assign_node::VariableAssignNode, variable_reassign_node::VariableRessignNode,
+        while_node::WhileNode,
     },
     parse_result::ParseResult,
 };
@@ -58,6 +59,14 @@ impl Parser {
 
     pub fn current_token_ref(&mut self) -> &Token {
         self.current_token.as_ref().unwrap()
+    }
+
+    fn next_token_copy(&mut self) -> Option<Token> {
+        if self.token_index >= 0 && self.token_index + 1 < self.tokens.len() as isize {
+            return Some(self.tokens[self.token_index as usize + 1].clone());
+        }
+
+        None
     }
 
     fn current_pos_start(&self) -> Position {
@@ -820,6 +829,10 @@ impl Parser {
 
     fn expr(&mut self) -> ParseResult {
         let mut parse_result = ParseResult::new();
+        let next_tok = match self.next_token_copy() {
+            Some(tok) => tok,
+            None => Token::new(TokenType::TT_EOF, None, None, None),
+        };
 
         if self
             .current_token_ref()
@@ -868,6 +881,27 @@ impl Parser {
 
             return parse_result.success(Some(Box::new(AstNode::VariableAssign(
                 VariableAssignNode::new(var_name, expr.unwrap()),
+            ))));
+        } else if self.current_token_copy().token_type == TokenType::TT_IDENTIFIER
+            && next_tok.token_type == TokenType::TT_EQ
+        {
+            let var_name = self.current_token_copy();
+
+            parse_result.register_advancement();
+            self.advance();
+
+            // advance past the '=' token too
+            parse_result.register_advancement();
+            self.advance();
+
+            let expr = parse_result.register(self.expr());
+
+            if parse_result.error.is_some() {
+                return parse_result;
+            }
+
+            return parse_result.success(Some(Box::new(AstNode::VariableReassign(
+                VariableRessignNode::new(var_name, expr.unwrap()),
             ))));
         } else if self
             .current_token_ref()

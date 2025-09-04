@@ -10,10 +10,10 @@ func os_type() {
         obj _type = _env("OS");
 
         if _type == "Windows_NT" {
-            obj os = "windows";
+            os = "windows";
         }
     } safe _ {
-        obj os = "macos";
+        os = "macos";
     }
 
     if os == "unknown" {
@@ -57,10 +57,10 @@ func os_user_dir() {
 
     unsafe {
         # windows
-        obj dir = _env("USERPROFILE");
+        dir = _env("USERPROFILE");
     } safe _ {
         # macos
-        obj dir = _env("HOME");
+        dir = _env("HOME");
     }
 
     give dir;
