@@ -134,7 +134,7 @@ impl Function {
         }
 
         let value =
-            result.register(interpreter.visit(self.body_node.clone(), exec_context.clone()));
+            result.register(interpreter.visit(self.body_node.as_ref(), exec_context.clone()));
 
         if result.should_return() && result.func_return_value.is_none() {
             return result;

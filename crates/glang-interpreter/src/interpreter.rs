@@ -61,12 +61,12 @@ impl Interpreter {
             return ast.error;
         }
 
-        let result = self.visit(ast.node.unwrap(), context);
+        let result = self.visit(ast.node.unwrap().as_ref(), context);
         result.error
     }
 
-    pub fn visit(&mut self, node: Box<AstNode>, context: Rc<RefCell<Context>>) -> RuntimeResult {
-        match node.as_ref() {
+    pub fn visit(&mut self, node: &AstNode, context: Rc<RefCell<Context>>) -> RuntimeResult {
+        match node {
             AstNode::List(node) => self.visit_list_node(node, context),
             AstNode::Number(node) => self.visit_number_node(node, context),
             AstNode::Strings(node) => self.visit_string_node(node, context),
@@ -102,7 +102,7 @@ impl Interpreter {
         let mut elements: Vec<Value> = Vec::new();
 
         for element in node.element_nodes.iter() {
-            let element_result = result.register(self.visit(element.to_owned(), context.clone()));
+            let element_result = result.register(self.visit(element.as_ref(), context.clone()));
 
             if result.should_return() {
                 return result;
@@ -155,7 +155,7 @@ impl Interpreter {
             )));
         }
 
-        let value = result.register(self.visit(node.value_node.clone(), context.clone()));
+        let value = result.register(self.visit(node.value_node.as_ref(), context.clone()));
 
         if result.should_return() {
             return result;
@@ -214,7 +214,7 @@ impl Interpreter {
             )));
         }
 
-        let value = result.register(self.visit(node.value_node.clone(), context.clone()));
+        let value = result.register(self.visit(node.value_node.as_ref(), context.clone()));
 
         if result.should_return() {
             return result;
@@ -256,7 +256,7 @@ impl Interpreter {
             )));
         }
 
-        let mut value = result.register(self.visit(node.value_node.clone(), context.clone()));
+        let mut value = result.register(self.visit(node.value_node.as_ref(), context.clone()));
 
         if result.should_return() {
             return result;
@@ -313,7 +313,7 @@ impl Interpreter {
         let mut result = RuntimeResult::new();
 
         for (condition, expr, should_return_null) in node.cases.iter() {
-            let condition_value = result.register(self.visit(condition.clone(), context.clone()));
+            let condition_value = result.register(self.visit(condition.as_ref(), context.clone()));
 
             if result.should_return() {
                 return result;
@@ -322,7 +322,7 @@ impl Interpreter {
             let condition_value = condition_value.unwrap();
 
             if condition_value.is_true() {
-                let expr_value = result.register(self.visit(expr.clone(), context.clone()));
+                let expr_value = result.register(self.visit(expr.as_ref(), context.clone()));
 
                 if result.should_return() {
                     return result;
@@ -338,7 +338,7 @@ impl Interpreter {
 
         if node.else_case.is_some() {
             let (expr, should_return_null) = node.else_case.as_ref().unwrap().clone();
-            let else_value = result.register(self.visit(expr.clone(), context.clone()));
+            let else_value = result.register(self.visit(expr.as_ref(), context.clone()));
 
             if result.should_return() {
                 return result;
@@ -358,7 +358,7 @@ impl Interpreter {
         let mut result = RuntimeResult::new();
 
         let start_value = match result
-            .register(self.visit(node.start_value_node.clone(), context.clone()))
+            .register(self.visit(node.start_value_node.as_ref(), context.clone()))
             .unwrap()
         {
             Value::NumberValue(value) => Number::new(value.value),
@@ -377,7 +377,7 @@ impl Interpreter {
         }
 
         let end_value = match result
-            .register(self.visit(node.end_value_node.clone(), context.clone()))
+            .register(self.visit(node.end_value_node.as_ref(), context.clone()))
             .unwrap()
         {
             Value::NumberValue(value) => Number::new(value.value),
@@ -400,7 +400,7 @@ impl Interpreter {
         if node.step_value_node.is_some() {
             step_value = match result
                 .register(self.visit(
-                    node.step_value_node.as_ref().unwrap().clone(),
+                    node.step_value_node.as_ref().unwrap().as_ref(),
                     context.clone(),
                 ))
                 .unwrap()
@@ -439,7 +439,7 @@ impl Interpreter {
                     );
                 i += step_value.value;
 
-                let _ = result.register(self.visit(node.body_node.clone(), context.clone()));
+                let _ = result.register(self.visit(node.body_node.as_ref(), context.clone()));
 
                 if result.should_return()
                     && !result.loop_should_continue
@@ -470,7 +470,7 @@ impl Interpreter {
                     );
                 i += step_value.value;
 
-                let _ = result.register(self.visit(node.body_node.clone(), context.clone()));
+                let _ = result.register(self.visit(node.body_node.as_ref(), context.clone()));
 
                 if result.should_return()
                     && !result.loop_should_continue
@@ -501,7 +501,7 @@ impl Interpreter {
 
         loop {
             let condition =
-                result.register(self.visit(node.condition_node.clone(), context.clone()));
+                result.register(self.visit(node.condition_node.as_ref(), context.clone()));
 
             if result.should_return() {
                 return result;
@@ -513,7 +513,7 @@ impl Interpreter {
                 break;
             }
 
-            let _ = result.register(self.visit(node.body_node.clone(), context.clone()));
+            let _ = result.register(self.visit(node.body_node.as_ref(), context.clone()));
 
             if result.should_return() && !result.loop_should_continue && !result.loop_should_break {
                 return result;
@@ -538,7 +538,7 @@ impl Interpreter {
     ) -> RuntimeResult {
         let mut result = RuntimeResult::new();
 
-        let _ = result.register(self.visit(node.try_body_node.clone(), context.clone()));
+        let _ = result.register(self.visit(node.try_body_node.as_ref(), context.clone()));
         let try_error = result.error.clone();
 
         if try_error.is_some() {
@@ -553,7 +553,7 @@ impl Interpreter {
                     Some(Str::from(&try_error.unwrap().text)),
                 );
 
-            let _ = result.register(self.visit(node.except_body_node.clone(), context));
+            let _ = result.register(self.visit(node.except_body_node.as_ref(), context));
 
             if result.error.is_some() {
                 return result;
@@ -575,7 +575,7 @@ impl Interpreter {
         context: Rc<RefCell<Context>>,
     ) -> RuntimeResult {
         let mut result = RuntimeResult::new();
-        let import = result.register(self.visit(node.node_to_import.to_owned(), context.clone()));
+        let import = result.register(self.visit(node.node_to_import.as_ref(), context.clone()));
 
         if result.should_return() {
             return result;
@@ -659,7 +659,7 @@ impl Interpreter {
             None,
         )));
         module_context.borrow_mut().symbol_table = Some(self.global_symbol_table.clone());
-        let module_result = interpreter.visit(ast.node.unwrap(), module_context.clone());
+        let module_result = interpreter.visit(ast.node.unwrap().as_ref(), module_context.clone());
 
         if module_result.error.is_some() {
             return result.failure(module_result.error);
@@ -741,7 +741,7 @@ impl Interpreter {
         let mut args: Vec<Value> = Vec::new();
 
         let mut value_to_call =
-            result.register(self.visit(node.node_to_call.clone(), context.clone()));
+            result.register(self.visit(node.node_to_call.as_ref(), context.clone()));
 
         if result.should_return() {
             return result;
@@ -753,7 +753,7 @@ impl Interpreter {
             .set_position(node.pos_start.clone(), node.pos_end.clone());
 
         for arg_node in &node.arg_nodes {
-            let arg = result.register(self.visit(arg_node.to_owned(), context.clone()));
+            let arg = result.register(self.visit(arg_node.as_ref(), context.clone()));
 
             if result.should_return() {
                 return result;
@@ -799,7 +799,7 @@ impl Interpreter {
         context: Rc<RefCell<Context>>,
     ) -> RuntimeResult {
         let mut result = RuntimeResult::new();
-        let left = result.register(self.visit(node.left_node.clone(), context.clone()));
+        let left = result.register(self.visit(node.left_node.as_ref(), context.clone()));
 
         if result.should_return() {
             return result;
@@ -807,7 +807,7 @@ impl Interpreter {
 
         let mut left = left.unwrap();
 
-        let right = result.register(self.visit(node.right_node.clone(), context.clone()));
+        let right = result.register(self.visit(node.right_node.as_ref(), context.clone()));
 
         if result.should_return() {
             return result;
@@ -870,7 +870,7 @@ impl Interpreter {
         context: Rc<RefCell<Context>>,
     ) -> RuntimeResult {
         let mut result = RuntimeResult::new();
-        let value = result.register(self.visit(node.node.clone(), context));
+        let value = result.register(self.visit(node.node.as_ref(), context));
 
         if result.should_return() {
             return result;
@@ -917,8 +917,8 @@ impl Interpreter {
         let mut value: Option<Value> = None;
 
         if node.node_to_return.is_some() {
-            value =
-                result.register(self.visit(node.node_to_return.as_ref().unwrap().clone(), context));
+            value = result
+                .register(self.visit(node.node_to_return.as_ref().unwrap().as_ref(), context));
 
             if result.should_return() {
                 return result;

@@ -179,7 +179,7 @@ fn run(filename: &str, code: Option<String>) -> Option<StandardError> {
         return Some(e);
     }
 
-    let result = interpreter.visit(ast.node.unwrap(), context.clone());
+    let result = interpreter.visit(ast.node.unwrap().as_ref(), context.clone());
 
     let interpreting_time = interpreting_time.elapsed();
 

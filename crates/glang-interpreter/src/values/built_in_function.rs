@@ -447,7 +447,8 @@ impl BuiltInFunction {
         let external_context =
             Rc::new(RefCell::new(Context::new("<exec>".to_string(), None, None)));
         external_context.borrow_mut().symbol_table = Some(interpreter.global_symbol_table.clone());
-        let external_result = interpreter.visit(ast.node.unwrap(), external_context.clone());
+        let external_result =
+            interpreter.visit(ast.node.unwrap().as_ref(), external_context.clone());
 
         if external_result.error.is_some() {
             return result.failure(external_result.error);
