@@ -1,11 +1,11 @@
 [
   {
     "label": "Run GLang Test All",
-    "command": "cargo build --release --features benchmark; target/release/glang.exe library/tests/test_all.glang"
+    "command": "cargo run --features benchmark -- library/tests/test_all.glang"
   },
   {
     "label": "Run GLang Test Loop",
-    "command": "cargo build --release --features benchmark; target/release/glang.exe library/tests/test_loop.glang"
+    "command": "cargo run --features benchmark -- library/tests/test_loop.glang"
   },
   {
     "label": "Run GLang REPL",
