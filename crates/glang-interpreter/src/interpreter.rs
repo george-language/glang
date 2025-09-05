@@ -529,6 +529,9 @@ impl Interpreter {
         let try_error = result.error.clone();
 
         if try_error.is_some() {
+            let mut output_error = Str::from(&try_error.unwrap().text);
+            output_error.set_const(true);
+
             context
                 .borrow_mut()
                 .symbol_table
@@ -537,7 +540,7 @@ impl Interpreter {
                 .borrow_mut()
                 .set(
                     node.error_name_token.value.to_owned().unwrap(),
-                    Some(Str::from(&try_error.unwrap().text)),
+                    Some(output_error),
                 );
 
             let _ = result.register(self.visit(node.except_body_node.as_ref(), context));
