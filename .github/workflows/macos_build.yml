@@ -1,9 +1,8 @@
 name: GLang MacOS Build
 
-on: push
-
-permissions:
-  contents: write
+on:
+  release:
+    types: [published]
 
 jobs:
   build:
@@ -49,9 +48,3 @@ jobs:
         with:
           name: GeorgeLanguage+macos_setup
           path: dist/GeorgeLanguage+macos_setup.zip
-
-      - name: Upload zip
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ github.event.release.tag_name }}
-          files: dist/GeorgeLanguage+macos_setup.zip
