@@ -162,7 +162,7 @@ pub fn add_package(name: &str) {
         } else {
             if let Some(parent) = path.parent() {
                 fs::create_dir_all(parent).unwrap_or_else(|e| {
-                    log_error(&format!("Failed to create dir {parent:?} ({e})"));
+                    log_error(&format!("failed to create dir {parent:?} ({e})"));
                 });
             }
 
