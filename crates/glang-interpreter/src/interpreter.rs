@@ -397,12 +397,9 @@ impl Interpreter {
 
         let step_value: Number;
 
-        if node.step_value_node.is_some() {
+        if let Some(step_value_node) = node.step_value_node.as_ref() {
             step_value = match result
-                .register(self.visit(
-                    node.step_value_node.as_ref().unwrap().as_ref(),
-                    context.clone(),
-                ))
+                .register(self.visit(step_value_node, context.clone()))
                 .unwrap()
             {
                 Value::NumberValue(value) => Number::new(value.value),
@@ -424,19 +421,15 @@ impl Interpreter {
         }
 
         let mut i = start_value.value;
+        let iterator_name = node.var_name_token.value.as_ref().unwrap().to_owned();
+        let symbol_table = context.borrow_mut().symbol_table.as_mut().unwrap().clone();
 
         if step_value.value >= 0.0 {
             while i < end_value.value {
-                context
+                symbol_table
                     .borrow_mut()
-                    .symbol_table
-                    .as_mut()
-                    .unwrap()
-                    .borrow_mut()
-                    .set(
-                        node.var_name_token.value.as_ref().unwrap().clone(),
-                        Some(Value::NumberValue(Number::new(i))),
-                    );
+                    .set(iterator_name.clone(), Some(Number::from(i)));
+
                 i += step_value.value;
 
                 let _ = result.register(self.visit(node.body_node.as_ref(), context.clone()));
@@ -458,16 +451,10 @@ impl Interpreter {
             }
         } else {
             while i > end_value.value {
-                context
+                symbol_table
                     .borrow_mut()
-                    .symbol_table
-                    .as_mut()
-                    .unwrap()
-                    .borrow_mut()
-                    .set(
-                        node.var_name_token.value.as_ref().unwrap().clone(),
-                        Some(Value::NumberValue(Number::new(i))),
-                    );
+                    .set(iterator_name.clone(), Some(Number::from(i)));
+
                 i += step_value.value;
 
                 let _ = result.register(self.visit(node.body_node.as_ref(), context.clone()));
