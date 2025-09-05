@@ -38,11 +38,7 @@ impl Value {
         }
     }
 
-    pub fn set_position(
-        &mut self,
-        pos_start: Option<Position>,
-        pos_end: Option<Position>,
-    ) -> Value {
+    pub fn set_position(&mut self, pos_start: Option<Position>, pos_end: Option<Position>) {
         match self {
             Value::NumberValue(value) => {
                 value.pos_start = pos_start;
@@ -65,11 +61,9 @@ impl Value {
                 value.pos_end = pos_end;
             }
         }
-
-        self.clone()
     }
 
-    pub fn set_context(&mut self, context: Option<Rc<RefCell<Context>>>) -> Value {
+    pub fn set_context(&mut self, context: Option<Rc<RefCell<Context>>>) {
         match self {
             Value::NumberValue(value) => value.context = context,
             Value::ListValue(value) => value.context = context,
@@ -77,11 +71,9 @@ impl Value {
             Value::FunctionValue(value) => value.context = context,
             Value::BuiltInFunction(value) => value.context = context,
         }
-
-        self.clone()
     }
 
-    pub fn set_const(&mut self, is_const: bool) -> Value {
+    pub fn set_const(&mut self, is_const: bool) {
         match self {
             Value::NumberValue(value) => value.is_const = is_const,
             Value::ListValue(value) => value.is_const = is_const,
@@ -89,8 +81,6 @@ impl Value {
             Value::FunctionValue(value) => value.is_const = is_const,
             Value::BuiltInFunction(value) => value.is_const = is_const,
         }
-
-        self.clone()
     }
 
     pub fn perform_operation(

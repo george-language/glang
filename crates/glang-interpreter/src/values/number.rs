@@ -40,9 +40,9 @@ impl Number {
 
     pub fn perform_operation(&self, operator: &str, other: Value) -> Result<Value, StandardError> {
         match other {
-            Value::NumberValue(ref right) => {
+            Value::NumberValue(ref value) => {
                 let left_val = self.value;
-                let right_val = right.value;
+                let right_val = value.value;
 
                 let result = match operator {
                     "+" => Some(left_val + right_val),
@@ -52,8 +52,8 @@ impl Number {
                         if right_val == 0.0 {
                             return Err(StandardError::new(
                                 "division by zero",
-                                right.pos_start.clone().unwrap(),
-                                right.pos_end.clone().unwrap(),
+                                value.pos_start.clone().unwrap(),
+                                value.pos_end.clone().unwrap(),
                                 None,
                             ));
                         }
@@ -63,8 +63,8 @@ impl Number {
                         if right_val <= 0.0 {
                             return Err(StandardError::new(
                                 "powered by operator less than or equal to 0",
-                                right.pos_start.clone().unwrap(),
-                                right.pos_end.clone().unwrap(),
+                                value.pos_start.clone().unwrap(),
+                                value.pos_end.clone().unwrap(),
                                 None,
                             ));
                         }
@@ -75,8 +75,8 @@ impl Number {
                         if right_val <= 0.0 {
                             return Err(StandardError::new(
                                 "modded by operator less than or equal to 0",
-                                right.pos_start.clone().unwrap(),
-                                right.pos_end.clone().unwrap(),
+                                value.pos_start.clone().unwrap(),
+                                value.pos_end.clone().unwrap(),
                                 None,
                             ));
                         }
@@ -95,8 +95,10 @@ impl Number {
                     _ => return Err(self.illegal_operation(Some(other))),
                 };
 
-                Ok(Value::NumberValue(Number::new(result.unwrap()))
-                    .set_context(self.context.clone()))
+                let mut comparison_result = Number::from(result.unwrap());
+                comparison_result.set_context(self.context.clone());
+
+                Ok(comparison_result)
             }
             _ => Err(self.illegal_operation(Some(other))),
         }

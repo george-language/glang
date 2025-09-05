@@ -90,13 +90,11 @@ impl Interpreter {
     }
 
     fn visit_number_node(&self, node: &NumberNode, context: Rc<RefCell<Context>>) -> RuntimeResult {
-        let value: f64 = node.token.value.as_ref().unwrap().parse().unwrap();
+        let mut value = Number::from(node.token.value.as_ref().unwrap().parse().unwrap());
+        value.set_context(Some(context.clone()));
+        value.set_position(node.pos_start.clone(), node.pos_end.clone());
 
-        RuntimeResult::new().success(Some(
-            Value::NumberValue(Number::new(value))
-                .set_context(Some(context.clone()))
-                .set_position(node.pos_start.clone(), node.pos_end.clone()),
-        ))
+        RuntimeResult::new().success(Some(value))
     }
 
     fn visit_list_node(&mut self, node: &ListNode, context: Rc<RefCell<Context>>) -> RuntimeResult {
@@ -113,11 +111,11 @@ impl Interpreter {
             elements.push(element_result.unwrap());
         }
 
-        result.success(Some(
-            Value::ListValue(List::new(elements))
-                .set_context(Some(context.clone()))
-                .set_position(node.pos_start.clone(), node.pos_end.clone()),
-        ))
+        let mut list = List::from(elements);
+        list.set_context(Some(context.clone()));
+        list.set_position(node.pos_start.clone(), node.pos_end.clone());
+
+        result.success(Some(list))
     }
 
     fn visit_string_node(
@@ -125,11 +123,11 @@ impl Interpreter {
         node: &StringNode,
         context: Rc<RefCell<Context>>,
     ) -> RuntimeResult {
-        RuntimeResult::new().success(Some(
-            Value::StringValue(Str::new(node.token.value.as_ref().unwrap().clone()))
-                .set_context(Some(context.clone()))
-                .set_position(node.pos_start.clone(), node.pos_end.clone()),
-        ))
+        let mut string = Str::from(node.token.value.as_ref().unwrap());
+        string.set_context(Some(context.clone()));
+        string.set_position(node.pos_start.clone(), node.pos_end.clone());
+
+        RuntimeResult::new().success(Some(string))
     }
 
     fn visit_variable_assign_node(
@@ -302,13 +300,11 @@ impl Interpreter {
             )));
         }
 
-        value = Some(
-            value
-                .clone()
-                .unwrap()
-                .set_position(node.pos_start.clone(), node.pos_end.clone())
-                .set_context(Some(context.clone())),
-        );
+        value.as_mut().unwrap().set_context(Some(context.clone()));
+        value
+            .as_mut()
+            .unwrap()
+            .set_position(node.pos_start.clone(), node.pos_end.clone());
 
         result.success(value)
     }
@@ -718,14 +714,14 @@ impl Interpreter {
             arg_names.push(arg_name.value.as_ref().unwrap().clone());
         }
 
-        let func_value = Value::FunctionValue(Function::new(
+        let mut func_value = Value::FunctionValue(Function::new(
             func_name.clone(),
             body_node,
             &arg_names,
             node.should_auto_return,
-        ))
-        .set_context(Some(context.clone()))
-        .set_position(node.pos_start.clone(), node.pos_end.clone());
+        ));
+        func_value.set_context(Some(context.clone()));
+        func_value.set_position(node.pos_start.clone(), node.pos_end.clone());
 
         if !&func_name.is_empty() {
             context
@@ -744,13 +740,15 @@ impl Interpreter {
         let mut result = RuntimeResult::new();
         let mut args: Vec<Value> = Vec::new();
 
-        let value_to_call = result.register(self.visit(node.node_to_call.clone(), context.clone()));
+        let mut value_to_call =
+            result.register(self.visit(node.node_to_call.clone(), context.clone()));
 
         if result.should_return() {
             return result;
         }
 
-        let value_to_call = value_to_call
+        value_to_call
+            .as_mut()
             .unwrap()
             .set_position(node.pos_start.clone(), node.pos_end.clone());
 
@@ -766,7 +764,7 @@ impl Interpreter {
             args.push(arg);
         }
 
-        let return_value = result.register(match value_to_call {
+        let mut return_value = result.register(match value_to_call.unwrap() {
             Value::FunctionValue(value) => value.execute(&args),
             Value::BuiltInFunction(value) => value.execute(&args),
             _ => {
@@ -783,12 +781,16 @@ impl Interpreter {
             return result;
         }
 
-        let return_value = return_value
+        return_value
+            .as_mut()
             .unwrap()
-            .set_position(node.pos_start.clone(), node.pos_end.clone())
+            .set_position(node.pos_start.clone(), node.pos_end.clone());
+        return_value
+            .as_mut()
+            .unwrap()
             .set_context(Some(context.clone()));
 
-        result.success(Some(return_value))
+        result.success(Some(return_value.unwrap()))
     }
 
     fn visit_binary_operator_node(
@@ -813,7 +815,7 @@ impl Interpreter {
 
         let right = right.unwrap();
 
-        let operation_result: Result<Value, StandardError>;
+        let mut operation_result: Result<Value, StandardError>;
 
         if node.op_token.token_type == TokenType::TT_PLUS {
             operation_result = left.perform_operation("+", right);
@@ -850,12 +852,13 @@ impl Interpreter {
         if operation_result.is_err() {
             result.failure(operation_result.err())
         } else if operation_result.is_ok() {
-            return result.success(Some(
-                operation_result
-                    .ok()
-                    .unwrap()
-                    .set_position(node.pos_start.clone(), node.pos_end.clone()),
-            ));
+            operation_result
+                .as_mut()
+                .ok()
+                .unwrap()
+                .set_position(node.pos_start.clone(), node.pos_end.clone());
+
+            return result.success(Some(operation_result.ok().unwrap()));
         } else {
             return result.success(Some(Number::null_value()));
         }
@@ -875,7 +878,7 @@ impl Interpreter {
 
         let mut value = value.unwrap();
 
-        let operation_result: Result<Value, StandardError>;
+        let mut operation_result: Result<Value, StandardError>;
 
         if node.op_token.token_type == TokenType::TT_MINUS {
             operation_result = value.perform_operation("*", Number::from(-1.0));
@@ -893,12 +896,13 @@ impl Interpreter {
         if operation_result.is_err() {
             result.failure(operation_result.err())
         } else if operation_result.is_ok() {
-            return result.success(Some(
-                operation_result
-                    .ok()
-                    .unwrap()
-                    .set_position(node.pos_start.clone(), node.pos_end.clone()),
-            ));
+            operation_result
+                .as_mut()
+                .ok()
+                .unwrap()
+                .set_position(node.pos_start.clone(), node.pos_end.clone());
+
+            return result.success(Some(operation_result.ok().unwrap()));
         } else {
             return result.success(Some(Number::null_value()));
         }

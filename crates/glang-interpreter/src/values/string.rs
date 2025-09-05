@@ -49,22 +49,34 @@ impl Str {
 
                     Ok(Value::StringValue(copy))
                 }
-                "==" => Ok(Value::NumberValue(Number::new(
-                    (self.value == value.value) as u8 as f64,
-                ))
-                .set_context(self.context.clone())),
-                "!=" => Ok(Value::NumberValue(Number::new(
-                    (self.value != value.value) as u8 as f64,
-                ))
-                .set_context(self.context.clone())),
-                "and" => Ok(Value::NumberValue(Number::new(
-                    (!self.value.is_empty() && !value.value.is_empty()) as u8 as f64,
-                ))
-                .set_context(self.context.clone())),
-                "or" => Ok(Value::NumberValue(Number::new(
-                    (!self.value.is_empty() || !value.value.is_empty()) as u8 as f64,
-                ))
-                .set_context(self.context.clone())),
+                "==" => {
+                    let mut is_neq = Number::from((self.value == value.value) as u8 as f64);
+                    is_neq.set_context(self.context.clone());
+
+                    Ok(is_neq)
+                }
+                "!=" => {
+                    let mut is_neq = Number::from((self.value != value.value) as u8 as f64);
+                    is_neq.set_context(self.context.clone());
+
+                    Ok(is_neq)
+                }
+                "and" => {
+                    let mut is_and = Number::from(
+                        (!self.value.is_empty() && !value.value.is_empty()) as u8 as f64,
+                    );
+                    is_and.set_context(self.context.clone());
+
+                    Ok(is_and)
+                }
+                "or" => {
+                    let mut is_or = Number::from(
+                        (!self.value.is_empty() || !value.value.is_empty()) as u8 as f64,
+                    );
+                    is_or.set_context(self.context.clone());
+
+                    Ok(is_or)
+                }
                 _ => Err(self.illegal_operation(Some(&other))),
             },
             Value::NumberValue(ref value) => match operator {

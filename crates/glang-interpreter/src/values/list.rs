@@ -35,12 +35,13 @@ impl List {
         }
 
         match other {
-            Value::ListValue(ref right) => match operator {
-                "+" => Ok(self.append(&mut right.elements.clone())),
+            Value::ListValue(ref value) => match operator {
+                "+" => Ok(self.append(&mut value.elements.clone())),
                 "==" => {
                     let mut is_eq = Number::null_value();
+                    is_eq.set_context(self.context.clone());
 
-                    for (a, b) in zip(&self.elements, &right.elements) {
+                    for (a, b) in zip(&self.elements, &value.elements) {
                         let result = a.to_owned().perform_operation("==", b.to_owned());
 
                         if result.is_err() {
@@ -50,12 +51,13 @@ impl List {
                         is_eq = result.ok().unwrap();
                     }
 
-                    Ok(is_eq.set_context(self.context.clone()))
+                    Ok(is_eq)
                 }
                 "!=" => {
                     let mut is_neq = Number::null_value();
+                    is_neq.set_context(self.context.clone());
 
-                    for (a, b) in zip(&self.elements, &right.elements) {
+                    for (a, b) in zip(&self.elements, &value.elements) {
                         let result = a.to_owned().perform_operation("!=", b.to_owned());
 
                         if result.is_err() {
@@ -65,66 +67,74 @@ impl List {
                         is_neq = result.ok().unwrap();
                     }
 
-                    Ok(is_neq.set_context(self.context.clone()))
+                    Ok(is_neq)
                 }
-                "and" => Ok(Value::NumberValue(Number::new(
-                    (!self.elements.is_empty() && !right.elements.is_empty()) as u8 as f64,
-                ))
-                .set_context(self.context.clone())),
-                "or" => Ok(Value::NumberValue(Number::new(
-                    (!self.elements.is_empty() || !right.elements.is_empty()) as u8 as f64,
-                ))
-                .set_context(self.context.clone())),
+                "and" => {
+                    let mut is_and = Number::from(
+                        (!self.elements.is_empty() && !value.elements.is_empty()) as u8 as f64,
+                    );
+                    is_and.set_context(self.context.clone());
+
+                    Ok(is_and)
+                }
+                "or" => {
+                    let mut is_or = Number::from(
+                        (!self.elements.is_empty() || !value.elements.is_empty()) as u8 as f64,
+                    );
+                    is_or.set_context(self.context.clone());
+
+                    Ok(is_or)
+                }
                 _ => Err(self.illegal_operation(Some(other))),
             },
-            Value::NumberValue(ref right) => match operator {
+            Value::NumberValue(ref value) => match operator {
                 "^" => {
-                    if right.value < -1.0 {
+                    if value.value < -1.0 {
                         return Err(StandardError::new(
                             "cannot access a negative index",
-                            right.pos_start.clone().unwrap(),
-                            right.pos_end.clone().unwrap(),
+                            value.pos_start.clone().unwrap(),
+                            value.pos_end.clone().unwrap(),
                             Some(
                                 "use an index greater than or equal to 0 or use -1 to reverse the list",
                             ),
                         ));
                     }
 
-                    if right.value == -1.0 {
+                    if value.value == -1.0 {
                         return Ok(self.reverse());
                     }
 
-                    if (right.value as usize) >= self.elements.len() {
+                    if (value.value as usize) >= self.elements.len() {
                         return Err(StandardError::new(
                             "index is out of bounds",
-                            right.pos_start.clone().unwrap(),
-                            right.pos_end.clone().unwrap(),
+                            value.pos_start.clone().unwrap(),
+                            value.pos_end.clone().unwrap(),
                             None,
                         ));
                     }
 
-                    Ok(self.retrieve(right.value as usize))
+                    Ok(self.retrieve(value.value as usize))
                 }
                 "-" => {
-                    if right.value < 0.0 {
+                    if value.value < 0.0 {
                         return Err(StandardError::new(
                             "cannot access a negative index",
-                            right.pos_start.clone().unwrap(),
-                            right.pos_end.clone().unwrap(),
+                            value.pos_start.clone().unwrap(),
+                            value.pos_end.clone().unwrap(),
                             Some("use an index greater than or equal to 0"),
                         ));
                     }
 
-                    if (right.value as usize) >= self.elements.len() {
+                    if (value.value as usize) >= self.elements.len() {
                         return Err(StandardError::new(
                             "index is out of bounds",
-                            right.pos_start.clone().unwrap(),
-                            right.pos_end.clone().unwrap(),
+                            value.pos_start.clone().unwrap(),
+                            value.pos_end.clone().unwrap(),
                             None,
                         ));
                     }
 
-                    Ok(self.remove(right.value as usize))
+                    Ok(self.remove(value.value as usize))
                 }
                 _ => Err(self.illegal_operation(Some(other))),
             },
