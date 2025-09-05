@@ -61,6 +61,30 @@ impl Str {
 
                     Ok(is_neq)
                 }
+                ">" => {
+                    let mut is_gt = Number::from((self.value > value.value) as u8 as f64);
+                    is_gt.set_context(self.context.clone());
+
+                    Ok(is_gt)
+                }
+                "<" => {
+                    let mut is_lt = Number::from((self.value < value.value) as u8 as f64);
+                    is_lt.set_context(self.context.clone());
+
+                    Ok(is_lt)
+                }
+                ">=" => {
+                    let mut is_gte = Number::from((self.value >= value.value) as u8 as f64);
+                    is_gte.set_context(self.context.clone());
+
+                    Ok(is_gte)
+                }
+                "<=" => {
+                    let mut is_lte = Number::from((self.value <= value.value) as u8 as f64);
+                    is_lte.set_context(self.context.clone());
+
+                    Ok(is_lte)
+                }
                 "and" => {
                     let mut is_and = Number::from(
                         (!self.value.is_empty() && !value.value.is_empty()) as u8 as f64,
