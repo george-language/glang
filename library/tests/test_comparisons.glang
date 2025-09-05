@@ -1,0 +1,43 @@
+# file test_comparisons.glang: test glang's comparison system
+
+bark("<Number Comparisons>");
+
+# in glang, number comparisons are mathematical
+# for example, '>' compares the size of each number (2 > 1)
+# another example, '==' will compare if two numbers are the same (1 == 1)
+obj x = 1;
+
+bark(x == x); # 1
+bark(x != x); # 0
+bark(x > x);  # 0
+bark(x < x);  # 0
+bark(x >= x); # 1
+bark(x <= x); # 1
+
+bark("<String Comparisons>");
+
+# in glang, string comparisons are based on the characters of the string
+# for example, '>' compares the character positions, ("a" is lower in the alphabet, so "a" > "z" is false)
+# another example, '==' will compare each character in the list (if char == char)
+obj y = "a";
+
+bark(y == y);   # 1
+bark(y != y);   # 0
+bark(y > "z");  # 0
+bark(y < "z");  # 1
+bark(y >= "z"); # 0
+bark(y <= "z"); # 1
+
+bark("<List Comparisons>");
+
+# in glang, list comparisons are based on the elements and length of the lists
+# for example, '>' compares the length of the two lists (which is larger)
+# another example, '==' will compare each element in the list (if they == eachother)
+obj z = [1, 2, 3];
+
+bark(z == z); # 1
+bark(z != z); # 0
+bark(z > z);  # 0
+bark(z < z);  # 0
+bark(z >= z); # 1
+bark(z <= z); # 1
