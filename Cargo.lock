@@ -505,7 +505,7 @@ checksum = "07e28edb80900c19c28f1072f2e8aeca7fa06b23cd4169cefe1af5aa3260783f"
 
 [[package]]
 name = "glang"
-version = "3.2.0"
+version = "3.3.0"
 dependencies = [
  "clap",
  "dirs",
@@ -519,14 +519,14 @@ dependencies = [
 
 [[package]]
 name = "glang-attributes"
-version = "3.2.0"
+version = "3.3.0"
 dependencies = [
  "simply_colored",
 ]
 
 [[package]]
 name = "glang-interpreter"
-version = "3.2.0"
+version = "3.3.0"
 dependencies = [
  "glang-attributes",
  "glang-lexer",
@@ -535,21 +535,21 @@ dependencies = [
 
 [[package]]
 name = "glang-lexer"
-version = "3.2.0"
+version = "3.3.0"
 dependencies = [
  "glang-attributes",
 ]
 
 [[package]]
 name = "glang-logging"
-version = "3.2.0"
+version = "3.3.0"
 dependencies = [
  "simply_colored",
 ]
 
 [[package]]
 name = "glang-package-manager"
-version = "3.2.0"
+version = "3.3.0"
 dependencies = [
  "dirs",
  "glang-logging",
@@ -564,7 +564,7 @@ dependencies = [
 
 [[package]]
 name = "glang-parser"
-version = "3.2.0"
+version = "3.3.0"
 dependencies = [
  "glang-attributes",
  "glang-lexer",
