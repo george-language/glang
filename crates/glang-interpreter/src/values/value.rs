@@ -18,7 +18,7 @@ pub enum Value {
 }
 
 impl Value {
-    pub fn position_start(&self) -> Option<Position> {
+    pub fn position_start(&self) -> Option<Rc<Position>> {
         match self {
             Value::NumberValue(value) => value.pos_start.clone(),
             Value::ListValue(value) => value.pos_start.clone(),
@@ -28,7 +28,7 @@ impl Value {
         }
     }
 
-    pub fn position_end(&self) -> Option<Position> {
+    pub fn position_end(&self) -> Option<Rc<Position>> {
         match self {
             Value::NumberValue(value) => value.pos_end.clone(),
             Value::ListValue(value) => value.pos_end.clone(),
@@ -38,7 +38,7 @@ impl Value {
         }
     }
 
-    pub fn set_position(&mut self, pos_start: Option<Position>, pos_end: Option<Position>) {
+    pub fn set_position(&mut self, pos_start: Option<Rc<Position>>, pos_end: Option<Rc<Position>>) {
         match self {
             Value::NumberValue(value) => {
                 value.pos_start = pos_start;

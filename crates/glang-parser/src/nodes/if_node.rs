@@ -1,13 +1,14 @@
 use crate::nodes::ast_node::AstNode;
 use glang_attributes::Position;
+use std::rc::Rc;
 use std::sync::Arc;
 
 #[derive(Debug, Clone)]
 pub struct IfNode {
     pub cases: Arc<[(Box<AstNode>, Box<AstNode>, bool)]>,
     pub else_case: Option<(Box<AstNode>, bool)>,
-    pub pos_start: Option<Position>,
-    pub pos_end: Option<Position>,
+    pub pos_start: Option<Rc<Position>>,
+    pub pos_end: Option<Rc<Position>>,
 }
 
 impl IfNode {

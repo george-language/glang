@@ -1,6 +1,7 @@
 use crate::nodes::ast_node::AstNode;
 use glang_attributes::Position;
 use glang_lexer::Token;
+use std::rc::Rc;
 use std::sync::Arc;
 
 #[derive(Debug, Clone)]
@@ -9,8 +10,8 @@ pub struct FunctionDefinitionNode {
     pub arg_name_tokens: Arc<[Token]>,
     pub body_node: Box<AstNode>,
     pub should_auto_return: bool,
-    pub pos_start: Option<Position>,
-    pub pos_end: Option<Position>,
+    pub pos_start: Option<Rc<Position>>,
+    pub pos_end: Option<Rc<Position>>,
 }
 
 impl FunctionDefinitionNode {
@@ -25,10 +26,10 @@ impl FunctionDefinitionNode {
             arg_name_tokens: Arc::from(arg_name_tokens),
             body_node: body_node.to_owned(),
             should_auto_return,
-            pos_start: if var_name_token.is_some() {
-                var_name_token.unwrap().pos_end
+            pos_start: if let Some(var_name) = var_name_token {
+                Some(Rc::new(var_name.pos_end.unwrap()))
             } else if !arg_name_tokens.is_empty() {
-                arg_name_tokens[0].pos_start.to_owned()
+                Some(Rc::new(arg_name_tokens[0].pos_start.clone().unwrap()))
             } else {
                 body_node.position_start()
             },

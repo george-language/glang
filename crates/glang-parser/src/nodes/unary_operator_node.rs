@@ -1,13 +1,14 @@
 use crate::nodes::ast_node::AstNode;
 use glang_attributes::Position;
 use glang_lexer::Token;
+use std::rc::Rc;
 
 #[derive(Debug, Clone)]
 pub struct UnaryOperatorNode {
     pub op_token: Token,
     pub node: Box<AstNode>,
-    pub pos_start: Option<Position>,
-    pub pos_end: Option<Position>,
+    pub pos_start: Option<Rc<Position>>,
+    pub pos_end: Option<Rc<Position>>,
 }
 
 impl UnaryOperatorNode {
@@ -17,7 +18,7 @@ impl UnaryOperatorNode {
         Self {
             op_token: op_token.to_owned(),
             node,
-            pos_start: op_token.pos_start,
+            pos_start: Some(Rc::new(op_token.pos_start.unwrap())),
             pos_end,
         }
     }

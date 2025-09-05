@@ -20,8 +20,8 @@ pub struct BuiltInFunction {
     pub name: String,
     pub context: Option<Rc<RefCell<Context>>>,
     pub is_const: bool,
-    pub pos_start: Option<Position>,
-    pub pos_end: Option<Position>,
+    pub pos_start: Option<Rc<Position>>,
+    pub pos_end: Option<Rc<Position>>,
 }
 
 impl BuiltInFunction {
@@ -381,8 +381,8 @@ impl BuiltInFunction {
             _ => {
                 return result.failure(Some(StandardError::new(
                     "expected type string",
-                    error.position_start().unwrap().clone(),
-                    error.position_end().unwrap().clone(),
+                    error.position_start().unwrap(),
+                    error.position_end().unwrap(),
                     Some("add an error message"),
                 )));
             }

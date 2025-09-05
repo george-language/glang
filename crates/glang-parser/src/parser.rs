@@ -13,7 +13,7 @@ use crate::{
 };
 use glang_attributes::{Position, StandardError};
 use glang_lexer::{Token, TokenType};
-use std::sync::Arc;
+use std::{rc::Rc, sync::Arc};
 
 pub struct Parser {
     pub tokens: Arc<[Token]>,
@@ -69,28 +69,8 @@ impl Parser {
         None
     }
 
-    fn current_pos_start(&self) -> Position {
-        self.current_token
-            .as_ref()
-            .unwrap()
-            .pos_start
-            .as_ref()
-            .unwrap()
-            .clone()
-    }
-
-    fn current_pos_end(&self) -> Position {
-        self.current_token
-            .as_ref()
-            .unwrap()
-            .pos_end
-            .as_ref()
-            .unwrap()
-            .clone()
-    }
-
-    fn current_pos_range(&self) -> (Position, Position) {
-        (
+    fn current_pos_start(&self) -> Rc<Position> {
+        Rc::new(
             self.current_token
                 .as_ref()
                 .unwrap()
@@ -98,6 +78,11 @@ impl Parser {
                 .as_ref()
                 .unwrap()
                 .clone(),
+        )
+    }
+
+    fn current_pos_end(&self) -> Rc<Position> {
+        Rc::new(
             self.current_token
                 .as_ref()
                 .unwrap()
@@ -105,6 +90,29 @@ impl Parser {
                 .as_ref()
                 .unwrap()
                 .clone(),
+        )
+    }
+
+    fn current_pos_range(&self) -> (Rc<Position>, Rc<Position>) {
+        (
+            Rc::new(
+                self.current_token
+                    .as_ref()
+                    .unwrap()
+                    .pos_start
+                    .as_ref()
+                    .unwrap()
+                    .clone(),
+            ),
+            Rc::new(
+                self.current_token
+                    .as_ref()
+                    .unwrap()
+                    .pos_end
+                    .as_ref()
+                    .unwrap()
+                    .clone(),
+            ),
         )
     }
 
@@ -245,7 +253,7 @@ impl Parser {
         parse_result.success(Some(Box::new(AstNode::List(ListNode::new(
             &element_nodes,
             Some(pos_start),
-            self.current_token_copy().pos_end,
+            Some(self.current_pos_end()),
         )))))
     }
 
@@ -1249,8 +1257,8 @@ impl Parser {
 
         parse_result.failure(Some(StandardError::new(
             "expected object, keyword, function, or expression",
-            token.pos_start.unwrap(),
-            token.pos_end.unwrap(),
+            Rc::new(token.pos_start.unwrap()),
+            Rc::new(token.pos_end.unwrap()),
             None,
         )))
     }

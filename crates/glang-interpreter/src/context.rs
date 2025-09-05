@@ -6,7 +6,7 @@ use std::{cell::RefCell, rc::Rc};
 pub struct Context {
     pub display_name: String,
     pub parent: Option<Rc<RefCell<Context>>>,
-    pub parent_entry_pos: Option<Position>,
+    pub parent_entry_pos: Option<Rc<Position>>,
     pub symbol_table: Option<Rc<RefCell<SymbolTable>>>,
 }
 
@@ -14,7 +14,7 @@ impl Context {
     pub fn new(
         display_name: String,
         parent: Option<Rc<RefCell<Context>>>,
-        parent_entry_pos: Option<Position>,
+        parent_entry_pos: Option<Rc<Position>>,
     ) -> Self {
         Self {
             display_name,

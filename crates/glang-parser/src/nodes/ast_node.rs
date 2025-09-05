@@ -8,6 +8,7 @@ use crate::nodes::{
     variable_reassign_node::VariableRessignNode, while_node::WhileNode,
 };
 use glang_attributes::Position;
+use std::rc::Rc;
 
 #[derive(Debug, Clone)]
 pub enum AstNode {
@@ -33,7 +34,7 @@ pub enum AstNode {
 }
 
 impl AstNode {
-    pub fn position_start(&self) -> Option<Position> {
+    pub fn position_start(&self) -> Option<Rc<Position>> {
         match self {
             AstNode::BinaryOperator(node) => node.pos_start.clone(),
             AstNode::Break(node) => node.pos_start.clone(),
@@ -57,7 +58,7 @@ impl AstNode {
         }
     }
 
-    pub fn position_end(&self) -> Option<Position> {
+    pub fn position_end(&self) -> Option<Rc<Position>> {
         match self {
             AstNode::BinaryOperator(node) => node.pos_end.clone(),
             AstNode::Break(node) => node.pos_end.clone(),

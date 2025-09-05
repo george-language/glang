@@ -1,12 +1,13 @@
 use crate::nodes::ast_node::AstNode;
 use glang_attributes::Position;
+use std::rc::Rc;
 
 #[derive(Debug, Clone)]
 pub struct WhileNode {
     pub condition_node: Box<AstNode>,
     pub body_node: Box<AstNode>,
-    pub pos_start: Option<Position>,
-    pub pos_end: Option<Position>,
+    pub pos_start: Option<Rc<Position>>,
+    pub pos_end: Option<Rc<Position>>,
 }
 
 impl WhileNode {

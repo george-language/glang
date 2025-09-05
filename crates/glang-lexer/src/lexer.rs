@@ -4,6 +4,7 @@ use glang_attributes::Position;
 use glang_attributes::StandardError;
 use glang_attributes::keywords::*;
 use std::collections::HashMap;
+use std::rc::Rc;
 use std::sync::Arc;
 
 pub struct Lexer {
@@ -209,8 +210,8 @@ impl Lexer {
 
                     return Err(StandardError::new(
                         format!("unkown character '{unknown_char}'").as_str(),
-                        pos_start,
-                        self.position.clone(),
+                        Rc::new(pos_start),
+                        Rc::new(self.position.clone()),
                         Some("replace this character with one known by glang"),
                     ));
                 }
@@ -248,8 +249,8 @@ impl Lexer {
             } else if LETTERS.contains(character) {
                 return Err(StandardError::new(
                     "object names cannot start with numerical values",
-                    pos_start,
-                    self.position.clone(),
+                    Rc::new(pos_start),
+                    Rc::new(self.position.clone()),
                     None,
                 ));
             } else {
@@ -337,8 +338,8 @@ impl Lexer {
                     } else {
                         return Err(StandardError::new(
                             "invalid ANSI escape sequence (expected '[')",
-                            pos_start.clone(),
-                            self.position.clone(),
+                            Rc::new(pos_start),
+                            Rc::new(self.position.clone()),
                             None,
                         ));
                     }
@@ -348,8 +349,8 @@ impl Lexer {
                 } else {
                     return Err(StandardError::new(
                         "invalid escape character",
-                        pos_start.clone(),
-                        self.position.clone(),
+                        Rc::new(pos_start),
+                        Rc::new(self.position.clone()),
                         None,
                     ));
                 }
@@ -371,8 +372,8 @@ impl Lexer {
         if self.current_char != Some('"') {
             return Err(StandardError::new(
                 "unfinished string",
-                pos_start,
-                self.position.clone(),
+                Rc::new(pos_start),
+                Rc::new(self.position.clone()),
                 Some("add a '\"' at the end of the string to close it"),
             ));
         }
@@ -450,8 +451,8 @@ impl Lexer {
 
         Err(StandardError::new(
             "expected '=' after '!'",
-            pos_start,
-            self.position.clone(),
+            Rc::new(pos_start),
+            Rc::new(self.position.clone()),
             Some("add a '=' after the '!' character"),
         ))
     }

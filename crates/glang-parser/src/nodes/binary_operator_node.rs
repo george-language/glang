@@ -1,14 +1,15 @@
 use crate::nodes::ast_node::AstNode;
 use glang_attributes::Position;
 use glang_lexer::Token;
+use std::rc::Rc;
 
 #[derive(Debug, Clone)]
 pub struct BinaryOperatorNode {
     pub left_node: Box<AstNode>,
     pub op_token: Token,
     pub right_node: Box<AstNode>,
-    pub pos_start: Option<Position>,
-    pub pos_end: Option<Position>,
+    pub pos_start: Option<Rc<Position>>,
+    pub pos_end: Option<Rc<Position>>,
 }
 
 impl BinaryOperatorNode {

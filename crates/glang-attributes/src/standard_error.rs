@@ -1,17 +1,22 @@
 use crate::position::Position;
 use simply_colored::*;
-use std::fmt::Display;
+use std::{fmt::Display, rc::Rc};
 
 #[derive(Clone)]
 pub struct StandardError {
     pub text: String,
-    pub pos_start: Position,
-    pub pos_end: Position,
+    pub pos_start: Rc<Position>,
+    pub pos_end: Rc<Position>,
     pub help: Option<String>,
 }
 
 impl StandardError {
-    pub fn new(text: &str, pos_start: Position, pos_end: Position, help: Option<&str>) -> Self {
+    pub fn new(
+        text: &str,
+        pos_start: Rc<Position>,
+        pos_end: Rc<Position>,
+        help: Option<&str>,
+    ) -> Self {
         Self {
             text: text.to_string(),
             pos_start,

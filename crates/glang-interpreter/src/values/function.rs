@@ -17,8 +17,8 @@ pub struct Function {
     pub should_auto_return: bool,
     pub context: Option<Rc<RefCell<Context>>>,
     pub is_const: bool,
-    pub pos_start: Option<Position>,
-    pub pos_end: Option<Position>,
+    pub pos_start: Option<Rc<Position>>,
+    pub pos_end: Option<Rc<Position>>,
 }
 
 impl Function {
