@@ -420,59 +420,56 @@ impl Interpreter {
             step_value = Number::new(1.0);
         }
 
-        let mut i = start_value.value;
+        if step_value.value == 0.0 {
+            return result.failure(Some(StandardError::new(
+                "step value of a 'walk' loop cannot be 0",
+                node.step_value_node
+                    .as_ref()
+                    .unwrap()
+                    .position_start()
+                    .unwrap(),
+                node.step_value_node
+                    .as_ref()
+                    .unwrap()
+                    .position_end()
+                    .unwrap(),
+                Some("use a step value like 'step = 1' to control how many iteration steps occur"),
+            )));
+        }
+
         let iterator_name = node.var_name_token.value.as_ref().unwrap().to_owned();
         let symbol_table = context.borrow_mut().symbol_table.as_mut().unwrap().clone();
 
-        if step_value.value >= 0.0 {
-            while i < end_value.value {
-                symbol_table
-                    .borrow_mut()
-                    .set(iterator_name.clone(), Some(Number::from(i)));
-
-                i += step_value.value;
-
-                let _ = result.register(self.visit(node.body_node.as_ref(), context.clone()));
-
-                if result.should_return()
-                    && !result.loop_should_continue
-                    && !result.loop_should_break
-                {
-                    return result;
-                }
-
-                if result.loop_should_continue {
-                    continue;
-                }
-
-                if result.loop_should_break {
-                    break;
-                }
-            }
+        let range: Vec<f64> = if step_value.value > 0.0 {
+            (start_value.value as i64..end_value.value as i64)
+                .step_by(step_value.value as usize)
+                .map(|x| x as f64)
+                .collect()
         } else {
-            while i > end_value.value {
-                symbol_table
-                    .borrow_mut()
-                    .set(iterator_name.clone(), Some(Number::from(i)));
+            (end_value.value as i64 + 1..=start_value.value as i64)
+                .rev()
+                .step_by((-step_value.value) as usize)
+                .map(|x| x as f64)
+                .collect()
+        };
 
-                i += step_value.value;
+        for i in range {
+            symbol_table
+                .borrow_mut()
+                .set(iterator_name.clone(), Some(Number::from(i)));
 
-                let _ = result.register(self.visit(node.body_node.as_ref(), context.clone()));
+            let _ = result.register(self.visit(node.body_node.as_ref(), context.clone()));
 
-                if result.should_return()
-                    && !result.loop_should_continue
-                    && !result.loop_should_break
-                {
-                    return result;
-                }
+            if result.should_return() && !result.loop_should_continue && !result.loop_should_break {
+                return result;
+            }
 
-                if result.loop_should_continue {
-                    continue;
-                }
+            if result.loop_should_continue {
+                continue;
+            }
 
-                if result.loop_should_break {
-                    break;
-                }
+            if result.loop_should_break {
+                break;
             }
         }
 
