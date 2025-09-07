@@ -218,9 +218,7 @@ impl List {
     }
 
     pub fn remove(&mut self, index: usize) -> Rc<RefCell<Value>> {
-        self.elements.remove(index);
-
-        Number::null_value()
+        self.elements.remove(index).clone()
     }
 
     pub fn retrieve(&self, index: usize) -> Rc<RefCell<Value>> {
