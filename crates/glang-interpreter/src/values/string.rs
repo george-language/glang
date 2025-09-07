@@ -52,43 +52,43 @@ impl Str {
                     Ok(Rc::new(RefCell::new(Value::StringValue(copy))))
                 }
                 "==" => {
-                    let mut is_neq = Number::from((self.value == value.value) as u8 as f64);
+                    let is_neq = Number::from((self.value == value.value) as u8 as f64);
                     is_neq.borrow_mut().set_context(self.context.clone());
 
                     Ok(is_neq)
                 }
                 "!=" => {
-                    let mut is_neq = Number::from((self.value != value.value) as u8 as f64);
+                    let is_neq = Number::from((self.value != value.value) as u8 as f64);
                     is_neq.borrow_mut().set_context(self.context.clone());
 
                     Ok(is_neq)
                 }
                 ">" => {
-                    let mut is_gt = Number::from((self.value > value.value) as u8 as f64);
+                    let is_gt = Number::from((self.value > value.value) as u8 as f64);
                     is_gt.borrow_mut().set_context(self.context.clone());
 
                     Ok(is_gt)
                 }
                 "<" => {
-                    let mut is_lt = Number::from((self.value < value.value) as u8 as f64);
+                    let is_lt = Number::from((self.value < value.value) as u8 as f64);
                     is_lt.borrow_mut().set_context(self.context.clone());
 
                     Ok(is_lt)
                 }
                 ">=" => {
-                    let mut is_gte = Number::from((self.value >= value.value) as u8 as f64);
+                    let is_gte = Number::from((self.value >= value.value) as u8 as f64);
                     is_gte.borrow_mut().set_context(self.context.clone());
 
                     Ok(is_gte)
                 }
                 "<=" => {
-                    let mut is_lte = Number::from((self.value <= value.value) as u8 as f64);
+                    let is_lte = Number::from((self.value <= value.value) as u8 as f64);
                     is_lte.borrow_mut().set_context(self.context.clone());
 
                     Ok(is_lte)
                 }
                 "and" => {
-                    let mut is_and = Number::from(
+                    let is_and = Number::from(
                         (!self.value.is_empty() && !value.value.is_empty()) as u8 as f64,
                     );
                     is_and.borrow_mut().set_context(self.context.clone());

@@ -113,7 +113,7 @@ impl Interpreter {
             elements.push(element_result.unwrap());
         }
 
-        let mut list = List::from(elements);
+        let list = List::from(elements);
         list.borrow_mut().set_context(Some(context.clone()));
         list.borrow_mut()
             .set_position(node.pos_start.clone(), node.pos_end.clone());
@@ -126,7 +126,7 @@ impl Interpreter {
         node: &StringNode,
         context: Rc<RefCell<Context>>,
     ) -> RuntimeResult {
-        let mut string = Str::from(node.token.value.as_ref().unwrap());
+        let string = Str::from(node.token.value.as_ref().unwrap());
         string.borrow_mut().set_context(Some(context.clone()));
         string
             .borrow_mut()
@@ -539,7 +539,7 @@ impl Interpreter {
         let try_error = result.error.clone();
 
         if try_error.is_some() {
-            let mut output_error = Str::from(&try_error.unwrap().text);
+            let output_error = Str::from(&try_error.unwrap().text);
             output_error.borrow_mut().set_const(true);
 
             context
@@ -719,7 +719,7 @@ impl Interpreter {
             arg_names.push(arg_name.value.as_ref().unwrap().clone());
         }
 
-        let mut func_value = Rc::new(RefCell::new(Value::FunctionValue(Function::new(
+        let func_value = Rc::new(RefCell::new(Value::FunctionValue(Function::new(
             func_name.clone(),
             body_node,
             &arg_names,
@@ -815,7 +815,7 @@ impl Interpreter {
             return result;
         }
 
-        let mut left = left.unwrap();
+        let left = left.unwrap();
 
         let right = result.register(self.visit(node.right_node.as_ref(), context.clone()));
 
@@ -869,9 +869,9 @@ impl Interpreter {
                 .borrow_mut()
                 .set_position(node.pos_start.clone(), node.pos_end.clone());
 
-            return result.success(Some(operation_result.ok().unwrap()));
+            result.success(Some(operation_result.ok().unwrap()))
         } else {
-            return result.success(Some(Number::null_value()));
+            result.success(Some(Number::null_value()))
         }
     }
 
@@ -918,9 +918,9 @@ impl Interpreter {
                 .borrow_mut()
                 .set_position(node.pos_start.clone(), node.pos_end.clone());
 
-            return result.success(Some(operation_result.ok().unwrap()));
+            result.success(Some(operation_result.ok().unwrap()))
         } else {
-            return result.success(Some(Number::null_value()));
+            result.success(Some(Number::null_value()))
         }
     }
 

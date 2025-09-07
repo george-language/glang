@@ -395,11 +395,11 @@ impl Lexer {
         let pos_start = self.position.clone();
         self.advance();
 
-        if let Some(character) = self.current_char {
-            if character == '>' {
-                self.advance();
-                token_type = TokenType::TT_ARROW;
-            }
+        if let Some(character) = self.current_char
+            && character == '>'
+        {
+            self.advance();
+            token_type = TokenType::TT_ARROW;
         }
 
         Token::new(
@@ -415,11 +415,11 @@ impl Lexer {
         let pos_start = self.position.clone();
         self.advance();
 
-        if let Some(character) = self.current_char {
-            if character == '=' {
-                self.advance();
-                token_type = TokenType::TT_EE;
-            }
+        if let Some(character) = self.current_char
+            && character == '='
+        {
+            self.advance();
+            token_type = TokenType::TT_EE;
         }
 
         Token::new(
@@ -434,17 +434,17 @@ impl Lexer {
         let pos_start = self.position.clone();
         self.advance();
 
-        if let Some(character) = self.current_char {
-            if character == '=' {
-                self.advance();
+        if let Some(character) = self.current_char
+            && character == '='
+        {
+            self.advance();
 
-                return Ok(Token::new(
-                    TokenType::TT_NE,
-                    None,
-                    Some(pos_start),
-                    Some(self.position.clone()),
-                ));
-            }
+            return Ok(Token::new(
+                TokenType::TT_NE,
+                None,
+                Some(pos_start),
+                Some(self.position.clone()),
+            ));
         }
 
         self.advance();
@@ -462,11 +462,11 @@ impl Lexer {
         let pos_start = self.position.clone();
         self.advance();
 
-        if let Some(character) = self.current_char {
-            if character == '=' {
-                self.advance();
-                token_type = TokenType::TT_LTE;
-            }
+        if let Some(character) = self.current_char
+            && character == '='
+        {
+            self.advance();
+            token_type = TokenType::TT_LTE;
         }
 
         Token::new(
@@ -482,11 +482,11 @@ impl Lexer {
         let pos_start = self.position.clone();
         self.advance();
 
-        if let Some(character) = self.current_char {
-            if character == '=' {
-                self.advance();
-                token_type = TokenType::TT_GTE;
-            }
+        if let Some(character) = self.current_char
+            && character == '='
+        {
+            self.advance();
+            token_type = TokenType::TT_GTE;
         }
 
         Token::new(

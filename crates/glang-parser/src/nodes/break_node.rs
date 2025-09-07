@@ -9,9 +9,6 @@ pub struct BreakNode {
 
 impl BreakNode {
     pub fn new(pos_start: Option<Rc<Position>>, pos_end: Option<Rc<Position>>) -> Self {
-        Self {
-            pos_start: pos_start,
-            pos_end: pos_end,
-        }
+        Self { pos_start, pos_end }
     }
 }

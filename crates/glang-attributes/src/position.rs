@@ -28,11 +28,11 @@ impl Position {
         self.index += 1;
         self.column_num += 1;
 
-        if let Some(character) = current_char {
-            if character == '\n' {
-                self.line_num += 1;
-                self.column_num = 0;
-            }
+        if let Some(character) = current_char
+            && character == '\n'
+        {
+            self.line_num += 1;
+            self.column_num = 0;
         }
 
         self.clone()

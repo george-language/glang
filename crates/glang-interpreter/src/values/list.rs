@@ -3,7 +3,7 @@ use crate::{
     values::{number::Number, value::Value},
 };
 use glang_attributes::{Position, StandardError};
-use std::{cell::RefCell, iter::zip, num::NonZero, rc::Rc};
+use std::{cell::RefCell, iter::zip, rc::Rc};
 
 #[derive(Debug, Clone)]
 pub struct List {
@@ -92,35 +92,35 @@ impl List {
                     Ok(is_neq)
                 }
                 ">" => {
-                    let mut is_gt =
+                    let is_gt =
                         Number::from((self.elements.len() > value.elements.len()) as u8 as f64);
                     is_gt.borrow_mut().set_context(self.context.clone());
 
                     Ok(is_gt)
                 }
                 "<" => {
-                    let mut is_lt =
+                    let is_lt =
                         Number::from((self.elements.len() < value.elements.len()) as u8 as f64);
                     is_lt.borrow_mut().set_context(self.context.clone());
 
                     Ok(is_lt)
                 }
                 ">=" => {
-                    let mut is_gte =
+                    let is_gte =
                         Number::from((self.elements.len() >= value.elements.len()) as u8 as f64);
                     is_gte.borrow_mut().set_context(self.context.clone());
 
                     Ok(is_gte)
                 }
                 "<=" => {
-                    let mut is_lte =
+                    let is_lte =
                         Number::from((self.elements.len() <= value.elements.len()) as u8 as f64);
                     is_lte.borrow_mut().set_context(self.context.clone());
 
                     Ok(is_lte)
                 }
                 "and" => {
-                    let mut is_and = Number::from(
+                    let is_and = Number::from(
                         (!self.elements.is_empty() && !value.elements.is_empty()) as u8 as f64,
                     );
                     is_and.borrow_mut().set_context(self.context.clone());
@@ -128,7 +128,7 @@ impl List {
                     Ok(is_and)
                 }
                 "or" => {
-                    let mut is_or = Number::from(
+                    let is_or = Number::from(
                         (!self.elements.is_empty() || !value.elements.is_empty()) as u8 as f64,
                     );
                     is_or.borrow_mut().set_context(self.context.clone());
