@@ -3,7 +3,7 @@ use crate::{
     values::{number::Number, value::Value},
 };
 use glang_attributes::{Position, StandardError};
-use std::{cell::RefCell, iter::zip, rc::Rc};
+use std::{cell::RefCell, iter::zip, num::NonZero, rc::Rc};
 
 #[derive(Debug, Clone)]
 pub struct List {
@@ -34,6 +34,24 @@ impl List {
         operator: &str,
         other: Rc<RefCell<Value>>,
     ) -> Result<Rc<RefCell<Value>>, StandardError> {
+        if self.is_const {
+            return Err(StandardError::new(
+                "cannot change a constant value",
+                self.pos_start.as_ref().unwrap().clone(),
+                self.pos_end.as_ref().unwrap().clone(),
+                None,
+            ));
+        }
+
+        if other.borrow().is_const() {
+            return Err(StandardError::new(
+                "cannot change a constant value",
+                other.borrow().position_start().unwrap(),
+                other.borrow().position_end().unwrap(),
+                None,
+            ));
+        }
+
         if operator == "*" {
             return Ok(self.push(other.clone()));
         }
