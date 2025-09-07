@@ -86,11 +86,11 @@ impl Value {
     pub fn perform_operation(
         &mut self,
         operator: &str,
-        other: Value,
-    ) -> Result<Value, StandardError> {
+        other: Rc<RefCell<Value>>,
+    ) -> Result<Rc<RefCell<Value>>, StandardError> {
         match self {
             Value::NumberValue(value) => value.perform_operation(operator, other),
-            Value::ListValue(value) => value.to_owned().perform_operation(operator, other),
+            Value::ListValue(value) => value.perform_operation(operator, other),
             Value::StringValue(value) => value.perform_operation(operator, other),
             _ => Err(StandardError::new(
                 format!("type doesn't support the '{operator}' operator").as_str(),

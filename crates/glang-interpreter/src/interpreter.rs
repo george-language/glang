@@ -37,10 +37,10 @@ impl Interpreter {
         ];
 
         for builtin in &builtins {
-            interpreter.global_symbol_table.borrow_mut().set(
-                builtin.to_string(),
-                Some(Value::BuiltInFunction(BuiltInFunction::new(builtin))),
-            );
+            interpreter
+                .global_symbol_table
+                .borrow_mut()
+                .set(builtin.to_string(), Some(BuiltInFunction::from(builtin)));
         }
 
         interpreter
@@ -90,16 +90,18 @@ impl Interpreter {
     }
 
     fn visit_number_node(&self, node: &NumberNode, context: Rc<RefCell<Context>>) -> RuntimeResult {
-        let mut value = Number::from(node.token.value.as_ref().unwrap().parse().unwrap());
-        value.set_context(Some(context.clone()));
-        value.set_position(node.pos_start.clone(), node.pos_end.clone());
+        let value = Number::from(node.token.value.as_ref().unwrap().parse().unwrap());
+        value.borrow_mut().set_context(Some(context.clone()));
+        value
+            .borrow_mut()
+            .set_position(node.pos_start.clone(), node.pos_end.clone());
 
         RuntimeResult::new().success(Some(value))
     }
 
     fn visit_list_node(&mut self, node: &ListNode, context: Rc<RefCell<Context>>) -> RuntimeResult {
         let mut result = RuntimeResult::new();
-        let mut elements: Vec<Value> = Vec::new();
+        let mut elements: Vec<Rc<RefCell<Value>>> = Vec::new();
 
         for element in node.element_nodes.iter() {
             let element_result = result.register(self.visit(element.as_ref(), context.clone()));
@@ -112,8 +114,9 @@ impl Interpreter {
         }
 
         let mut list = List::from(elements);
-        list.set_context(Some(context.clone()));
-        list.set_position(node.pos_start.clone(), node.pos_end.clone());
+        list.borrow_mut().set_context(Some(context.clone()));
+        list.borrow_mut()
+            .set_position(node.pos_start.clone(), node.pos_end.clone());
 
         result.success(Some(list))
     }
@@ -124,8 +127,10 @@ impl Interpreter {
         context: Rc<RefCell<Context>>,
     ) -> RuntimeResult {
         let mut string = Str::from(node.token.value.as_ref().unwrap());
-        string.set_context(Some(context.clone()));
-        string.set_position(node.pos_start.clone(), node.pos_end.clone());
+        string.borrow_mut().set_context(Some(context.clone()));
+        string
+            .borrow_mut()
+            .set_position(node.pos_start.clone(), node.pos_end.clone());
 
         RuntimeResult::new().success(Some(string))
     }
@@ -146,7 +151,7 @@ impl Interpreter {
             .borrow()
             .get(&var_name);
 
-        if constant.is_some() && constant.unwrap().is_const() {
+        if constant.is_some() && constant.unwrap().borrow().is_const() {
             return result.failure(Some(StandardError::new(
                 "cannot reassign the value of a constant",
                 node.pos_start.as_ref().unwrap().to_owned(),
@@ -188,7 +193,7 @@ impl Interpreter {
             .borrow()
             .get(&var_name);
 
-        if constant.is_some() && constant.unwrap().is_const() {
+        if constant.is_some() && constant.unwrap().borrow().is_const() {
             return result.failure(Some(StandardError::new(
                 "cannot reassign the value of a constant",
                 node.pos_start.as_ref().unwrap().to_owned(),
@@ -247,7 +252,7 @@ impl Interpreter {
             .borrow()
             .get(&const_name);
 
-        if constant.is_some() && constant.unwrap().is_const() {
+        if constant.is_some() && constant.unwrap().borrow().is_const() {
             return result.failure(Some(StandardError::new(
                 "cannot reassign the value of a constant",
                 node.pos_start.as_ref().unwrap().to_owned(),
@@ -262,7 +267,7 @@ impl Interpreter {
             return result;
         }
 
-        value.as_mut().unwrap().set_const(true);
+        value.as_mut().unwrap().borrow_mut().set_const(true);
 
         context
             .borrow_mut()
@@ -300,10 +305,15 @@ impl Interpreter {
             )));
         }
 
-        value.as_mut().unwrap().set_context(Some(context.clone()));
         value
             .as_mut()
             .unwrap()
+            .borrow_mut()
+            .set_context(Some(context.clone()));
+        value
+            .as_mut()
+            .unwrap()
+            .borrow_mut()
             .set_position(node.pos_start.clone(), node.pos_end.clone());
 
         result.success(value)
@@ -321,7 +331,7 @@ impl Interpreter {
 
             let condition_value = condition_value.unwrap();
 
-            if condition_value.is_true() {
+            if condition_value.borrow().is_true() {
                 let expr_value = result.register(self.visit(expr.as_ref(), context.clone()));
 
                 if result.should_return() {
@@ -357,11 +367,12 @@ impl Interpreter {
     fn visit_for_node(&mut self, node: &ForNode, context: Rc<RefCell<Context>>) -> RuntimeResult {
         let mut result = RuntimeResult::new();
 
-        let start_value = match result
+        let start_value = match *result
             .register(self.visit(node.start_value_node.as_ref(), context.clone()))
             .unwrap()
+            .borrow()
         {
-            Value::NumberValue(value) => Number::new(value.value),
+            Value::NumberValue(ref value) => Number::new(value.value),
             _ => {
                 return result.failure(Some(StandardError::new(
                     "expected start value as number",
@@ -376,11 +387,12 @@ impl Interpreter {
             return result;
         }
 
-        let end_value = match result
+        let end_value = match *result
             .register(self.visit(node.end_value_node.as_ref(), context.clone()))
             .unwrap()
+            .borrow()
         {
-            Value::NumberValue(value) => Number::new(value.value),
+            Value::NumberValue(ref value) => Number::new(value.value),
             _ => {
                 return result.failure(Some(StandardError::new(
                     "expected end value as number",
@@ -398,11 +410,12 @@ impl Interpreter {
         let step_value: Number;
 
         if let Some(step_value_node) = node.step_value_node.as_ref() {
-            step_value = match result
+            step_value = match *result
                 .register(self.visit(step_value_node, context.clone()))
                 .unwrap()
+                .borrow()
             {
-                Value::NumberValue(value) => Number::new(value.value),
+                Value::NumberValue(ref value) => Number::new(value.value),
                 _ => {
                     return result.failure(Some(StandardError::new(
                         "expected step value as number",
@@ -493,7 +506,7 @@ impl Interpreter {
 
             let condition = condition.unwrap();
 
-            if !condition.is_true() {
+            if !condition.borrow().is_true() {
                 break;
             }
 
@@ -527,7 +540,7 @@ impl Interpreter {
 
         if try_error.is_some() {
             let mut output_error = Str::from(&try_error.unwrap().text);
-            output_error.set_const(true);
+            output_error.borrow_mut().set_const(true);
 
             context
                 .borrow_mut()
@@ -569,20 +582,25 @@ impl Interpreter {
         }
 
         let import_value = import.unwrap();
-        let import_position_path = import_value.position_start().unwrap().filename.clone();
+        let import_position_path = import_value
+            .borrow()
+            .position_start()
+            .unwrap()
+            .filename
+            .clone();
 
         let importing_dir = Path::new(&import_position_path)
             .parent()
             .unwrap_or_else(|| Path::new(""))
             .to_path_buf();
 
-        let file_to_import = match import_value {
+        let file_to_import = match *import_value.borrow() {
             Value::StringValue(ref string) => string.as_string(),
             _ => {
                 return result.failure(Some(StandardError::new(
                     "expected type string",
-                    import_value.position_start().unwrap(),
-                    import_value.position_end().unwrap(),
+                    import_value.borrow_mut().position_start().unwrap(),
+                    import_value.borrow_mut().position_end().unwrap(),
                     Some("add the '.glang' file you would like to import"),
                 )));
             }
@@ -596,8 +614,8 @@ impl Interpreter {
         if fs::exists(&file_to_import).is_err() || !&file_to_import.ends_with(".glang") {
             return result.failure(Some(StandardError::new(
                 "file doesn't exist or isn't valid",
-                import_value.position_start().unwrap(),
-                import_value.position_end().unwrap(),
+                import_value.borrow_mut().position_start().unwrap(),
+                import_value.borrow_mut().position_end().unwrap(),
                 Some("add the '.glang' file you would like to import"),
             )));
         }
@@ -605,8 +623,8 @@ impl Interpreter {
         if file_to_import == import_position_path {
             return result.failure(Some(StandardError::new(
                 "circular import",
-                import_value.position_start().unwrap(),
-                import_value.position_end().unwrap(),
+                import_value.borrow_mut().position_start().unwrap(),
+                import_value.borrow_mut().position_end().unwrap(),
                 None,
             )));
         }
@@ -618,8 +636,8 @@ impl Interpreter {
             Err(_) => {
                 return result.failure(Some(StandardError::new(
                     &format!("file contents couldn't be read properly on {file_to_import}"),
-                    import_value.position_start().unwrap(),
-                    import_value.position_end().unwrap(),
+                    import_value.borrow_mut().position_start().unwrap(),
+                    import_value.borrow_mut().position_end().unwrap(),
                     Some("add a UTF-8 encoded '.glang' file you would like to import"),
                 )));
             }
@@ -652,7 +670,7 @@ impl Interpreter {
             return result.failure(module_result.error);
         }
 
-        let symbols: Vec<(String, Option<Value>)> = module_context
+        let symbols: Vec<(String, Option<Rc<RefCell<Value>>>)> = module_context
             .borrow()
             .symbol_table
             .as_ref()
@@ -701,14 +719,16 @@ impl Interpreter {
             arg_names.push(arg_name.value.as_ref().unwrap().clone());
         }
 
-        let mut func_value = Value::FunctionValue(Function::new(
+        let mut func_value = Rc::new(RefCell::new(Value::FunctionValue(Function::new(
             func_name.clone(),
             body_node,
             &arg_names,
             node.should_auto_return,
-        ));
-        func_value.set_context(Some(context.clone()));
-        func_value.set_position(node.pos_start.clone(), node.pos_end.clone());
+        ))));
+        func_value.borrow_mut().set_context(Some(context.clone()));
+        func_value
+            .borrow_mut()
+            .set_position(node.pos_start.clone(), node.pos_end.clone());
 
         if !&func_name.is_empty() {
             context
@@ -725,7 +745,7 @@ impl Interpreter {
 
     fn visit_call_node(&mut self, node: &CallNode, context: Rc<RefCell<Context>>) -> RuntimeResult {
         let mut result = RuntimeResult::new();
-        let mut args: Vec<Value> = Vec::new();
+        let mut args: Vec<Rc<RefCell<Value>>> = Vec::new();
 
         let mut value_to_call =
             result.register(self.visit(node.node_to_call.as_ref(), context.clone()));
@@ -737,6 +757,7 @@ impl Interpreter {
         value_to_call
             .as_mut()
             .unwrap()
+            .borrow_mut()
             .set_position(node.pos_start.clone(), node.pos_end.clone());
 
         for arg_node in &node.arg_nodes {
@@ -751,9 +772,9 @@ impl Interpreter {
             args.push(arg);
         }
 
-        let mut return_value = result.register(match value_to_call.unwrap() {
-            Value::FunctionValue(value) => value.execute(&args),
-            Value::BuiltInFunction(value) => value.execute(&args),
+        let mut return_value = result.register(match *value_to_call.unwrap().borrow() {
+            Value::FunctionValue(ref value) => value.execute(&args),
+            Value::BuiltInFunction(ref value) => value.execute(&args),
             _ => {
                 return result.failure(Some(StandardError::new(
                     "expected function as call",
@@ -771,10 +792,12 @@ impl Interpreter {
         return_value
             .as_mut()
             .unwrap()
+            .borrow_mut()
             .set_position(node.pos_start.clone(), node.pos_end.clone());
         return_value
             .as_mut()
             .unwrap()
+            .borrow_mut()
             .set_context(Some(context.clone()));
 
         result.success(Some(return_value.unwrap()))
@@ -802,38 +825,38 @@ impl Interpreter {
 
         let right = right.unwrap();
 
-        let mut operation_result: Result<Value, StandardError>;
+        let mut operation_result: Result<Rc<RefCell<Value>>, StandardError>;
 
         if node.op_token.token_type == TokenType::TT_PLUS {
-            operation_result = left.perform_operation("+", right);
+            operation_result = left.borrow_mut().perform_operation("+", right);
         } else if node.op_token.token_type == TokenType::TT_MINUS {
-            operation_result = left.perform_operation("-", right);
+            operation_result = left.borrow_mut().perform_operation("-", right);
         } else if node.op_token.token_type == TokenType::TT_MUL {
-            operation_result = left.perform_operation("*", right);
+            operation_result = left.borrow_mut().perform_operation("*", right);
         } else if node.op_token.token_type == TokenType::TT_DIV {
-            operation_result = left.perform_operation("/", right);
+            operation_result = left.borrow_mut().perform_operation("/", right);
         } else if node.op_token.token_type == TokenType::TT_POW {
-            operation_result = left.perform_operation("^", right);
+            operation_result = left.borrow_mut().perform_operation("^", right);
         } else if node.op_token.token_type == TokenType::TT_MOD {
-            operation_result = left.perform_operation("%", right);
+            operation_result = left.borrow_mut().perform_operation("%", right);
         } else if node.op_token.token_type == TokenType::TT_GT {
-            operation_result = left.perform_operation(">", right);
+            operation_result = left.borrow_mut().perform_operation(">", right);
         } else if node.op_token.token_type == TokenType::TT_LT {
-            operation_result = left.perform_operation("<", right);
+            operation_result = left.borrow_mut().perform_operation("<", right);
         } else if node.op_token.token_type == TokenType::TT_EE {
-            operation_result = left.perform_operation("==", right);
+            operation_result = left.borrow_mut().perform_operation("==", right);
         } else if node.op_token.token_type == TokenType::TT_NE {
-            operation_result = left.perform_operation("!=", right);
+            operation_result = left.borrow_mut().perform_operation("!=", right);
         } else if node.op_token.token_type == TokenType::TT_LTE {
-            operation_result = left.perform_operation("<=", right);
+            operation_result = left.borrow_mut().perform_operation("<=", right);
         } else if node.op_token.token_type == TokenType::TT_GTE {
-            operation_result = left.perform_operation(">=", right);
+            operation_result = left.borrow_mut().perform_operation(">=", right);
         } else if node.op_token.matches(TokenType::TT_KEYWORD, "and") {
-            operation_result = left.perform_operation("and", right);
+            operation_result = left.borrow_mut().perform_operation("and", right);
         } else if node.op_token.matches(TokenType::TT_KEYWORD, "or") {
-            operation_result = left.perform_operation("or", right);
+            operation_result = left.borrow_mut().perform_operation("or", right);
         } else {
-            operation_result = left.perform_operation("", right);
+            operation_result = left.borrow_mut().perform_operation("", right);
         }
 
         if operation_result.is_err() {
@@ -843,6 +866,7 @@ impl Interpreter {
                 .as_mut()
                 .ok()
                 .unwrap()
+                .borrow_mut()
                 .set_position(node.pos_start.clone(), node.pos_end.clone());
 
             return result.success(Some(operation_result.ok().unwrap()));
@@ -863,19 +887,23 @@ impl Interpreter {
             return result;
         }
 
-        let mut value = value.unwrap();
+        let value = value.unwrap();
 
-        let mut operation_result: Result<Value, StandardError>;
+        let mut operation_result: Result<Rc<RefCell<Value>>, StandardError>;
 
         if node.op_token.token_type == TokenType::TT_MINUS {
-            operation_result = value.perform_operation("*", Number::from(-1.0));
+            operation_result = value
+                .borrow_mut()
+                .perform_operation("*", Number::from(-1.0));
         } else if node.op_token.matches(TokenType::TT_KEYWORD, "not") {
-            operation_result = value.perform_operation("not", Number::false_value());
+            operation_result = value
+                .borrow_mut()
+                .perform_operation("not", Number::false_value());
         } else {
             operation_result = Err(StandardError::new(
                 "unsupported unary operation",
-                value.position_start().unwrap(),
-                value.position_end().unwrap(),
+                value.borrow().position_start().unwrap(),
+                value.borrow().position_end().unwrap(),
                 None,
             ))
         }
@@ -887,6 +915,7 @@ impl Interpreter {
                 .as_mut()
                 .ok()
                 .unwrap()
+                .borrow_mut()
                 .set_position(node.pos_start.clone(), node.pos_end.clone());
 
             return result.success(Some(operation_result.ok().unwrap()));
@@ -901,7 +930,7 @@ impl Interpreter {
         context: Rc<RefCell<Context>>,
     ) -> RuntimeResult {
         let mut result = RuntimeResult::new();
-        let mut value: Option<Value> = None;
+        let mut value: Option<Rc<RefCell<Value>>> = None;
 
         if node.node_to_return.is_some() {
             value = result

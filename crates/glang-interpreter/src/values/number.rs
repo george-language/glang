@@ -22,24 +22,28 @@ impl Number {
         }
     }
 
-    pub fn from(value: f64) -> Value {
-        Value::NumberValue(Number::new(value))
+    pub fn from(value: f64) -> Rc<RefCell<Value>> {
+        Rc::new(RefCell::new(Value::NumberValue(Number::new(value))))
     }
 
-    pub fn null_value() -> Value {
-        Value::NumberValue(Number::new(0.0))
+    pub fn null_value() -> Rc<RefCell<Value>> {
+        Rc::new(RefCell::new(Value::NumberValue(Number::new(0.0))))
     }
 
-    pub fn true_value() -> Value {
-        Value::NumberValue(Number::new(1.0))
+    pub fn true_value() -> Rc<RefCell<Value>> {
+        Rc::new(RefCell::new(Value::NumberValue(Number::new(1.0))))
     }
 
-    pub fn false_value() -> Value {
-        Value::NumberValue(Number::new(0.0))
+    pub fn false_value() -> Rc<RefCell<Value>> {
+        Rc::new(RefCell::new(Value::NumberValue(Number::new(0.0))))
     }
 
-    pub fn perform_operation(&self, operator: &str, other: Value) -> Result<Value, StandardError> {
-        match other {
+    pub fn perform_operation(
+        &self,
+        operator: &str,
+        other: Rc<RefCell<Value>>,
+    ) -> Result<Rc<RefCell<Value>>, StandardError> {
+        match *other.borrow_mut() {
             Value::NumberValue(ref value) => {
                 let left_val = self.value;
                 let right_val = value.value;
@@ -92,24 +96,26 @@ impl Number {
                     "and" => Some(((left_val != 0.0) && (right_val != 0.0)) as u8 as f64),
                     "or" => Some(((left_val != 0.0) || (right_val != 0.0)) as u8 as f64),
                     "not" => Some(if self.value == 0.0 { 1.0 } else { 0.0 }),
-                    _ => return Err(self.illegal_operation(Some(other))),
+                    _ => return Err(self.illegal_operation(Some(other.clone()))),
                 };
 
-                let mut comparison_result = Number::from(result.unwrap());
-                comparison_result.set_context(self.context.clone());
+                let comparison_result = Number::from(result.unwrap());
+                comparison_result
+                    .borrow_mut()
+                    .set_context(self.context.clone());
 
                 Ok(comparison_result)
             }
-            _ => Err(self.illegal_operation(Some(other))),
+            _ => Err(self.illegal_operation(Some(other.clone()))),
         }
     }
 
-    pub fn illegal_operation(&self, other: Option<Value>) -> StandardError {
+    pub fn illegal_operation(&self, other: Option<Rc<RefCell<Value>>>) -> StandardError {
         StandardError::new(
             "operation not supported by type",
             self.pos_start.as_ref().unwrap().clone(),
             if other.is_some() {
-                other.unwrap().position_end().unwrap()
+                other.unwrap().borrow().position_end().unwrap()
             } else {
                 self.pos_end.as_ref().unwrap().clone()
             },
