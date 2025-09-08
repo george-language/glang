@@ -1099,6 +1099,8 @@ impl Parser {
         }
 
         if self.current_token_ref().token_type == TokenType::TT_LPAREN {
+            let mut pos_start = self.current_pos_start();
+
             parse_result.register_advancement();
             self.advance();
 
@@ -1113,7 +1115,7 @@ impl Parser {
                 if parse_result.error.is_some() {
                     return parse_result.failure(Some(StandardError::new(
                         "expected keyword, object, function, expression",
-                        self.current_pos_start(),
+                        pos_start,
                         self.current_pos_end(),
                         None,
                     )));
@@ -1121,21 +1123,30 @@ impl Parser {
 
                 arg_nodes.push(expr.unwrap());
 
+                pos_start = self.current_pos_start();
+
                 while self.current_token_ref().token_type == TokenType::TT_COMMA {
                     parse_result.register_advancement();
                     self.advance();
 
-                    arg_nodes.push(parse_result.register(self.expr()).unwrap());
+                    let expr = parse_result.register(self.expr());
 
                     if parse_result.error.is_some() {
-                        return parse_result;
+                        return parse_result.failure(Some(StandardError::new(
+                            "expected keyword, object, function, expression",
+                            pos_start,
+                            self.current_pos_end(),
+                            None,
+                        )));
                     }
+
+                    arg_nodes.push(expr.unwrap());
                 }
 
                 if self.current_token_ref().token_type != TokenType::TT_RPAREN {
                     return parse_result.failure(Some(StandardError::new(
                         "expected ',' or ')'",
-                        self.current_pos_start(),
+                        pos_start,
                         self.current_pos_end(),
                         Some("add a ',' to input all the function arguments or close with a ')' to call the function"),
                     )));
