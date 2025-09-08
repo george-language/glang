@@ -1123,7 +1123,7 @@ impl Parser {
 
                 arg_nodes.push(expr.unwrap());
 
-                pos_start = self.current_pos_start();
+                let comma_pos_start = self.current_pos_start();
 
                 while self.current_token_ref().token_type == TokenType::TT_COMMA {
                     parse_result.register_advancement();
@@ -1134,7 +1134,7 @@ impl Parser {
                     if parse_result.error.is_some() {
                         return parse_result.failure(Some(StandardError::new(
                             "expected keyword, object, function, expression",
-                            pos_start,
+                            comma_pos_start,
                             self.current_pos_end(),
                             None,
                         )));
