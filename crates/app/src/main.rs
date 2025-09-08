@@ -172,11 +172,13 @@ fn run(filename: &str, code: Option<String>) -> Option<StandardError> {
     )));
     context.borrow_mut().symbol_table = Some(interpreter.global_symbol_table.clone());
 
-    if let Some(e) = interpreter.evaluate(
-        "fetch _env(\"GLANG_STD\") + \"/default/lib.glang\";",
-        context.clone(),
-    ) {
-        return Some(e);
+    if !cfg!(feature = "no-std") {
+        if let Some(e) = interpreter.evaluate(
+            "fetch _env(\"GLANG_STD\") + \"/default/lib.glang\";",
+            context.clone(),
+        ) {
+            return Some(e);
+        }
     }
 
     let result = interpreter.visit(ast.node.unwrap().as_ref(), context.clone());

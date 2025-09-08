@@ -18,3 +18,4 @@ dirs = "6.0.0"
 [features]
 default = []
 benchmark = []
+no-std = []

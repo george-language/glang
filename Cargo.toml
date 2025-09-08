@@ -29,3 +29,4 @@ glang-package-manager = { path = "crates/glang-package-manager" }
 [workspace.features]
 default = []
 benchmark = ["glang/benchmark"]
+no-std = ["glang/no-std"]
