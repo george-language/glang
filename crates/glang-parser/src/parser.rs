@@ -93,29 +93,6 @@ impl Parser {
         )
     }
 
-    fn current_pos_range(&self) -> (Rc<Position>, Rc<Position>) {
-        (
-            Rc::new(
-                self.current_token
-                    .as_ref()
-                    .unwrap()
-                    .pos_start
-                    .as_ref()
-                    .unwrap()
-                    .clone(),
-            ),
-            Rc::new(
-                self.current_token
-                    .as_ref()
-                    .unwrap()
-                    .pos_end
-                    .as_ref()
-                    .unwrap()
-                    .clone(),
-            ),
-        )
-    }
-
     pub fn parse(&mut self) -> ParseResult {
         let mut parse_result = self.statements();
 
