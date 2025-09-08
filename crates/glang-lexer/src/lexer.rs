@@ -17,14 +17,14 @@ pub struct Lexer {
 
 impl Lexer {
     pub fn new(filename: &str, text: String) -> Self {
-        let contents = text.replace("\r\n", "\n");
-        let contents = contents.trim_end();
+        let contents = text.replace("\r\n", "\n"); // on windows, the duplicate \r can cause issues, so it's best to remove it
+        let contents = contents.trim_end(); // we trim the end of the contents so that the lexer can't advance into an empty newline
 
         let mut lexer = Self {
             filename: filename.to_string(),
             text: contents.to_string(),
             chars: contents.chars().collect::<Vec<_>>().into(),
-            position: Position::new(-1, 0, 0, filename, contents),
+            position: Position::new(-1, 0, 0, filename, contents), // initially start at index -1 because we are advancing into the first char (index 0)
             current_char: None,
         };
         lexer.advance();
@@ -213,7 +213,7 @@ impl Lexer {
                         format!("unkown character '{unknown_char}'").as_str(),
                         Rc::new(pos_start),
                         Rc::new(self.position.clone()),
-                        Some("replace this character with one known by glang"),
+                        None,
                     ));
                 }
             };
