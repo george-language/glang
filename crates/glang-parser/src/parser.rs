@@ -417,6 +417,10 @@ impl Parser {
         let condition = parse_result.register(self.statement());
 
         if parse_result.error.is_some() {
+            // quick fix to allow error output to match current positions
+            parse_result.error.as_mut().unwrap().pos_start = pos_start.clone();
+            parse_result.error.as_mut().unwrap().pos_end = pos_end.clone();
+
             return (parse_result, Vec::new(), None);
         }
 
@@ -1132,12 +1136,11 @@ impl Parser {
                     let expr = parse_result.register(self.expr());
 
                     if parse_result.error.is_some() {
-                        return parse_result.failure(Some(StandardError::new(
-                            "expected keyword, object, function, expression",
-                            comma_pos_start,
-                            self.current_pos_end(),
-                            None,
-                        )));
+                        // quick fix to allow error output to match current positions
+                        parse_result.error.as_mut().unwrap().pos_start = comma_pos_start.clone();
+                        parse_result.error.as_mut().unwrap().pos_end = self.current_pos_end();
+
+                        return parse_result;
                     }
 
                     arg_nodes.push(expr.unwrap());
