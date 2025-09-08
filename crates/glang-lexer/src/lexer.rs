@@ -18,12 +18,13 @@ pub struct Lexer {
 impl Lexer {
     pub fn new(filename: &str, text: String) -> Self {
         let contents = text.replace("\r\n", "\n");
+        let contents = contents.trim_end();
 
         let mut lexer = Self {
             filename: filename.to_string(),
             text: contents.to_string(),
             chars: contents.chars().collect::<Vec<_>>().into(),
-            position: Position::new(-1, 0, -1, filename, &contents.clone()),
+            position: Position::new(-1, 0, 0, filename, contents),
             current_char: None,
         };
         lexer.advance();
@@ -260,6 +261,8 @@ impl Lexer {
             self.advance();
         }
 
+        let pos_end = self.position.clone();
+
         let token_type = if dot_count == 0 {
             TokenType::TT_INT
         } else {
@@ -270,7 +273,7 @@ impl Lexer {
             token_type,
             Some(num_str),
             Some(pos_start),
-            Some(self.position.clone()),
+            Some(pos_end),
         ))
     }
 
@@ -402,12 +405,9 @@ impl Lexer {
             token_type = TokenType::TT_ARROW;
         }
 
-        Token::new(
-            token_type,
-            None,
-            Some(pos_start),
-            Some(self.position.clone()),
-        )
+        let pos_end = self.position.clone();
+
+        Token::new(token_type, None, Some(pos_start), Some(pos_end))
     }
 
     fn make_equals(&mut self) -> Token {
@@ -422,12 +422,9 @@ impl Lexer {
             token_type = TokenType::TT_EE;
         }
 
-        Token::new(
-            token_type,
-            None,
-            Some(pos_start),
-            Some(self.position.clone()),
-        )
+        let pos_end = self.position.clone();
+
+        Token::new(token_type, None, Some(pos_start), Some(pos_end))
     }
 
     fn make_not_equals(&mut self) -> Result<Token, StandardError> {
@@ -439,20 +436,24 @@ impl Lexer {
         {
             self.advance();
 
+            let pos_end = self.position.clone();
+
             return Ok(Token::new(
                 TokenType::TT_NE,
                 None,
                 Some(pos_start),
-                Some(self.position.clone()),
+                Some(pos_end),
             ));
         }
 
         self.advance();
 
+        let pos_end = self.position.clone();
+
         Err(StandardError::new(
             "expected '=' after '!'",
             Rc::new(pos_start),
-            Rc::new(self.position.clone()),
+            Rc::new(pos_end),
             Some("add a '=' after the '!' character"),
         ))
     }
@@ -469,12 +470,9 @@ impl Lexer {
             token_type = TokenType::TT_LTE;
         }
 
-        Token::new(
-            token_type,
-            None,
-            Some(pos_start),
-            Some(self.position.clone()),
-        )
+        let pos_end = self.position.clone();
+
+        Token::new(token_type, None, Some(pos_start), Some(pos_end))
     }
 
     fn make_greater_than(&mut self) -> Token {
@@ -489,12 +487,9 @@ impl Lexer {
             token_type = TokenType::TT_GTE;
         }
 
-        Token::new(
-            token_type,
-            None,
-            Some(pos_start),
-            Some(self.position.clone()),
-        )
+        let pos_end = self.position.clone();
+
+        Token::new(token_type, None, Some(pos_start), Some(pos_end))
     }
 
     fn skip_comment(&mut self) {

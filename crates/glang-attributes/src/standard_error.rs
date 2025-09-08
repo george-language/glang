@@ -45,7 +45,7 @@ impl StandardError {
                 result.push('\n');
 
                 let col_start = if i == pos_start.line_num {
-                    pos_start.column_num as usize
+                    (pos_start.column_num - 1) as usize
                 } else {
                     0
                 };
