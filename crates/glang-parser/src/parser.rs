@@ -228,6 +228,10 @@ impl Parser {
                 parse_result.register_advancement();
                 self.advance();
 
+                if self.current_token_ref().token_type == TokenType::TT_RSQUARE {
+                    break;
+                }
+
                 let element = parse_result.register(self.expr());
 
                 if parse_result.error.is_some() {
@@ -239,7 +243,7 @@ impl Parser {
 
             if self.current_token_ref().token_type != TokenType::TT_RSQUARE {
                 return parse_result.failure(Some(StandardError::new(
-                    "expected closing bracket or next list element",
+                    "expected ']' or next list element",
                     self.current_pos_start(),
                     self.current_pos_end(),
                     Some("add a ']' to close the list or add a list element followed by a comma"),
@@ -1361,6 +1365,10 @@ impl Parser {
                 parse_result.register_advancement();
                 self.advance();
 
+                if self.current_token_ref().token_type == TokenType::TT_RPAREN {
+                    break;
+                }
+
                 if self.current_token_ref().token_type != TokenType::TT_IDENTIFIER {
                     return parse_result.failure(Some(StandardError::new(
                         "expected identifier",
@@ -1378,10 +1386,10 @@ impl Parser {
 
             if self.current_token_ref().token_type != TokenType::TT_RPAREN {
                 return parse_result.failure(Some(StandardError::new(
-                    "expected comma or ')'",
+                    "expected ')'",
                     self.current_pos_start(),
                     self.current_pos_end(),
-                    Some("add a ',' followed by the function argument or complete the function with ')'"),
+                    Some("add another function argument or complete the function with ')'"),
                 )));
             }
         } else if self.current_token_ref().token_type != TokenType::TT_RPAREN {
