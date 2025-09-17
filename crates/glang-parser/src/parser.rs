@@ -13,10 +13,10 @@ use crate::{
 };
 use glang_attributes::{Position, StandardError};
 use glang_lexer::{Token, TokenType};
-use std::{rc::Rc, sync::Arc};
+use std::rc::Rc;
 
 pub struct Parser {
-    pub tokens: Arc<[Token]>,
+    pub tokens: Rc<[Token]>,
     pub token_index: isize,
     pub current_token: Option<Token>,
 }
@@ -24,7 +24,7 @@ pub struct Parser {
 impl Parser {
     pub fn new(tokens: &[Token]) -> Self {
         let mut parser = Self {
-            tokens: Arc::from(tokens),
+            tokens: Rc::from(tokens),
             token_index: -1,
             current_token: None,
         };

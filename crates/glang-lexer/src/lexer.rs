@@ -5,12 +5,11 @@ use glang_attributes::StandardError;
 use glang_attributes::keywords::*;
 use std::collections::HashMap;
 use std::rc::Rc;
-use std::sync::Arc;
 
 pub struct Lexer {
     pub filename: String,
     pub text: String,
-    pub chars: Arc<[char]>,
+    pub chars: Rc<[char]>,
     pub position: Position,
     pub current_char: Option<char>,
 }
