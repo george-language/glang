@@ -60,7 +60,7 @@ impl Function {
         Rc::new(RefCell::new(new_context))
     }
 
-    pub fn check_args(&self, arg_names: &[String], args: &[Value]) -> RuntimeResult {
+    pub fn check_args(&self, arg_names: &[String], args: &[Rc<RefCell<Value>>]) -> RuntimeResult {
         let mut result = RuntimeResult::new();
 
         if args.len() > arg_names.len() || args.len() < arg_names.len() {
@@ -86,13 +86,13 @@ impl Function {
     pub fn populate_args(
         &self,
         arg_names: &[String],
-        args: &[Value],
+        args: &[Rc<RefCell<Value>>],
         expr_ctx: Rc<RefCell<Context>>,
     ) {
         for i in 0..args.len() {
             let arg_name = arg_names[i].clone();
-            let mut arg_value = args[i].clone();
-            arg_value.set_context(Some(expr_ctx.clone()));
+            let arg_value = args[i].clone();
+            arg_value.borrow_mut().set_context(Some(expr_ctx.clone()));
 
             expr_ctx
                 .borrow_mut()
@@ -107,7 +107,7 @@ impl Function {
     pub fn check_and_populate_args(
         &self,
         arg_names: &[String],
-        args: &[Value],
+        args: &[Rc<RefCell<Value>>],
         expr_ctx: Rc<RefCell<Context>>,
     ) -> RuntimeResult {
         let mut result = RuntimeResult::new();
@@ -122,7 +122,7 @@ impl Function {
         result.success(None)
     }
 
-    pub fn execute(&self, args: &[Value]) -> RuntimeResult {
+    pub fn execute(&self, args: &[Rc<RefCell<Value>>]) -> RuntimeResult {
         let mut result = RuntimeResult::new();
         let mut interpreter = Interpreter::new();
         let exec_context = self.generate_new_context();

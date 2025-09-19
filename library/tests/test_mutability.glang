@@ -1,0 +1,14 @@
+# file test_mutability.glang: test the list type's mutability
+
+# adding a value to the list (this function also represents all other list operations)
+obj list1 = [1, 2, 3];
+push(list1, 4);
+
+bark(list1); # [1, 2, 3, 4]
+
+# creating a list based off the same list
+obj list2 = list1;
+push(list1, 5);
+
+# list1 should have also been modified because list1 and list2 point to the same object
+bark(list1); # [1, 2, 3, 4, 5]

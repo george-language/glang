@@ -20,7 +20,7 @@ obj x = 0;
 
 # let's go for a walk!
 walk i = 0 through 10 {
-    obj x = x + 1;
+    x = x + 1;
 
     if x == 5 {
         leave;

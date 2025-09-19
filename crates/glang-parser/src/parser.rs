@@ -13,10 +13,10 @@ use crate::{
 };
 use glang_attributes::{Position, StandardError};
 use glang_lexer::{Token, TokenType};
-use std::{rc::Rc, sync::Arc};
+use std::rc::Rc;
 
 pub struct Parser {
-    pub tokens: Arc<[Token]>,
+    pub tokens: Rc<[Token]>,
     pub token_index: isize,
     pub current_token: Option<Token>,
 }
@@ -24,7 +24,7 @@ pub struct Parser {
 impl Parser {
     pub fn new(tokens: &[Token]) -> Self {
         let mut parser = Self {
-            tokens: Arc::from(tokens),
+            tokens: Rc::from(tokens),
             token_index: -1,
             current_token: None,
         };
@@ -90,29 +90,6 @@ impl Parser {
                 .as_ref()
                 .unwrap()
                 .clone(),
-        )
-    }
-
-    fn current_pos_range(&self) -> (Rc<Position>, Rc<Position>) {
-        (
-            Rc::new(
-                self.current_token
-                    .as_ref()
-                    .unwrap()
-                    .pos_start
-                    .as_ref()
-                    .unwrap()
-                    .clone(),
-            ),
-            Rc::new(
-                self.current_token
-                    .as_ref()
-                    .unwrap()
-                    .pos_end
-                    .as_ref()
-                    .unwrap()
-                    .clone(),
-            ),
         )
     }
 
@@ -285,7 +262,6 @@ impl Parser {
     fn if_expr_c(&mut self) -> (ParseResult, Option<(Box<AstNode>, bool)>) {
         let mut parse_result = ParseResult::new();
         let mut else_case: Option<(Box<AstNode>, bool)> = None;
-        let (pos_start, pos_end) = self.current_pos_range();
 
         if self
             .current_token_ref()
@@ -298,8 +274,8 @@ impl Parser {
                 return (
                     parse_result.failure(Some(StandardError::new(
                         "expected '{'",
-                        pos_start,
-                        pos_end,
+                        self.current_pos_start(),
+                        self.current_pos_end(),
                         Some("add a '{' to define the body"),
                     ))),
                     None,
@@ -323,8 +299,8 @@ impl Parser {
                 return (
                     parse_result.failure(Some(StandardError::new(
                         "expected '}'",
-                        pos_start,
-                        pos_end,
+                        self.current_pos_start(),
+                        self.current_pos_end(),
                         Some("add a '}' to close the body"),
                     ))),
                     None,
@@ -395,7 +371,6 @@ impl Parser {
         Option<(Box<AstNode>, bool)>,
     ) {
         let mut parse_result = ParseResult::new();
-        let (pos_start, pos_end) = self.current_pos_range();
         let mut cases: Vec<(Box<AstNode>, Box<AstNode>, bool)> = Vec::new();
         let mut else_case: Option<(Box<AstNode>, bool)> = None;
 
@@ -406,8 +381,8 @@ impl Parser {
             return (
                 parse_result.failure(Some(StandardError::new(
                     "expected keyword",
-                    pos_start,
-                    pos_end,
+                    self.current_pos_start(),
+                    self.current_pos_end(),
                     Some(format!("add the '{keyword}' keyword").as_str()),
                 ))),
                 Vec::new(),
@@ -428,8 +403,8 @@ impl Parser {
             return (
                 parse_result.failure(Some(StandardError::new(
                     "expected '{'",
-                    pos_start,
-                    pos_end,
+                    self.current_pos_start(),
+                    self.current_pos_end(),
                     Some("add a '{' to define the body"),
                 ))),
                 Vec::new(),
@@ -446,18 +421,14 @@ impl Parser {
             return (parse_result, Vec::new(), None);
         }
 
-        cases.push((
-            condition.unwrap().clone(),
-            statements.unwrap().clone(),
-            true,
-        ));
+        cases.push((condition.unwrap(), statements.unwrap(), true));
 
         if self.current_token_ref().token_type != TokenType::TT_RBRACKET {
             return (
                 parse_result.failure(Some(StandardError::new(
                     "expected '}'",
-                    pos_start,
-                    pos_end,
+                    self.current_pos_start(),
+                    self.current_pos_end(),
                     Some("add a '}' to close the body"),
                 ))),
                 Vec::new(),
@@ -483,17 +454,14 @@ impl Parser {
     fn for_expr(&mut self) -> ParseResult {
         let mut parse_result = ParseResult::new();
 
-        // We clone these two so the error output doesn't skip with 'walk' token (fixed output of errors)
-        let (pos_start, pos_end) = self.current_pos_range();
-
         if !self
             .current_token_ref()
             .matches(TokenType::TT_KEYWORD, "walk")
         {
             return parse_result.failure(Some(StandardError::new(
                 "expected keyword",
-                pos_start,
-                pos_end,
+                self.current_pos_start(),
+                self.current_pos_end(),
                 Some("add the 'walk' keyword to represent a for loop"),
             )));
         }
@@ -504,8 +472,8 @@ impl Parser {
         if self.current_token_ref().token_type != TokenType::TT_IDENTIFIER {
             return parse_result.failure(Some(StandardError::new(
                 "expected identifier",
-                pos_start,
-                pos_end,
+                self.current_pos_start(),
+                self.current_pos_end(),
                 Some("add an object name like 'i' to represent a for loop's iterator"),
             )));
         }
@@ -518,8 +486,8 @@ impl Parser {
         if self.current_token_ref().token_type != TokenType::TT_EQ {
             return parse_result.failure(Some(StandardError::new(
                 "expected '='",
-                pos_start,
-                pos_end,
+                self.current_pos_start(),
+                self.current_pos_end(),
                 Some(
                     format!(
                         "add an '=' to set the value of the variable '{}'",
@@ -545,8 +513,8 @@ impl Parser {
         {
             return parse_result.failure(Some(StandardError::new(
                 "expected 'through'",
-                pos_start,
-                pos_end,
+                self.current_pos_start(),
+                self.current_pos_end(),
                 Some("add the 'through' keyword to define a range 'n through n'"),
             )));
         }
@@ -572,8 +540,8 @@ impl Parser {
             if self.current_token_ref().token_type != TokenType::TT_EQ {
                 return parse_result.failure(Some(StandardError::new(
                     "expected '='",
-                    pos_start,
-                    pos_end,
+                    self.current_pos_start(),
+                    self.current_pos_end(),
                     Some("add an '=' to set the step amount"),
                 )));
             }
@@ -593,8 +561,8 @@ impl Parser {
         if self.current_token_ref().token_type != TokenType::TT_LBRACKET {
             return parse_result.failure(Some(StandardError::new(
                 "expected '{'",
-                pos_start,
-                pos_end,
+                self.current_pos_start(),
+                self.current_pos_end(),
                 Some("add a '{' to define the body"),
             )));
         }
@@ -611,8 +579,8 @@ impl Parser {
         if self.current_token_ref().token_type != TokenType::TT_RBRACKET {
             return parse_result.failure(Some(StandardError::new(
                 "expected '}'",
-                pos_start,
-                pos_end,
+                self.current_pos_start(),
+                self.current_pos_end(),
                 Some("add a '}' to close the body"),
             )));
         }
@@ -631,7 +599,6 @@ impl Parser {
 
     fn while_expr(&mut self) -> ParseResult {
         let mut parse_result = ParseResult::new();
-        let (pos_start, pos_end) = self.current_pos_range();
 
         if !self
             .current_token_ref()
@@ -639,8 +606,8 @@ impl Parser {
         {
             return parse_result.failure(Some(StandardError::new(
                 "expected keyword",
-                pos_start,
-                pos_end,
+                self.current_pos_start(),
+                self.current_pos_end(),
                 Some("add the 'while' keyword to represent a while loop"),
             )));
         }
@@ -657,8 +624,8 @@ impl Parser {
         if self.current_token_ref().token_type != TokenType::TT_LBRACKET {
             return parse_result.failure(Some(StandardError::new(
                 "expected '{'",
-                pos_start,
-                pos_end,
+                self.current_pos_start(),
+                self.current_pos_end(),
                 Some("add a '{' to define the body"),
             )));
         }
@@ -675,8 +642,8 @@ impl Parser {
         if self.current_token_ref().token_type != TokenType::TT_RBRACKET {
             return parse_result.failure(Some(StandardError::new(
                 "expected '}'",
-                pos_start,
-                pos_end,
+                self.current_pos_start(),
+                self.current_pos_end(),
                 Some("add a '}' to close the body"),
             )));
         }
@@ -692,7 +659,6 @@ impl Parser {
 
     fn try_expr(&mut self) -> ParseResult {
         let mut parse_result = ParseResult::new();
-        let (pos_start, pos_end) = self.current_pos_range();
 
         if !self
             .current_token_ref()
@@ -700,8 +666,8 @@ impl Parser {
         {
             return parse_result.failure(Some(StandardError::new(
                 "expected keyword",
-                pos_start,
-                pos_end,
+                self.current_pos_start(),
+                self.current_pos_end(),
                 Some("add the 'unsafe' keyword to represent the block of code that is dangerous"),
             )));
         }
@@ -712,8 +678,8 @@ impl Parser {
         if self.current_token_ref().token_type != TokenType::TT_LBRACKET {
             return parse_result.failure(Some(StandardError::new(
                 "expected '{'",
-                pos_start,
-                pos_end,
+                self.current_pos_start(),
+                self.current_pos_end(),
                 Some("add a '{' to define the body"),
             )));
         }
@@ -730,8 +696,8 @@ impl Parser {
         if self.current_token_ref().token_type != TokenType::TT_RBRACKET {
             return parse_result.failure(Some(StandardError::new(
                 "expected '}'",
-                pos_start,
-                pos_end,
+                self.current_pos_start(),
+                self.current_pos_end(),
                 Some("add a '}' to close the body"),
             )));
         }
@@ -739,16 +705,14 @@ impl Parser {
         parse_result.register_advancement();
         self.advance();
 
-        let (pos_start, pos_end) = self.current_pos_range();
-
         if !self
             .current_token_ref()
             .matches(TokenType::TT_KEYWORD, "safe")
         {
             return parse_result.failure(Some(StandardError::new(
                 "expected keyword",
-                pos_start,
-                pos_end,
+                self.current_pos_start(),
+                self.current_pos_end(),
                 Some("add the 'safe' keyword to represent the block of code to fall back to if the 'unsafe' block fails"),
             )));
         }
@@ -759,8 +723,8 @@ impl Parser {
         if self.current_token_ref().token_type != TokenType::TT_IDENTIFIER {
             return parse_result.failure(Some(StandardError::new(
                 "expected identifier",
-                pos_start,
-                pos_end,
+                self.current_pos_start(),
+                self.current_pos_end(),
                 Some("add a name for the exception error like 'error'"),
             )));
         }
@@ -773,8 +737,8 @@ impl Parser {
         if self.current_token_ref().token_type != TokenType::TT_LBRACKET {
             return parse_result.failure(Some(StandardError::new(
                 "expected '{'",
-                pos_start,
-                pos_end,
+                self.current_pos_start(),
+                self.current_pos_end(),
                 Some("add a '{' to define the body"),
             )));
         }
@@ -791,8 +755,8 @@ impl Parser {
         if self.current_token_ref().token_type != TokenType::TT_RBRACKET {
             return parse_result.failure(Some(StandardError::new(
                 "expected '}'",
-                pos_start,
-                pos_end,
+                self.current_pos_start(),
+                self.current_pos_end(),
                 Some("add a '}' to close the body"),
             )));
         }
@@ -1129,11 +1093,13 @@ impl Parser {
                     parse_result.register_advancement();
                     self.advance();
 
-                    arg_nodes.push(parse_result.register(self.expr()).unwrap());
+                    let expr = parse_result.register(self.expr());
 
                     if parse_result.error.is_some() {
                         return parse_result;
                     }
+
+                    arg_nodes.push(expr.unwrap());
                 }
 
                 if self.current_token_ref().token_type != TokenType::TT_RPAREN {

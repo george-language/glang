@@ -1,64 +1,64 @@
 # file list.glang: list operations in glang
 
 # add a value to a list
-# returns a the list with the new value inside
+# returns null
 func push(list, value) {
     if type(list) != "list" {
-        uhoh("expected type list in 'push'");
+        uhoh("expected type list");
     }
 
     give list * value;
 }
 
-# add two lists together
-# returns <list_a> combined with <list_b>
+# add two lists together (copy <list_b>'s objects into <list_a>)
+# returns null
 func append(list_a, list_b) {
     if type(list_a) != "list" {
-        uhoh("argument 'list_a' must be type list in 'append'");
+        uhoh("argument 'list_a' must be type list");
     }
 
     if type(list_a) != "list" {
-        uhoh("argument 'list_b' must be type list in 'append'");
+        uhoh("argument 'list_b' must be type list");
     }
 
     give list_a + list_b;
 }
 
-# remove a value from a list
-# returns the list with the removed value
+# remove the element at <index> in a list
+# returns the removed value from the list
 func remove(list, index) {
     if type(list) != "list" {
-        uhoh("expected type list in 'remove'");
+        uhoh("expected type list");
     }
 
     if type(index) != "number" {
-        uhoh("argument 'index' must be type number in 'remove'");
+        uhoh("argument 'index' must be type number");
     }
 
     give list - index;
 }
 
 # retrieve a value from a list
-# returns a copy of the value at the retrieved index
+# returns the value at the retrieved index
 func retrieve(list, index) {
     if type(list) != "list" {
-        uhoh("expected type list in 'retrieve'");
+        uhoh("expected type list");
     }
 
     if type(index) != "number" {
-        uhoh("argument 'index' must be type number in 'retrieve'");
+        uhoh("argument 'index' must be type number");
     }
 
     give list ^ index;
 }
 
 # reverse a list (supports the string type as well)
-# returns the type with it's elements or characters reversed
+# returns null if reversing a list otherwise returns a copy of the string reversed
 func reverse(list) {
     if type(list) == "list" or type(list) == "string" {
         skip;
     } otherwise {
-        uhoh("expected type list or string in 'reverse'");
+        uhoh("expected type list or string");
     }
 
     give list ^ -1;
@@ -72,6 +72,6 @@ func clear(value) {
     } alsoif type(value) == "string" {
         give "";
     } otherwise {
-        uhoh("expected type list or string in 'clear'");
+        uhoh("expected type list or string");
     }
 }

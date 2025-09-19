@@ -1,11 +1,12 @@
 use crate::values::value::Value;
 use glang_attributes::StandardError;
+use std::{cell::RefCell, rc::Rc};
 
 #[derive(Clone)]
 pub struct RuntimeResult {
-    pub value: Option<Value>,
+    pub value: Option<Rc<RefCell<Value>>>,
     pub error: Option<StandardError>,
-    pub func_return_value: Option<Value>,
+    pub func_return_value: Option<Rc<RefCell<Value>>>,
     pub loop_should_continue: bool,
     pub loop_should_break: bool,
 }
@@ -29,7 +30,7 @@ impl RuntimeResult {
         self.loop_should_break = false;
     }
 
-    pub fn register(&mut self, result: RuntimeResult) -> Option<Value> {
+    pub fn register(&mut self, result: RuntimeResult) -> Option<Rc<RefCell<Value>>> {
         self.error = result.error;
         self.func_return_value = result.func_return_value;
         self.loop_should_continue = result.loop_should_continue;
@@ -38,14 +39,14 @@ impl RuntimeResult {
         result.value
     }
 
-    pub fn success(&mut self, value: Option<Value>) -> RuntimeResult {
+    pub fn success(&mut self, value: Option<Rc<RefCell<Value>>>) -> RuntimeResult {
         self.reset();
         self.value = value;
 
         self.clone()
     }
 
-    pub fn success_return(&mut self, value: Option<Value>) -> RuntimeResult {
+    pub fn success_return(&mut self, value: Option<Rc<RefCell<Value>>>) -> RuntimeResult {
         self.reset();
         self.func_return_value = value;
 

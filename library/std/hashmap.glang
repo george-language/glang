@@ -7,7 +7,7 @@ func hashmap() {
 }
 
 # set the key & value pairs of a hashmap
-# returns a new hashmap with the key & value pair added to it
+# returns null
 func hashmap_set(hashmap_obj, key, value) {
     walk i = 0 through length(hashmap_obj) {
         obj pair = retrieve(hashmap_obj, i);
@@ -35,8 +35,8 @@ func hashmap_get(hashmap_obj, key) {
     uhoh("key doesn't exist in hashmap");
 }
 
-# remove a value based on the key in a hashmap
-# returns a new hashmap with the key & value pair removed (if any) otherwise tosses an error
+# remove a value based on the key in a hashmap (if key exists) otherwise tosses an error
+# returns the value removed from the hashmap
 func hashmap_remove(hashmap_obj, key) {
     walk i = 0 through length(hashmap_obj) {
         obj pair = retrieve(hashmap_obj, i);
@@ -56,20 +56,20 @@ func hashmap_keys(hashmap_obj) {
 
     walk i = 0 through length(hashmap_obj) {
         obj pair = retrieve(hashmap_obj, i);
-        keys = push(keys, retrieve(pair, 0));
+        push(keys, retrieve(pair, 0));
     }
 
     give keys;
 }
 
 # get the values in a hashmap
-# returns: a list of all values in the hashmap
+# returns a list of all values in the hashmap
 func hashmap_values(hashmap_obj) {
     obj values = [];
 
     walk i = 0 through length(hashmap_obj) {
         obj pair = retrieve(hashmap_obj, i);
-        values = push(values, retrieve(pair, 1));
+        push(values, retrieve(pair, 1));
     }
 
     give values;

@@ -35,6 +35,12 @@ impl BuiltInFunction {
         }
     }
 
+    pub fn from(name: &str) -> Rc<RefCell<Value>> {
+        Rc::new(RefCell::new(Value::BuiltInFunction(BuiltInFunction::new(
+            name,
+        ))))
+    }
+
     pub fn generate_new_context(&self) -> Rc<RefCell<Context>> {
         let mut new_context = Context::new(
             self.name.clone(),
@@ -55,7 +61,7 @@ impl BuiltInFunction {
         Rc::new(RefCell::new(new_context))
     }
 
-    pub fn check_args(&self, arg_names: &[String], args: &[Value]) -> RuntimeResult {
+    pub fn check_args(&self, arg_names: &[String], args: &[Rc<RefCell<Value>>]) -> RuntimeResult {
         let mut result = RuntimeResult::new();
 
         if args.len() > arg_names.len() || args.len() < arg_names.len() {
@@ -81,13 +87,13 @@ impl BuiltInFunction {
     pub fn populate_args(
         &self,
         arg_names: &[String],
-        args: &[Value],
+        args: &[Rc<RefCell<Value>>],
         exec_ctx: Rc<RefCell<Context>>,
     ) {
         for i in 0..args.len() {
             let arg_name = arg_names[i].clone();
-            let mut arg_value = args[i].clone();
-            arg_value.set_context(Some(exec_ctx.clone()));
+            let arg_value = args[i].clone();
+            arg_value.borrow_mut().set_context(Some(exec_ctx.clone()));
 
             exec_ctx
                 .borrow_mut()
@@ -102,7 +108,7 @@ impl BuiltInFunction {
     pub fn check_and_populate_args(
         &self,
         arg_names: &[String],
-        args: &[Value],
+        args: &[Rc<RefCell<Value>>],
         exec_ctx: Rc<RefCell<Context>>,
     ) -> RuntimeResult {
         let mut result = RuntimeResult::new();
@@ -117,7 +123,7 @@ impl BuiltInFunction {
         result.success(None)
     }
 
-    pub fn execute(&self, args: &[Value]) -> RuntimeResult {
+    pub fn execute(&self, args: &[Rc<RefCell<Value>>]) -> RuntimeResult {
         let exec_context = self.generate_new_context();
 
         match self.name.as_str() {
@@ -125,6 +131,7 @@ impl BuiltInFunction {
             "chew" => self.execute_input(args, exec_context),
             "dig" => self.execute_read(args, exec_context),
             "bury" => self.execute_write(args, exec_context),
+            "copy" => self.execute_copy(args, exec_context),
             "tostring" => self.execute_tostring(args, exec_context),
             "tonumber" => self.execute_tonumber(args, exec_context),
             "length" => self.execute_length(args, exec_context),
@@ -136,7 +143,11 @@ impl BuiltInFunction {
         }
     }
 
-    pub fn execute_print(&self, args: &[Value], exec_ctx: Rc<RefCell<Context>>) -> RuntimeResult {
+    pub fn execute_print(
+        &self,
+        args: &[Rc<RefCell<Value>>],
+        exec_ctx: Rc<RefCell<Context>>,
+    ) -> RuntimeResult {
         let mut result = RuntimeResult::new();
         result.register(self.check_and_populate_args(&["value".to_string()], args, exec_ctx));
 
@@ -144,12 +155,16 @@ impl BuiltInFunction {
             return result;
         }
 
-        println!("{}", args[0].as_string());
+        println!("{}", args[0].borrow().as_string());
 
         result.success(Some(Number::null_value()))
     }
 
-    pub fn execute_input(&self, args: &[Value], exec_ctx: Rc<RefCell<Context>>) -> RuntimeResult {
+    pub fn execute_input(
+        &self,
+        args: &[Rc<RefCell<Value>>],
+        exec_ctx: Rc<RefCell<Context>>,
+    ) -> RuntimeResult {
         let mut result = RuntimeResult::new();
         result.register(self.check_and_populate_args(&["msg".to_string()], args, exec_ctx));
 
@@ -159,13 +174,13 @@ impl BuiltInFunction {
 
         let message_arg = args[0].clone();
 
-        let message = match &message_arg {
-            Value::StringValue(string) => string.as_string(),
+        let message = match *message_arg.borrow() {
+            Value::StringValue(ref string) => string.as_string(),
             _ => {
                 return result.failure(Some(StandardError::new(
                     "expected type string",
-                    message_arg.position_start().unwrap().clone(),
-                    message_arg.position_end().unwrap().clone(),
+                    message_arg.borrow().position_start().unwrap().clone(),
+                    message_arg.borrow().position_end().unwrap().clone(),
                     Some("add a message like 'Enter a number:' to get user input"),
                 )));
             }
@@ -184,7 +199,11 @@ impl BuiltInFunction {
         result.success(Some(Str::from(input.trim())))
     }
 
-    pub fn execute_read(&self, args: &[Value], exec_ctx: Rc<RefCell<Context>>) -> RuntimeResult {
+    pub fn execute_read(
+        &self,
+        args: &[Rc<RefCell<Value>>],
+        exec_ctx: Rc<RefCell<Context>>,
+    ) -> RuntimeResult {
         let mut result = RuntimeResult::new();
         result.register(self.check_and_populate_args(&["file".to_string()], args, exec_ctx));
 
@@ -194,13 +213,13 @@ impl BuiltInFunction {
 
         let file_arg = args[0].clone();
 
-        let filename = match &file_arg {
-            Value::StringValue(string) => string.as_string(),
+        let filename = match *file_arg.borrow() {
+            Value::StringValue(ref string) => string.as_string(),
             _ => {
                 return result.failure(Some(StandardError::new(
                     "expected type string",
-                    file_arg.position_start().unwrap().clone(),
-                    file_arg.position_end().unwrap().clone(),
+                    file_arg.borrow().position_start().unwrap().clone(),
+                    file_arg.borrow().position_end().unwrap().clone(),
                     Some("add a filename to read like 'test.txt'"),
                 )));
             }
@@ -209,8 +228,8 @@ impl BuiltInFunction {
         if fs::exists(&filename).is_err() {
             return result.failure(Some(StandardError::new(
                 "file doesn't exist",
-                file_arg.position_start().unwrap().clone(),
-                file_arg.position_end().unwrap().clone(),
+                file_arg.borrow().position_start().unwrap().clone(),
+                file_arg.borrow().position_end().unwrap().clone(),
                 Some("add a filename to read like 'test.txt'"),
             )));
         }
@@ -222,8 +241,8 @@ impl BuiltInFunction {
             Err(_) => {
                 return result.failure(Some(StandardError::new(
                     "file contents couldn't be read properly",
-                    file_arg.position_start().unwrap().clone(),
-                    file_arg.position_end().unwrap().clone(),
+                    file_arg.borrow().position_start().unwrap().clone(),
+                    file_arg.borrow().position_end().unwrap().clone(),
                     Some("add a UTF-8 encoded file you would like to read"),
                 )));
             }
@@ -232,7 +251,11 @@ impl BuiltInFunction {
         result.success(Some(Str::from(contents.as_str())))
     }
 
-    pub fn execute_write(&self, args: &[Value], exec_ctx: Rc<RefCell<Context>>) -> RuntimeResult {
+    pub fn execute_write(
+        &self,
+        args: &[Rc<RefCell<Value>>],
+        exec_ctx: Rc<RefCell<Context>>,
+    ) -> RuntimeResult {
         let mut result = RuntimeResult::new();
         result.register(self.check_and_populate_args(
             &["file".to_string(), "contents".to_string()],
@@ -247,25 +270,25 @@ impl BuiltInFunction {
         let file_arg = args[0].clone();
         let contents_arg = args[1].clone();
 
-        let filename = match &file_arg {
-            Value::StringValue(string) => string.as_string(),
+        let filename = match *file_arg.borrow() {
+            Value::StringValue(ref string) => string.as_string(),
             _ => {
                 return result.failure(Some(StandardError::new(
                     "expected type string",
-                    file_arg.position_start().unwrap().clone(),
-                    file_arg.position_end().unwrap().clone(),
+                    file_arg.borrow().position_start().unwrap().clone(),
+                    file_arg.borrow().position_end().unwrap().clone(),
                     Some("add a filename to write to like 'test.txt'"),
                 )));
             }
         };
 
-        let contents = match &contents_arg {
-            Value::StringValue(string) => string.as_string(),
+        let contents = match *contents_arg.borrow() {
+            Value::StringValue(ref string) => string.as_string(),
             _ => {
                 return result.failure(Some(StandardError::new(
                     "expected type string",
-                    file_arg.position_start().unwrap().clone(),
-                    file_arg.position_end().unwrap().clone(),
+                    file_arg.borrow().position_start().unwrap().clone(),
+                    file_arg.borrow().position_end().unwrap().clone(),
                     Some("add the file contents to write into the file"),
                 )));
             }
@@ -276,8 +299,8 @@ impl BuiltInFunction {
             Err(_) => {
                 return result.failure(Some(StandardError::new(
                     "file contents couldn't be written properly",
-                    file_arg.position_start().unwrap().clone(),
-                    file_arg.position_end().unwrap().clone(),
+                    file_arg.borrow().position_start().unwrap().clone(),
+                    file_arg.borrow().position_end().unwrap().clone(),
                     None,
                 )));
             }
@@ -286,9 +309,9 @@ impl BuiltInFunction {
         result.success(Some(Number::null_value()))
     }
 
-    pub fn execute_tostring(
+    pub fn execute_copy(
         &self,
-        args: &[Value],
+        args: &[Rc<RefCell<Value>>],
         exec_ctx: Rc<RefCell<Context>>,
     ) -> RuntimeResult {
         let mut result = RuntimeResult::new();
@@ -298,12 +321,29 @@ impl BuiltInFunction {
             return result;
         }
 
-        result.success(Some(Str::from(args[0].as_string().as_str())))
+        let object_arg = args[0].clone();
+
+        result.success(Some(Rc::new(RefCell::new(object_arg.borrow().clone())))) // we need to make a deep copy of the object
+    }
+
+    pub fn execute_tostring(
+        &self,
+        args: &[Rc<RefCell<Value>>],
+        exec_ctx: Rc<RefCell<Context>>,
+    ) -> RuntimeResult {
+        let mut result = RuntimeResult::new();
+        result.register(self.check_and_populate_args(&["value".to_string()], args, exec_ctx));
+
+        if result.should_return() {
+            return result;
+        }
+
+        result.success(Some(Str::from(args[0].borrow().as_string().as_str())))
     }
 
     pub fn execute_tonumber(
         &self,
-        args: &[Value],
+        args: &[Rc<RefCell<Value>>],
         exec_ctx: Rc<RefCell<Context>>,
     ) -> RuntimeResult {
         let mut result = RuntimeResult::new();
@@ -315,14 +355,14 @@ impl BuiltInFunction {
 
         let string_to_convert = args[0].clone();
 
-        let value: f64 = match &string_to_convert {
-            Value::StringValue(string) => match string.as_string().parse() {
+        let value: f64 = match *string_to_convert.borrow() {
+            Value::StringValue(ref string) => match string.as_string().parse() {
                 Ok(number) => number,
                 Err(e) => {
                     return result.failure(Some(StandardError::new(
                         format!("string couldn't be converted to number {e}").as_str(),
-                        string_to_convert.position_start().unwrap().clone(),
-                        string_to_convert.position_end().unwrap().clone(),
+                        string_to_convert.borrow().position_start().unwrap().clone(),
+                        string_to_convert.borrow().position_end().unwrap().clone(),
                         Some("make sure the string is represented as a valid number like '1.0'"),
                     )));
                 }
@@ -330,8 +370,8 @@ impl BuiltInFunction {
             _ => {
                 return result.failure(Some(StandardError::new(
                     "expected type string",
-                    string_to_convert.position_start().unwrap().clone(),
-                    string_to_convert.position_end().unwrap().clone(),
+                    string_to_convert.borrow().position_start().unwrap().clone(),
+                    string_to_convert.borrow().position_end().unwrap().clone(),
                     Some("add a string like '1.0' to convert to a number object"),
                 )));
             }
@@ -340,7 +380,11 @@ impl BuiltInFunction {
         result.success(Some(Number::from(value)))
     }
 
-    pub fn execute_length(&self, args: &[Value], exec_ctx: Rc<RefCell<Context>>) -> RuntimeResult {
+    pub fn execute_length(
+        &self,
+        args: &[Rc<RefCell<Value>>],
+        exec_ctx: Rc<RefCell<Context>>,
+    ) -> RuntimeResult {
         let mut result = RuntimeResult::new();
         result.register(self.check_and_populate_args(&["value".to_string()], args, exec_ctx));
 
@@ -350,14 +394,14 @@ impl BuiltInFunction {
 
         let object_arg = args[0].clone();
 
-        let length: f64 = match &object_arg {
-            Value::StringValue(value) => value.value.len() as f64,
-            Value::ListValue(value) => value.elements.len() as f64,
+        let length: f64 = match *object_arg.borrow() {
+            Value::StringValue(ref value) => value.value.len() as f64,
+            Value::ListValue(ref value) => value.elements.len() as f64,
             _ => {
                 return result.failure(Some(StandardError::new(
                     "expected type string or list",
-                    object_arg.position_start().unwrap().clone(),
-                    object_arg.position_end().unwrap().clone(),
+                    object_arg.borrow().position_start().unwrap().clone(),
+                    object_arg.borrow().position_end().unwrap().clone(),
                     None,
                 )));
             }
@@ -366,7 +410,11 @@ impl BuiltInFunction {
         result.success(Some(Number::from(length)))
     }
 
-    pub fn execute_error(&self, args: &[Value], exec_ctx: Rc<RefCell<Context>>) -> RuntimeResult {
+    pub fn execute_error(
+        &self,
+        args: &[Rc<RefCell<Value>>],
+        exec_ctx: Rc<RefCell<Context>>,
+    ) -> RuntimeResult {
         let mut result = RuntimeResult::new();
         result.register(self.check_and_populate_args(&["msg".to_string()], args, exec_ctx));
 
@@ -376,27 +424,31 @@ impl BuiltInFunction {
 
         let error = args[0].clone();
 
-        let message = match &error {
-            Value::StringValue(_) => error,
+        let message = match *error.borrow() {
+            Value::StringValue(_) => error.clone(),
             _ => {
                 return result.failure(Some(StandardError::new(
                     "expected type string",
-                    error.position_start().unwrap(),
-                    error.position_end().unwrap(),
+                    error.borrow().position_start().unwrap(),
+                    error.borrow().position_end().unwrap(),
                     Some("add an error message"),
                 )));
             }
         };
 
         result.failure(Some(StandardError::new(
-            message.as_string().as_str(),
-            message.position_start().unwrap().clone(),
-            message.position_end().unwrap().clone(),
+            message.borrow().as_string().as_str(),
+            message.borrow().position_start().unwrap().clone(),
+            message.borrow().position_end().unwrap().clone(),
             None,
         )))
     }
 
-    pub fn execute_type(&self, args: &[Value], exec_ctx: Rc<RefCell<Context>>) -> RuntimeResult {
+    pub fn execute_type(
+        &self,
+        args: &[Rc<RefCell<Value>>],
+        exec_ctx: Rc<RefCell<Context>>,
+    ) -> RuntimeResult {
         let mut result = RuntimeResult::new();
         result.register(self.check_and_populate_args(&["value".to_string()], args, exec_ctx));
 
@@ -404,10 +456,16 @@ impl BuiltInFunction {
             return result;
         }
 
-        result.success(Some(Str::from(args[0].object_type().to_string().as_str())))
+        result.success(Some(Str::from(
+            args[0].borrow().object_type().to_string().as_str(),
+        )))
     }
 
-    pub fn execute_exec(&self, args: &[Value], exec_ctx: Rc<RefCell<Context>>) -> RuntimeResult {
+    pub fn execute_exec(
+        &self,
+        args: &[Rc<RefCell<Value>>],
+        exec_ctx: Rc<RefCell<Context>>,
+    ) -> RuntimeResult {
         let mut result = RuntimeResult::new();
         result.register(self.check_and_populate_args(&["code".to_string()], args, exec_ctx));
 
@@ -417,19 +475,22 @@ impl BuiltInFunction {
 
         let code_arg = args[0].clone();
 
-        let code = match &code_arg {
-            Value::StringValue(glang) => glang.as_string(),
+        let code = match *code_arg.borrow() {
+            Value::StringValue(ref glang) => glang.as_string(),
             _ => {
                 return result.failure(Some(StandardError::new(
                     "expected type string",
-                    code_arg.position_start().unwrap().clone(),
-                    code_arg.position_end().unwrap().clone(),
+                    code_arg.borrow().position_start().unwrap().clone(),
+                    code_arg.borrow().position_end().unwrap().clone(),
                     Some("add the glang code you would like to execute"),
                 )));
             }
         };
 
-        let mut lexer = Lexer::new(&code_arg.position_start().unwrap().filename, code.clone());
+        let mut lexer = Lexer::new(
+            &code_arg.borrow().position_start().unwrap().filename,
+            code.clone(),
+        );
         let token_result = lexer.make_tokens();
 
         if token_result.is_err() {
@@ -457,7 +518,11 @@ impl BuiltInFunction {
         result.success(Some(Number::null_value()))
     }
 
-    pub fn execute_env(&self, args: &[Value], exec_ctx: Rc<RefCell<Context>>) -> RuntimeResult {
+    pub fn execute_env(
+        &self,
+        args: &[Rc<RefCell<Value>>],
+        exec_ctx: Rc<RefCell<Context>>,
+    ) -> RuntimeResult {
         let mut result = RuntimeResult::new();
         result.register(self.check_and_populate_args(&["var".to_string()], args, exec_ctx));
 
@@ -467,13 +532,13 @@ impl BuiltInFunction {
 
         let env_arg = args[0].clone();
 
-        let variable = match &env_arg {
-            Value::StringValue(glang) => glang.as_string(),
+        let variable = match *env_arg.borrow() {
+            Value::StringValue(ref var) => var.as_string(),
             _ => {
                 return result.failure(Some(StandardError::new(
                     "expected type string",
-                    env_arg.position_start().unwrap().clone(),
-                    env_arg.position_end().unwrap().clone(),
+                    env_arg.borrow().position_start().unwrap().clone(),
+                    env_arg.borrow().position_end().unwrap().clone(),
                     Some("add the glang code you would like to execute"),
                 )));
             }
@@ -483,8 +548,8 @@ impl BuiltInFunction {
             Ok(var) => result.success(Some(Str::from(&var))),
             Err(_) => result.failure(Some(StandardError::new(
                 "unable to access environment variable",
-                env_arg.position_start().unwrap().clone(),
-                env_arg.position_end().unwrap().clone(),
+                env_arg.borrow().position_start().unwrap().clone(),
+                env_arg.borrow().position_end().unwrap().clone(),
                 None,
             ))),
         }

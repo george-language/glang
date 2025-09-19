@@ -7,7 +7,7 @@ use std::{cell::RefCell, iter::zip, rc::Rc};
 
 #[derive(Debug, Clone)]
 pub struct List {
-    pub elements: Vec<Value>,
+    pub elements: Vec<Rc<RefCell<Value>>>,
     pub context: Option<Rc<RefCell<Context>>>,
     pub is_const: bool,
     pub pos_start: Option<Rc<Position>>,
@@ -15,7 +15,7 @@ pub struct List {
 }
 
 impl List {
-    pub fn new(elements: Vec<Value>) -> Self {
+    pub fn new(elements: Vec<Rc<RefCell<Value>>>) -> Self {
         Self {
             elements,
             context: None,
@@ -25,24 +25,46 @@ impl List {
         }
     }
 
-    pub fn from(elements: Vec<Value>) -> Value {
-        Value::ListValue(List::new(elements))
+    pub fn from(elements: Vec<Rc<RefCell<Value>>>) -> Rc<RefCell<Value>> {
+        Rc::new(RefCell::new(Value::ListValue(List::new(elements))))
     }
 
-    pub fn perform_operation(self, operator: &str, other: Value) -> Result<Value, StandardError> {
+    pub fn perform_operation(
+        &mut self,
+        operator: &str,
+        other: Rc<RefCell<Value>>,
+    ) -> Result<Rc<RefCell<Value>>, StandardError> {
+        if self.is_const {
+            return Err(StandardError::new(
+                "cannot change a constant value",
+                self.pos_start.as_ref().unwrap().clone(),
+                self.pos_end.as_ref().unwrap().clone(),
+                None,
+            ));
+        }
+
+        if other.borrow().is_const() {
+            return Err(StandardError::new(
+                "cannot change a constant value",
+                other.borrow().position_start().unwrap(),
+                other.borrow().position_end().unwrap(),
+                None,
+            ));
+        }
+
         if operator == "*" {
             return Ok(self.push(other.clone()));
         }
 
-        match other {
+        match *other.borrow_mut() {
             Value::ListValue(ref value) => match operator {
                 "+" => Ok(self.append(&mut value.elements.clone())),
                 "==" => {
                     let mut is_eq = Number::null_value();
-                    is_eq.set_context(self.context.clone());
+                    is_eq.borrow_mut().set_context(self.context.clone());
 
                     for (a, b) in zip(&self.elements, &value.elements) {
-                        let result = a.to_owned().perform_operation("==", b.to_owned());
+                        let result = a.borrow_mut().perform_operation("==", b.clone());
 
                         if result.is_err() {
                             return Err(result.err().unwrap());
@@ -55,10 +77,10 @@ impl List {
                 }
                 "!=" => {
                     let mut is_neq = Number::null_value();
-                    is_neq.set_context(self.context.clone());
+                    is_neq.borrow_mut().set_context(self.context.clone());
 
                     for (a, b) in zip(&self.elements, &value.elements) {
-                        let result = a.to_owned().perform_operation("!=", b.to_owned());
+                        let result = a.borrow_mut().perform_operation("!=", b.clone());
 
                         if result.is_err() {
                             return Err(result.err().unwrap());
@@ -70,50 +92,50 @@ impl List {
                     Ok(is_neq)
                 }
                 ">" => {
-                    let mut is_gt =
+                    let is_gt =
                         Number::from((self.elements.len() > value.elements.len()) as u8 as f64);
-                    is_gt.set_context(self.context.clone());
+                    is_gt.borrow_mut().set_context(self.context.clone());
 
                     Ok(is_gt)
                 }
                 "<" => {
-                    let mut is_lt =
+                    let is_lt =
                         Number::from((self.elements.len() < value.elements.len()) as u8 as f64);
-                    is_lt.set_context(self.context.clone());
+                    is_lt.borrow_mut().set_context(self.context.clone());
 
                     Ok(is_lt)
                 }
                 ">=" => {
-                    let mut is_gte =
+                    let is_gte =
                         Number::from((self.elements.len() >= value.elements.len()) as u8 as f64);
-                    is_gte.set_context(self.context.clone());
+                    is_gte.borrow_mut().set_context(self.context.clone());
 
                     Ok(is_gte)
                 }
                 "<=" => {
-                    let mut is_lte =
+                    let is_lte =
                         Number::from((self.elements.len() <= value.elements.len()) as u8 as f64);
-                    is_lte.set_context(self.context.clone());
+                    is_lte.borrow_mut().set_context(self.context.clone());
 
                     Ok(is_lte)
                 }
                 "and" => {
-                    let mut is_and = Number::from(
+                    let is_and = Number::from(
                         (!self.elements.is_empty() && !value.elements.is_empty()) as u8 as f64,
                     );
-                    is_and.set_context(self.context.clone());
+                    is_and.borrow_mut().set_context(self.context.clone());
 
                     Ok(is_and)
                 }
                 "or" => {
-                    let mut is_or = Number::from(
+                    let is_or = Number::from(
                         (!self.elements.is_empty() || !value.elements.is_empty()) as u8 as f64,
                     );
-                    is_or.set_context(self.context.clone());
+                    is_or.borrow_mut().set_context(self.context.clone());
 
                     Ok(is_or)
                 }
-                _ => Err(self.illegal_operation(Some(other))),
+                _ => Err(self.illegal_operation(Some(other.clone()))),
             },
             Value::NumberValue(ref value) => match operator {
                 "^" => {
@@ -164,18 +186,18 @@ impl List {
 
                     Ok(self.remove(value.value as usize))
                 }
-                _ => Err(self.illegal_operation(Some(other))),
+                _ => Err(self.illegal_operation(Some(other.clone()))),
             },
-            _ => Err(self.illegal_operation(Some(other))),
+            _ => Err(self.illegal_operation(Some(other.clone()))),
         }
     }
 
-    pub fn illegal_operation(&self, other: Option<Value>) -> StandardError {
+    pub fn illegal_operation(&self, other: Option<Rc<RefCell<Value>>>) -> StandardError {
         StandardError::new(
             "operation not supported by type",
             self.pos_start.as_ref().unwrap().clone(),
             if other.is_some() {
-                other.unwrap().position_end().unwrap()
+                other.unwrap().borrow().position_end().unwrap()
             } else {
                 self.pos_end.as_ref().unwrap().clone()
             },
@@ -183,39 +205,37 @@ impl List {
         )
     }
 
-    pub fn push(mut self, item: Value) -> Value {
+    pub fn push(&mut self, item: Rc<RefCell<Value>>) -> Rc<RefCell<Value>> {
         self.elements.push(item);
 
-        Value::ListValue(self)
+        Number::null_value()
     }
 
-    pub fn append(mut self, other: &mut Vec<Value>) -> Value {
+    pub fn append(&mut self, other: &mut Vec<Rc<RefCell<Value>>>) -> Rc<RefCell<Value>> {
         self.elements.append(other);
 
-        Value::ListValue(self)
+        Number::null_value()
     }
 
-    pub fn remove(mut self, index: usize) -> Value {
-        self.elements.remove(index);
-
-        Value::ListValue(self)
+    pub fn remove(&mut self, index: usize) -> Rc<RefCell<Value>> {
+        self.elements.remove(index).clone()
     }
 
-    pub fn retrieve(&self, index: usize) -> Value {
+    pub fn retrieve(&self, index: usize) -> Rc<RefCell<Value>> {
         self.elements[index].clone()
     }
 
-    pub fn reverse(mut self) -> Value {
+    pub fn reverse(&mut self) -> Rc<RefCell<Value>> {
         self.elements.reverse();
 
-        Value::ListValue(self)
+        Number::null_value()
     }
 
     pub fn as_string(&self) -> String {
         let output = self
             .elements
             .iter()
-            .map(|item| item.as_string())
+            .map(|item| item.borrow().as_string())
             .collect::<Vec<_>>()
             .join(", ");
 
