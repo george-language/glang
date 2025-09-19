@@ -8,7 +8,6 @@ use std::cell::RefCell;
 use std::{
     env, fs,
     io::{Write, stdin, stdout},
-    path::Path,
     rc::Rc,
     time::Instant,
 };
@@ -25,10 +24,6 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
-    #[command(about = "Create a glang project")]
-    New { name: String },
-    #[command(about = "Initialize a glang project in the current directory")]
-    Init,
     #[command(about = "Install a glang kennel from the internet")]
     Install { name: String },
     #[command(about = "Remove an installed glang kennel")]
@@ -43,38 +38,33 @@ fn main() {
             .expect("Unable to retrieve executable path")
             .parent()
             .unwrap()
-            .join("library")
-            .to_string_lossy()
-            .replace("\\", "/")
-            .replace("target/debug/", "")
-            .replace("target/release/", "");
+            .join("library");
 
         let pkg_path = dirs::home_dir()
             .expect("Unable to retrieve user home directory")
             .join(".glang")
-            .join("kennels")
-            .to_string_lossy()
-            .replace("\\", "/");
+            .join("kennels");
 
         // these variables are set so that we can use them inside glang
-        // GLANG_STD is the path to the standard library ('library')
-        // GLANG_PKG is the path to the 'kennels' directory
-        env::set_var("GLANG_STD", &std_path);
-        env::set_var("GLANG_PKG", &pkg_path);
+        // GLANG_STD is the path to the standard library ('library/')
+        // GLANG_PKG is the path to the kennels directory ('.glang/kennels/')
+        env::set_var(
+            "GLANG_STD",
+            &std_path
+                .to_string_lossy()
+                .replace("target", "") // on development, get rid of the target folder in the path
+                .replace("debug", "")
+                .replace("release", ""),
+        );
+        env::set_var("GLANG_PKG", &pkg_path.to_string_lossy().to_string());
     }
 
-    // We have to run this everytime the glang executable is ran to double check 'kennels/' always exists
+    // we have to run this everytime the glang executable is ran to double check 'kennels/' always exists
     glang_package_manager::create_package_dir();
 
     let cli = Cli::parse();
 
     match (cli.command, cli.file) {
-        (Some(Commands::New { name }), _) => {
-            new_project(Path::new(&name), false);
-        }
-        (Some(Commands::Init), _) => {
-            new_project(Path::new("."), true);
-        }
         (Some(Commands::Install { name }), _) => {
             glang_package_manager::add_package(&name);
         }
@@ -205,7 +195,7 @@ fn run(filename: &str, code: Option<String>) -> Option<StandardError> {
 /// launch_repl();
 /// ```
 ///
-/// Effectively just a infinite loop running code and evaluating it
+/// An infinite loop in the terminal running glang code and evaluating it
 fn launch_repl() {
     println!("George Language {VERSION}\nType '/exit' to exit");
 
@@ -231,31 +221,4 @@ fn launch_repl() {
             continue; // keep evaluating more code
         }
     }
-}
-
-/// Creates a glang project folder
-/// - adds the `src/` folder
-/// - adds the `main.glang` file with a "hello world" program already written inside
-/// - adds a `README.md` for instructions and info
-///
-/// ```rust
-/// new_project(&Path::from("example_project"), false));
-/// ```
-///
-/// If `init` is set to true, glang will initialize a project in the current directory
-fn new_project(dir_name: &Path, init: bool) {
-    if !init {
-        fs::create_dir(dir_name).expect("Cannot create directory (invalid name)");
-    }
-
-    fs::create_dir(dir_name.join("src")).expect("'src/' directory already exists");
-
-    let _ = fs::write(
-        dir_name.join("main.glang"),
-        "func main() {\n    bark(\"Hello world!\");\n}\n\nmain();",
-    );
-    let _ = fs::write(
-        dir_name.join("README.md"),
-        "# Welcome to GLang!\nTo get started, see our documentation [here](https://sites.google.com/view/george-lang/documentation).",
-    );
 }
