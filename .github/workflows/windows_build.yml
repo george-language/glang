@@ -33,4 +33,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: GeorgeLanguage+windows_setup
-          path: dist/GeorgeLanguage+macos_setup.exe
+          path: dist/GeorgeLanguage+windows_setup.exe
