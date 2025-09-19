@@ -3,6 +3,9 @@ name: GLang MacOS Build
 on:
   release:
     types: [published]
+  push:
+    branches:
+      - experimental
 
 jobs:
   build:

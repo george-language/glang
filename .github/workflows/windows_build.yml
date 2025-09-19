@@ -1,0 +1,36 @@
+name: GLang Windows Build
+
+on:
+  release:
+    types: [published]
+  push:
+    branches:
+      - experimental
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+
+      - name: Build for x86_64
+        run: cargo build --release --target x86_64-pc-windows-msvc
+
+      - name: Install Inno Setup
+        run: choco install innosetup -y
+
+      - name: Build installer with Inno Setup
+        run: iscc installer.iss
+
+      - name: Upload exe artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: GeorgeLanguage+windows_setup
+          path: dist/GeorgeLanguage+macos_setup.exe
