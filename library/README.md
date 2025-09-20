@@ -16,6 +16,6 @@ Tests and runnable files to try out features in GLang. _Use `cargo build --relea
 ## About
 The fundamental library is a set of functions and constants (e.g. `push`) for GLang. All programs use the fundamental library (loaded automatically at the top of programs)
 
-The standard library is built on top of the fundamental library. It uses these fundamental functions (e.g. `push` to create modules like `std_os` or `std_hashmap`)
+The standard library is built on top of the fundamental library. It uses these fundamental functions (e.g. `push`) to create modules like `std_os` or `std_hashmap`
 
 The tests library can be used for both development or program testing. You can run files like `test_loop.glang` to see how fast GLang is running.
