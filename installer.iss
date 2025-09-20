@@ -1,5 +1,5 @@
 #define MyAppName "George Language"
-#define MyAppVersion "4.0-beta"
+#define MyAppVersion "4.0-alpha"
 #define MyAppPublisher "MP Software Foundation"
 #define MyAppExeName "glang.exe"
 #define MyAppURL "https://github.com/mpsoftwarefoundation/GeorgeLanguage"
