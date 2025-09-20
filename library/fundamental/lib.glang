@@ -1,0 +1,11 @@
+# file lib.glang: fundamental library providing a set of features and functions for the George programming language
+
+fetch _env("GLANG_STD") + "/fundamental/objects.glang";
+fetch _env("GLANG_STD") + "/fundamental/type.glang";
+fetch _env("GLANG_STD") + "/fundamental/list.glang";
+fetch _env("GLANG_STD") + "/fundamental/string.glang";
+fetch _env("GLANG_STD") + "/fundamental/number.glang";
+fetch _env("GLANG_STD") + "/fundamental/debug.glang";
+
+# load in the externel kennels (including the standard library)
+fetch _env("GLANG_PKG") + "/kennels.glang";

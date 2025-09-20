@@ -164,7 +164,7 @@ fn run(filename: &str, code: Option<String>) -> Option<StandardError> {
 
     if !cfg!(feature = "no-std") {
         if let Some(e) = interpreter.evaluate(
-            "fetch _env(\"GLANG_STD\") + \"/default/lib.glang\";",
+            "fetch _env(\"GLANG_STD\") + \"/fundamental/lib.glang\";",
             context.clone(),
         ) {
             return Some(e);

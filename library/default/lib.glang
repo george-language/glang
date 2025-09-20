@@ -1,9 +1,0 @@
-# file lib.glang: default library loaded automatically above every glang program
-
-fetch _env("GLANG_STD") + "/default/objects.glang";
-fetch _env("GLANG_STD") + "/default/type.glang";
-fetch _env("GLANG_STD") + "/default/list.glang";
-fetch _env("GLANG_STD") + "/default/string.glang";
-fetch _env("GLANG_STD") + "/default/number.glang";
-fetch _env("GLANG_STD") + "/default/debug.glang";
-fetch _env("GLANG_PKG") + "/kennels.glang";
