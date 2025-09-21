@@ -20,11 +20,12 @@ impl Token {
         let start = pos_start.clone();
         let mut end = pos_end;
 
-        if let Some(s) = &start {
-            let mut advanced = s.clone();
-
-            advanced.advance(None);
-            end = Some(advanced);
+        if end.is_none() {
+            if let Some(s) = &start {
+                let mut advanced = s.clone();
+                advanced.advance(None);
+                end = Some(advanced);
+            }
         }
 
         Self {
