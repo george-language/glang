@@ -54,14 +54,14 @@ func retrieve(list, index) {
 
 # reverse a list (supports the string type as well)
 # returns null if reversing a list otherwise returns a copy of the string reversed
-func reverse(list) {
-    if type(list) == "list" or type(list) == "string" {
+func reverse(value) {
+    if type(value) == "list" or type(value) == "string" {
         skip;
     } otherwise {
         uhoh("expected type list or string");
     }
 
-    give list ^ -1;
+    give value ^ -1;
 }
 
 # clear a list (supports the string type as well)
@@ -73,5 +73,43 @@ func clear(value) {
         give "";
     } otherwise {
         uhoh("expected type list or string");
+    }
+}
+
+# check if a list or string contains a value
+# returns true if the object is inside the list, or if the string contains the object (str)
+func contains(value, object) {
+    if type(value) == "list" {
+        walk i = 0 through length(value) {
+            if retrieve(value, i) == object {
+                give true;
+            }
+        }
+
+        give false;
+    } alsoif type(value) == "string" {
+        if type(object) != "string" {
+            uhoh("expected object as type string");
+        }
+
+        walk i = 0 through length(value) - length(object) {
+            obj match = true;
+
+            walk j = 0 through length(object) {
+                if charat(value, i + j) != charat(object, j) {
+                    match = false;
+
+                    leave;
+                }
+            }
+
+            if match {
+                give true;
+            }
+        }
+
+        give false;
+    } otherwise {
+        uhoh("expected value as type list or string");
     }
 }
