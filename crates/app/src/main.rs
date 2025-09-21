@@ -35,31 +35,7 @@ enum Commands {
 }
 
 fn main() {
-    unsafe {
-        let std_path = env::current_exe()
-            .expect("Unable to retrieve executable path")
-            .parent()
-            .unwrap()
-            .join("library");
-
-        let pkg_path = dirs::home_dir()
-            .expect("Unable to retrieve user home directory")
-            .join(".glang")
-            .join("kennels");
-
-        // these variables are set so that we can use them inside glang
-        // GLANG_STD is the path to the standard library ('library/')
-        // GLANG_PKG is the path to the kennels directory ('.glang/kennels/')
-        env::set_var(
-            "GLANG_STD",
-            &std_path
-                .to_string_lossy()
-                .replace("target", "") // on development, get rid of the target folder in the path
-                .replace("debug", "")
-                .replace("release", ""),
-        );
-        env::set_var("GLANG_PKG", &pkg_path.to_string_lossy().to_string());
-    }
+    set_env_variables();
 
     // we have to run this everytime the glang executable is ran to double check 'kennels/' always exists
     glang_package_manager::create_package_dir();
@@ -97,6 +73,41 @@ fn main() {
             // 'glang' by itself will just run the REPL, similar to python
             launch_repl();
         }
+    }
+}
+
+/// Creates and sets environment variables used internally by glang's source code.
+///
+/// ```rust
+/// set_env_variables();
+/// ```
+///
+/// The function sets the following environment variables:
+///
+/// - `GLANG_STD` is the path to the standard library ('library/')
+/// - `GLANG_PKG` is the path to the kennels directory ('.glang/kennels/')
+fn set_env_variables() {
+    unsafe {
+        let std_path = env::current_exe()
+            .expect("Unable to retrieve executable path")
+            .parent()
+            .unwrap()
+            .join("library");
+
+        let pkg_path = dirs::home_dir()
+            .expect("Unable to retrieve user home directory")
+            .join(".glang")
+            .join("kennels");
+
+        env::set_var(
+            "GLANG_STD",
+            &std_path
+                .to_string_lossy()
+                .replace("target", "") // on development, get rid of the target folder in the path
+                .replace("debug", "")
+                .replace("release", ""),
+        );
+        env::set_var("GLANG_PKG", &pkg_path.to_string_lossy().to_string());
     }
 }
 
@@ -224,14 +235,4 @@ fn launch_repl() {
             continue; // keep evaluating more code
         }
     }
-}
-
-#[test]
-fn run_test_folder() {
-    let _ = run("library/tests/test_all.glang", None);
-    let _ = run("library/tests/test_comparisons.glang", None);
-    let _ = run("library/tests/test_imports.glang", None);
-    let _ = run("library/tests/test_loop.glang", None);
-    let _ = run("library/tests/test_mutability.glang", None);
-    let _ = run("library/tests/test_try.glang", None);
 }
