@@ -1463,3 +1463,23 @@ impl Parser {
         parse_result.success(left)
     }
 }
+
+// Test the output AST from parsed tokens
+#[test]
+fn test_ast() {
+    use glang_lexer::Lexer;
+
+    let mut lexer = Lexer::new("<test>", "function(1 + 1);".to_owned());
+    let tokens = lexer.make_tokens().ok().unwrap();
+
+    let mut parser = Parser::new(&tokens);
+    let ast = parser.parse();
+
+    let node = match *ast.node.unwrap() {
+        AstNode::List(l) => l,
+        _ => panic!("Expected a list node"),
+    };
+
+    assert_eq!(node.element_nodes.len(), 1); // only one call node
+    assert!(matches!(*node.element_nodes[0], AstNode::Call { .. }));
+}

@@ -218,12 +218,20 @@ fn launch_repl() {
             break;
         }
 
-        let error = run("<stdin>", Some(code));
-
-        if let Some(e) = error {
+        if let Some(e) = run("<stdin>", Some(code)) {
             println!("{e}");
 
             continue; // keep evaluating more code
         }
     }
+}
+
+#[test]
+fn run_test_folder() {
+    let _ = run("library/tests/test_all.glang", None);
+    let _ = run("library/tests/test_comparisons.glang", None);
+    let _ = run("library/tests/test_imports.glang", None);
+    let _ = run("library/tests/test_loop.glang", None);
+    let _ = run("library/tests/test_mutability.glang", None);
+    let _ = run("library/tests/test_try.glang", None);
 }
