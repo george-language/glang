@@ -1,0 +1,25 @@
+name: Push Tests
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "**/*.rs"
+
+jobs:
+  cargo-checks:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Run cargo test
+        run: cargo test -- --no-capture
+
+      - name: Check formatting
+        run: cargo fmt -- --check
