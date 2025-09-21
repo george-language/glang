@@ -1,0 +1,17 @@
+# file test_constants.glang: test glang's constant values
+
+# test assigning and changing of constant's values
+obj x = 10;
+stay y = x;
+
+x = 20;
+
+bark(y); # y should remain 10 because it copied the value of x
+
+# test assigning variables value as constants
+stay CONST = [1, 2, 3];
+obj variable = CONST;
+
+push(variable, 4); # this can happen, because variables copy the values of constants
+
+bark(CONST); # should remain [1, 2, 3]
