@@ -24,6 +24,8 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
+    #[command(about = "Run a string of glang source code")]
+    Run { code: String },
     #[command(about = "Install a glang kennel from the internet")]
     Install { name: String },
     #[command(about = "Remove an installed glang kennel")]
@@ -65,6 +67,11 @@ fn main() {
     let cli = Cli::parse();
 
     match (cli.command, cli.file) {
+        (Some(Commands::Run { code }), _) => {
+            if let Some(err) = run("<stdin>", Some(code)) {
+                println!("{err}");
+            }
+        }
         (Some(Commands::Install { name }), _) => {
             glang_package_manager::add_package(&name);
         }
@@ -82,9 +89,7 @@ fn main() {
             }
 
             // if the file argument is valid, pass it on to the run function
-            let error = run(&file, None);
-
-            if let Some(err) = error {
+            if let Some(err) = run(&file, None) {
                 println!("{err}");
             }
         }
