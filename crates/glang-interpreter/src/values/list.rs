@@ -14,6 +14,36 @@ pub struct List {
     pub pos_end: Option<Rc<Position>>,
 }
 
+impl PartialEq for List {
+    fn eq(&self, other: &Self) -> bool {
+        let mut eq = false;
+
+        for (a, b) in zip(&self.elements, &other.elements) {
+            if a.borrow().as_string() == b.borrow().as_string() {
+                eq = true;
+            } else {
+                eq = false;
+            }
+        }
+
+        eq
+    }
+
+    fn ne(&self, other: &Self) -> bool {
+        let mut ne = false;
+
+        for (a, b) in zip(&self.elements, &other.elements) {
+            if a.borrow().as_string() != b.borrow().as_string() {
+                ne = true;
+            } else {
+                ne = false;
+            }
+        }
+
+        ne
+    }
+}
+
 impl List {
     pub fn new(elements: Vec<Rc<RefCell<Value>>>) -> Self {
         Self {
@@ -60,34 +90,14 @@ impl List {
             Value::ListValue(ref value) => match operator {
                 "+" => Ok(self.append(&mut value.elements.clone())),
                 "==" => {
-                    let mut is_eq = Number::null_value();
+                    let is_eq = Number::from((self == value) as u8 as f64);
                     is_eq.borrow_mut().set_context(self.context.clone());
-
-                    for (a, b) in zip(&self.elements, &value.elements) {
-                        let result = a.borrow_mut().perform_operation("==", b.clone());
-
-                        if result.is_err() {
-                            return Err(result.err().unwrap());
-                        }
-
-                        is_eq = result.ok().unwrap();
-                    }
 
                     Ok(is_eq)
                 }
                 "!=" => {
-                    let mut is_neq = Number::null_value();
+                    let is_neq = Number::from((self != value) as u8 as f64);
                     is_neq.borrow_mut().set_context(self.context.clone());
-
-                    for (a, b) in zip(&self.elements, &value.elements) {
-                        let result = a.borrow_mut().perform_operation("!=", b.clone());
-
-                        if result.is_err() {
-                            return Err(result.err().unwrap());
-                        }
-
-                        is_neq = result.ok().unwrap();
-                    }
 
                     Ok(is_neq)
                 }

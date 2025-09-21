@@ -7,13 +7,13 @@ use crate::{
 };
 use glang_attributes::{Position, StandardError};
 use glang_parser::AstNode;
-use std::{cell::RefCell, rc::Rc, sync::Arc};
+use std::{cell::RefCell, rc::Rc};
 
 #[derive(Debug, Clone)]
 pub struct Function {
     pub name: String,
     pub body_node: Box<AstNode>,
-    pub arg_names: Arc<[String]>,
+    pub arg_names: Rc<[String]>,
     pub should_auto_return: bool,
     pub context: Option<Rc<RefCell<Context>>>,
     pub is_const: bool,
@@ -31,7 +31,7 @@ impl Function {
         Self {
             name,
             body_node,
-            arg_names: Arc::from(arg_names),
+            arg_names: Rc::from(arg_names),
             should_auto_return,
             context: None,
             is_const: false,

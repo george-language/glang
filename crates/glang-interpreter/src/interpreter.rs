@@ -845,9 +845,13 @@ impl Interpreter {
         };
 
         let operation_result = {
+            let left_copy = left.borrow().clone();
             let mut left_borrow = left.borrow_mut();
 
-            if let Some(op) = op {
+            if Rc::ptr_eq(&left, &right) {
+                // if we are comparing two of the same values, perform operation on a clone of itself
+                left_borrow.perform_operation(op.unwrap_or(""), Rc::new(RefCell::new(left_copy)))
+            } else if let Some(op) = op {
                 left_borrow.perform_operation(op, right)
             } else {
                 left_borrow.perform_operation("", right)
