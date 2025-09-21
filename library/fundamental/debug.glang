@@ -25,3 +25,11 @@ func debug(value) {
     bark("display value: '" + tostring(value) + "'");
     bark("documentation: " + docs(value));
 }
+
+# assert that an expression is true (throws an error if false)
+# returns null
+func assert(expr) {
+    if expr != true {
+        uhoh("assertion failed, resulting expression was not true");
+    }
+}
