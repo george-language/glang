@@ -36,7 +36,7 @@ impl Str {
         operator: &str,
         other: Rc<RefCell<Value>>,
     ) -> Result<Rc<RefCell<Value>>, StandardError> {
-        match *other.borrow_mut() {
+        match *other.borrow() {
             Value::StringValue(ref value) => match operator {
                 "+" => {
                     let mut copy = self.clone();
