@@ -44,9 +44,10 @@ impl StandardError {
                 result.push_str(line);
                 result.push('\n');
 
-                let col_start = pos_start.column_num as usize;
-                let col_end = pos_end.column_num as usize;
-                let arrow_len = col_end - col_start;
+                let line_len = line.len();
+                let col_start = pos_start.column_num.clamp(0, line_len as isize) as usize;
+                let col_end = pos_end.column_num.clamp(0, line_len as isize) as usize;
+                let arrow_len = (col_end.saturating_sub(col_start)).max(1);
 
                 let arrow_line = " ".repeat(col_start) + &"^".repeat(arrow_len);
                 result.push_str(format!("   | {BOLD}{}{RESET}", &arrow_line).as_str());
