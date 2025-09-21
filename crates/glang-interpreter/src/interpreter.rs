@@ -160,10 +160,16 @@ impl Interpreter {
             )));
         }
 
-        let value = result.register(self.visit(node.value_node.as_ref(), context.clone()));
+        let mut value = result.register(self.visit(node.value_node.as_ref(), context.clone()));
 
         if result.should_return() {
             return result;
+        }
+
+        // if the value we are assigning to the variable name is a constant, we clone the constant at that point
+        if value.as_ref().unwrap().borrow().is_const() {
+            value = Some(Rc::new(RefCell::new(value.unwrap().borrow().clone())));
+            value.as_ref().unwrap().borrow_mut().set_const(false); // no longer a constant, cause we cloned
         }
 
         context
@@ -219,10 +225,16 @@ impl Interpreter {
             )));
         }
 
-        let value = result.register(self.visit(node.value_node.as_ref(), context.clone()));
+        let mut value = result.register(self.visit(node.value_node.as_ref(), context.clone()));
 
         if result.should_return() {
             return result;
+        }
+
+        // if the value we are reassigning to the variable name is a constant, we clone the constant at that point
+        if value.as_ref().unwrap().borrow().is_const() {
+            value = Some(Rc::new(RefCell::new(value.unwrap().borrow().clone())));
+            value.as_ref().unwrap().borrow_mut().set_const(false); // no longer a constant, cause we cloned
         }
 
         context
@@ -267,7 +279,8 @@ impl Interpreter {
             return result;
         }
 
-        value.as_mut().unwrap().borrow_mut().set_const(true);
+        value = Some(Rc::new(RefCell::new(value.unwrap().borrow().clone()))); // we clone the value to avoid accessing modified objects
+        value.as_ref().unwrap().borrow_mut().set_const(true);
 
         context
             .borrow_mut()
