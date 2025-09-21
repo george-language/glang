@@ -32,7 +32,7 @@ impl Str {
     }
 
     pub fn perform_operation(
-        &mut self,
+        &self,
         operator: &str,
         other: Rc<RefCell<Value>>,
     ) -> Result<Rc<RefCell<Value>>, StandardError> {

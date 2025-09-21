@@ -809,6 +809,7 @@ impl Interpreter {
         context: Rc<RefCell<Context>>,
     ) -> RuntimeResult {
         let mut result = RuntimeResult::new();
+
         let left = result.register(self.visit(node.left_node.as_ref(), context.clone()));
 
         if result.should_return() {
@@ -825,53 +826,41 @@ impl Interpreter {
 
         let right = right.unwrap();
 
-        let mut operation_result: Result<Rc<RefCell<Value>>, StandardError>;
+        let op = match node.op_token.token_type {
+            TokenType::TT_PLUS => Some("+"),
+            TokenType::TT_MINUS => Some("-"),
+            TokenType::TT_MUL => Some("*"),
+            TokenType::TT_DIV => Some("/"),
+            TokenType::TT_POW => Some("^"),
+            TokenType::TT_MOD => Some("%"),
+            TokenType::TT_GT => Some(">"),
+            TokenType::TT_LT => Some("<"),
+            TokenType::TT_EE => Some("=="),
+            TokenType::TT_NE => Some("!="),
+            TokenType::TT_LTE => Some("<="),
+            TokenType::TT_GTE => Some(">="),
+            _ if node.op_token.matches(TokenType::TT_KEYWORD, "and") => Some("and"),
+            _ if node.op_token.matches(TokenType::TT_KEYWORD, "or") => Some("or"),
+            _ => None,
+        };
 
-        if node.op_token.token_type == TokenType::TT_PLUS {
-            operation_result = left.borrow_mut().perform_operation("+", right);
-        } else if node.op_token.token_type == TokenType::TT_MINUS {
-            operation_result = left.borrow_mut().perform_operation("-", right);
-        } else if node.op_token.token_type == TokenType::TT_MUL {
-            operation_result = left.borrow_mut().perform_operation("*", right);
-        } else if node.op_token.token_type == TokenType::TT_DIV {
-            operation_result = left.borrow_mut().perform_operation("/", right);
-        } else if node.op_token.token_type == TokenType::TT_POW {
-            operation_result = left.borrow_mut().perform_operation("^", right);
-        } else if node.op_token.token_type == TokenType::TT_MOD {
-            operation_result = left.borrow_mut().perform_operation("%", right);
-        } else if node.op_token.token_type == TokenType::TT_GT {
-            operation_result = left.borrow_mut().perform_operation(">", right);
-        } else if node.op_token.token_type == TokenType::TT_LT {
-            operation_result = left.borrow_mut().perform_operation("<", right);
-        } else if node.op_token.token_type == TokenType::TT_EE {
-            operation_result = left.borrow_mut().perform_operation("==", right);
-        } else if node.op_token.token_type == TokenType::TT_NE {
-            operation_result = left.borrow_mut().perform_operation("!=", right);
-        } else if node.op_token.token_type == TokenType::TT_LTE {
-            operation_result = left.borrow_mut().perform_operation("<=", right);
-        } else if node.op_token.token_type == TokenType::TT_GTE {
-            operation_result = left.borrow_mut().perform_operation(">=", right);
-        } else if node.op_token.matches(TokenType::TT_KEYWORD, "and") {
-            operation_result = left.borrow_mut().perform_operation("and", right);
-        } else if node.op_token.matches(TokenType::TT_KEYWORD, "or") {
-            operation_result = left.borrow_mut().perform_operation("or", right);
-        } else {
-            operation_result = left.borrow_mut().perform_operation("", right);
-        }
+        let operation_result = {
+            let mut left_borrow = left.borrow_mut();
 
-        if operation_result.is_err() {
-            result.failure(operation_result.err())
-        } else if operation_result.is_ok() {
-            operation_result
-                .as_mut()
-                .ok()
-                .unwrap()
-                .borrow_mut()
-                .set_position(node.pos_start.clone(), node.pos_end.clone());
+            if let Some(op) = op {
+                left_borrow.perform_operation(op, right)
+            } else {
+                left_borrow.perform_operation("", right)
+            }
+        };
 
-            result.success(Some(operation_result.ok().unwrap()))
-        } else {
-            result.success(Some(Number::null_value()))
+        match operation_result {
+            Ok(val) => {
+                val.borrow_mut()
+                    .set_position(node.pos_start.clone(), node.pos_end.clone());
+                result.success(Some(val))
+            }
+            Err(err) => result.failure(Some(err)),
         }
     }
 

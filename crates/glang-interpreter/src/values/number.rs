@@ -43,7 +43,7 @@ impl Number {
         operator: &str,
         other: Rc<RefCell<Value>>,
     ) -> Result<Rc<RefCell<Value>>, StandardError> {
-        match *other.borrow_mut() {
+        match *other.borrow() {
             Value::NumberValue(ref value) => {
                 let left_val = self.value;
                 let right_val = value.value;
