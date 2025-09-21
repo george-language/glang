@@ -278,7 +278,8 @@ impl Lexer {
 
     fn make_identifier(&mut self) -> Token {
         let mut id_string = String::new();
-        let pos_start = self.position.clone();
+        let mut pos_start = self.position.clone();
+        pos_start.column_num -= 1; // move back 1
 
         while let Some(character) = self.current_char {
             if LETTERS_DIGITS.contains(character) {
@@ -290,7 +291,8 @@ impl Lexer {
             }
         }
 
-        let pos_end = self.position.clone();
+        let mut pos_end = self.position.clone();
+        pos_end.column_num -= 1; // move back 1
 
         let token_type = if KEYWORDS.contains(&id_string.as_str()) {
             TokenType::TT_KEYWORD

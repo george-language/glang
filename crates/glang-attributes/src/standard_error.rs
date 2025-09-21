@@ -44,23 +44,9 @@ impl StandardError {
                 result.push_str(line);
                 result.push('\n');
 
-                let col_start = if i == pos_start.line_num {
-                    (pos_start.column_num - 1) as usize
-                } else {
-                    0
-                };
-
-                let col_end = if i == pos_end.line_num - 1 {
-                    pos_end.column_num as usize
-                } else {
-                    line.len()
-                };
-
-                let arrow_len = if col_end > col_start {
-                    col_end - col_start
-                } else {
-                    1
-                };
+                let col_start = pos_start.column_num as usize;
+                let col_end = pos_end.column_num as usize;
+                let arrow_len = col_end - col_start;
 
                 let arrow_line = " ".repeat(col_start) + &"^".repeat(arrow_len);
                 result.push_str(format!("   | {BOLD}{}{RESET}", &arrow_line).as_str());
@@ -81,7 +67,7 @@ impl Display for StandardError {
                 self.text,
                 self.pos_start.filename,
                 self.pos_start.line_num + 1,
-                self.pos_start.column_num,
+                self.pos_start.column_num + 1,
             )
             .as_str(),
         );
