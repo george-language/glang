@@ -1,8 +1,8 @@
 #define MyAppName "George Language"
 #define MyAppVersion "4.0-alpha"
-#define MyAppPublisher "MP Software Foundation"
+#define MyAppPublisher "The George Language Foundation"
 #define MyAppExeName "glang.exe"
-#define MyAppURL "https://github.com/mpsoftwarefoundation/GeorgeLanguage"
+#define MyAppURL "https://github.com/george-language/glang"
 #define MyAppAssocName MyAppName + " File"
 #define MyAppAssocExt ".glang"
 #define MyAppAssocKey StringChange(MyAppAssocName, " ", "") + MyAppAssocExt
