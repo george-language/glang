@@ -24,6 +24,11 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
+    #[command(name = "self", about = "Manage the glang binary itself")]
+    GlangSelf {
+        #[command(subcommand)]
+        action: SelfCommands,
+    },
     #[command(about = "Run a string of glang source code")]
     Run { code: String },
     #[command(about = "Install a glang kennel from the internet")]
@@ -32,6 +37,14 @@ enum Commands {
     Remove { name: String },
     #[command(about = "Update an installed glang kennel to the latest version")]
     Update { name: String },
+}
+
+#[derive(Subcommand)]
+enum SelfCommands {
+    #[command(about = "Update glang to the latest version")]
+    Update,
+    #[command(about = "Uninstall glang from the system")]
+    Uninstall,
 }
 
 fn main() {
@@ -43,6 +56,10 @@ fn main() {
     let cli = Cli::parse();
 
     match (cli.command, cli.file) {
+        (Some(Commands::GlangSelf { action }), _) => match action {
+            SelfCommands::Update => {}
+            SelfCommands::Uninstall => {}
+        },
         (Some(Commands::Run { code }), _) => {
             if let Some(err) = run("<stdin>", Some(code)) {
                 println!("{err}");
@@ -110,6 +127,22 @@ fn set_env_variables() {
         env::set_var("GLANG_PKG", &pkg_path.to_string_lossy().to_string());
     }
 }
+
+/// Updates the glang binary and components
+///
+/// ```rust
+/// update_self()
+/// ```
+///
+/// The glang binary and components will be removed, then reinstalled from the latest version.
+fn update_self() {}
+
+/// Uninstalls the glang binary and components (including all installed kennels)
+///
+/// ```rust
+/// uninstall_self()
+/// ```
+fn uninstall_self() {}
 
 /// Run a '.glang' file or raw glang source code
 ///
