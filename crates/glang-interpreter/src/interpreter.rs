@@ -267,8 +267,11 @@ impl Interpreter {
             return result;
         }
 
-        value = Some(Rc::new(RefCell::new(value.unwrap().borrow().clone()))); // we clone the value to avoid accessing modified objects
-        value.as_ref().unwrap().borrow_mut().set_const(true);
+        // if the value we are accessing is not a constant, we copy that value in place
+        if !value.as_ref().unwrap().borrow().is_const() {
+            value = Some(Rc::new(RefCell::new(value.unwrap().borrow().clone())));
+            value.as_ref().unwrap().borrow_mut().set_const(true); // now a constant, cause we cloned
+        }
 
         context
             .borrow_mut()
