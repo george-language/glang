@@ -111,15 +111,23 @@ impl Number {
     }
 
     pub fn illegal_operation(&self, other: Option<Rc<RefCell<Value>>>) -> StandardError {
+        let (pos_end, help_msg) = if let Some(illegal) = other {
+            (
+                illegal.borrow().position_end().unwrap().clone(),
+                Some(format!(
+                    "the left type is a number and the right type is a {}",
+                    illegal.borrow().object_type()
+                )),
+            )
+        } else {
+            (self.pos_end.as_ref().unwrap().clone(), None)
+        };
+
         StandardError::new(
             "operation not supported by type",
             self.pos_start.as_ref().unwrap().clone(),
-            if other.is_some() {
-                other.unwrap().borrow().position_end().unwrap()
-            } else {
-                self.pos_end.as_ref().unwrap().clone()
-            },
-            None,
+            pos_end,
+            help_msg.as_deref(),
         )
     }
 
