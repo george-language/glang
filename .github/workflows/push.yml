@@ -18,6 +18,9 @@ jobs:
       - name: Set up Rust
         uses: dtolnay/rust-toolchain@stable
 
+      - name: Add cargo fmt
+        run: rustup component add rustfmt
+
       - name: Run cargo test
         run: cargo test -- --no-capture
 
