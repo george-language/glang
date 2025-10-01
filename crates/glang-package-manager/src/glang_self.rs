@@ -1,5 +1,5 @@
 use dirs::cache_dir;
-use glang_logging::log_header;
+use glang_logging::{log_header, log_message};
 use reqwest::blocking::get;
 use std::{
     fs::File,
@@ -25,13 +25,23 @@ pub fn update_self() {
             .with_file_name("glang-installer.exe");
 
         {
+            log_message("Retrieving installer data");
+
             let mut resp = get(
             "https://github.com/george-language/glang/releases/latest/download/GeorgeLanguage+windows_setup.exe",
         ).expect("Unable to download windows content");
+
+            log_message("Creating temporary installer file");
+
             let mut file =
                 File::create(&download_path).expect("Unable to create glang installer file");
+
+            log_message("Writing installer data to temporary installer file");
+
             copy(&mut resp, &mut file).expect("Unable to write installer file");
         }
+
+        log_message("Launching glang installer");
 
         let _ = Command::new(&download_path)
             .spawn()
