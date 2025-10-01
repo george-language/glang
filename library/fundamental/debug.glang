@@ -1,31 +1,5 @@
 # file debug.glang: tools for debugging objects
 
-# get object documentation based on it's type
-# returns a string representation of the documentation url
-func docs(value) {
-    if type(value) == "number" {
-        give "https://sites.google.com/view/george-lang/documentation/standard-docs/types/numbers/"
-    } alsoif type(value) == "string" {
-        give "https://sites.google.com/view/george-lang/documentation/standard-docs/types/strings/"
-    } alsoif type(value) == "list" {
-        give "https://sites.google.com/view/george-lang/documentation/standard-docs/types/lists/"
-    } alsoif type(value) == "function" {
-        give "https://sites.google.com/view/george-lang/documentation/standard-docs/keywords/func/"
-    } alsoif type(value) == "built-in-function" {
-        give "https://sites.google.com/view/george-lang/documentation/standard-docs/types/builtin/"
-    } otherwise {
-        give "https://sites.google.com/view/george-lang/home"
-    }
-}
-
-# display helpful info about a value
-# returns null
-func debug(value) {
-    bark("object type: '" + type(value) + "'");
-    bark("display value: '" + tostring(value) + "'");
-    bark("documentation: " + docs(value));
-}
-
 # assert that an expression is true (throws an error if false)
 # returns null
 func assert(expr) {
