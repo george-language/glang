@@ -7,5 +7,11 @@ fetch _env("GLANG_STD") + "/fundamental/string.glang";
 fetch _env("GLANG_STD") + "/fundamental/number.glang";
 fetch _env("GLANG_STD") + "/fundamental/debug.glang";
 
-# load in the externel kennels (including the standard library)
+# std library imports
+obj std_os = _env("GLANG_STD") + "/std/os.glang";
+obj std_hashmap = _env("GLANG_STD") + "/std/hashmap.glang";
+obj std_format = _env("GLANG_STD") + "/std/format.glang";
+obj std_math = _env("GLANG_STD") + "/std/math.glang";
+
+# externel kennel imports
 fetch _env("GLANG_PKG") + "/kennels.glang";

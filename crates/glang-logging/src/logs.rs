@@ -1,11 +1,11 @@
 use simply_colored::*;
 
 pub fn log_header(msg: &str) {
-    println!("  {BOLD}{msg}{RESET}");
+    println!("  {msg}");
 }
 
 pub fn log_message(msg: &str) {
-    println!("    {DIM_GREEN}{BOLD}->{RESET} {msg}");
+    println!("    -> {msg}");
 }
 
 pub fn log_error(msg: &str) {
