@@ -662,13 +662,13 @@ impl Parser {
 
         if !self
             .current_token_ref()
-            .matches(TokenType::TT_KEYWORD, "unsafe")
+            .matches(TokenType::TT_KEYWORD, "try")
         {
             return parse_result.failure(Some(StandardError::new(
                 "expected keyword",
                 self.current_pos_start(),
                 self.current_pos_end(),
-                Some("add the 'unsafe' keyword to represent the block of code that is dangerous"),
+                Some("add the 'try' keyword to represent a block of code that is unsafe"),
             )));
         }
 
@@ -707,13 +707,13 @@ impl Parser {
 
         if !self
             .current_token_ref()
-            .matches(TokenType::TT_KEYWORD, "safe")
+            .matches(TokenType::TT_KEYWORD, "catch")
         {
             return parse_result.failure(Some(StandardError::new(
                 "expected keyword",
                 self.current_pos_start(),
                 self.current_pos_end(),
-                Some("add the 'safe' keyword to represent the block of code to fall back to if the 'unsafe' block fails"),
+                Some("add the 'catch' keyword to represent the block of code to fall back to if the 'try' block fails"),
             )));
         }
 
@@ -1199,7 +1199,7 @@ impl Parser {
             }
 
             return parse_result.success(expr);
-        } else if token.matches(TokenType::TT_KEYWORD, "unsafe") {
+        } else if token.matches(TokenType::TT_KEYWORD, "try") {
             let expr = parse_result.register(self.try_expr());
 
             if parse_result.error.is_some() {

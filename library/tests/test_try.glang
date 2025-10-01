@@ -1,11 +1,7 @@
 # file test_try.glang: test glang's try/except functionality
 
-func danger() {
-    unsafe {
-        1 / 0;
-    } safe error {
-        bark("Some error occured: " + error);
-    }
+try {
+    1 / 0;
+} catch error {
+    bark("Some error occured: " + error);
 }
-
-danger();

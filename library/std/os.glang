@@ -5,14 +5,14 @@
 func os_type() {
     obj os = "unknown";
 
-    unsafe {
+    try {
         # 'OS' is windows only - we need to try to access it then default otherwise
         obj _type = _env("OS");
 
         if _type == "Windows_NT" {
             os = "windows";
         }
-    } safe _ {
+    } catch _ {
         os = "macos";
     }
 
@@ -30,9 +30,9 @@ func os_env(var) {
         uhoh("expected type string in 'os_env'");
     }
 
-    unsafe {
+    try {
         give _env(var);
-    } safe error {
+    } catch error {
         bark("OSError: " + error);
 
         give "";
@@ -43,9 +43,9 @@ func os_env(var) {
 # returns the full system PATH
 func os_path() {
     # we don't really know if 'PATH' is available, so gracefully handle the error
-    unsafe {
+    try {
         give _env("PATH");
-    } safe error {
+    } catch error {
         bark(error);
     };
 }
@@ -55,10 +55,10 @@ func os_path() {
 func os_user_dir() {
     obj dir = "";
 
-    unsafe {
+    try {
         # windows
         dir = _env("USERPROFILE");
-    } safe _ {
+    } catch _ {
         # macos
         dir = _env("HOME");
     }
