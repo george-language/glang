@@ -7,7 +7,6 @@ use std::{
     path::PathBuf,
     process::{Command, exit},
 };
-use zip::ZipArchive;
 
 /// Updates the glang binary and components
 ///
@@ -76,8 +75,8 @@ pub fn update_self() {
         log_message("Extracting zip data into '/Applications/GeorgeLanguage'");
 
         let cmd = format!(
-            "sleep 2 && unzip -o '{:?}' -d '/Applications/GeorgeLanguage'",
-            download_path
+            "sleep 2 && unzip -o {} -d /Applications/GeorgeLanguage",
+            download_path.to_string_lossy().to_string()
         );
 
         Command::new("sh")
