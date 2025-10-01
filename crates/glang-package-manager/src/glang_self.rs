@@ -11,7 +11,9 @@ use std::{
 /// Updates the glang binary and components
 ///
 /// ```rust
-/// update_self()
+/// use glang_package_manager::update_self();
+///
+/// update_self();
 /// ```
 ///
 /// This will download the platform specific binary and components.
@@ -92,7 +94,9 @@ pub fn update_self() {
 /// Uninstalls the glang binary and components (including all installed kennels)
 ///
 /// ```rust
-/// uninstall_self()
+/// use glang_package_manager::uninstall_self();
+///
+/// uninstall_self();
 /// ```
 pub fn uninstall_self() {
     log_header("Uninstalling glang and all components");
