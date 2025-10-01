@@ -3,7 +3,7 @@ use glang_logging::log_header;
 use reqwest::blocking::get;
 use std::{
     fs::File,
-    io::Write,
+    io::{Write, copy},
     process::{Command, exit},
 };
 
@@ -20,20 +20,18 @@ pub fn update_self() {
     if cfg!(target_os = "windows") {
         log_header("Downloading Windows Installer");
 
-        let data = get(
-            "https://github.com/george-language/glang/releases/latest/download/GeorgeLanguage+windows_setup.exe",
-        ).expect("Unable to download windows content");
-
         let download_path = cache_dir()
             .expect("Unable to get user cache dir")
             .with_file_name("glang-installer.exe");
-        let mut file = File::create(&download_path).expect("Unable to create glang installer file");
-        file.write(
-            &data
-                .bytes()
-                .expect("Unable to convert installer data to bytes"),
-        )
-        .expect("Unable to write glang installer file");
+
+        {
+            let mut resp = get(
+            "https://github.com/george-language/glang/releases/latest/download/GeorgeLanguage+windows_setup.exe",
+        ).expect("Unable to download windows content");
+            let mut file =
+                File::create(&download_path).expect("Unable to create glang installer file");
+            copy(&mut resp, &mut file).expect("Unable to write installer file");
+        }
 
         let _ = Command::new(&download_path)
             .spawn()
