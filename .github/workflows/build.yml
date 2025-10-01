@@ -44,7 +44,7 @@ jobs:
       - name: Upload zip artifact (github automatically turns the folder into a .zip)
         uses: actions/upload-artifact@v4
         with:
-          name: GeorgeLanguage+macos_setup
+          name: GeorgeLanguage
           path: dist/GeorgeLanguage
 
   build-windows:
