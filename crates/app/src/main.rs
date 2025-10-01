@@ -2,7 +2,6 @@ use clap::{Parser as ClapParser, Subcommand};
 use glang_attributes::StandardError;
 use glang_interpreter::{Context, Interpreter};
 use glang_lexer::Lexer;
-use glang_logging::log_error;
 use glang_parser::Parser;
 use std::cell::RefCell;
 use std::{
@@ -57,8 +56,12 @@ fn main() {
 
     match (cli.command, cli.file) {
         (Some(Commands::GlangSelf { action }), _) => match action {
-            SelfCommands::Update => {}
-            SelfCommands::Uninstall => {}
+            SelfCommands::Update => {
+                glang_package_manager::update_self();
+            }
+            SelfCommands::Uninstall => {
+                glang_package_manager::uninstall_self();
+            }
         },
         (Some(Commands::Run { code }), _) => {
             if let Some(err) = run("<stdin>", Some(code)) {
@@ -76,7 +79,7 @@ fn main() {
         }
         (None, Some(file)) => {
             if !file.ends_with(".glang") {
-                log_error("failed to read provided file (not a '.glang' file)");
+                println!("Unable to read provided file (not a '.glang' file)");
 
                 return;
             }
@@ -128,22 +131,6 @@ fn set_env_variables() {
     }
 }
 
-/// Updates the glang binary and components
-///
-/// ```rust
-/// update_self()
-/// ```
-///
-/// The glang binary and components will be removed, then reinstalled from the latest version.
-fn update_self() {}
-
-/// Uninstalls the glang binary and components (including all installed kennels)
-///
-/// ```rust
-/// uninstall_self()
-/// ```
-fn uninstall_self() {}
-
 /// Run a '.glang' file or raw glang source code
 ///
 /// ```rust
@@ -170,14 +157,7 @@ fn run(filename: &str, code: Option<String>) -> Option<StandardError> {
     let contents = if filename == "<stdin>" {
         code.unwrap_or_default()
     } else {
-        match fs::read_to_string(filename) {
-            Ok(s) => s,
-            Err(e) => {
-                log_error(&format!("failed to read provided '.glang' file ({e})"));
-
-                return None;
-            }
-        }
+        fs::read_to_string(filename).expect("Unable to read provided '.glang' file")
     };
 
     let total_time = Instant::now();

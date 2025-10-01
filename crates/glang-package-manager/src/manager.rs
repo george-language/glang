@@ -1,5 +1,5 @@
 use crate::package_path::get_package_path;
-use glang_logging::{log_error, log_header, log_message, log_package_status};
+use glang_logging::{log_header, log_message, log_package_status};
 use reqwest::blocking::get;
 use serde::Deserialize;
 use std::{fs, fs::File, io::Cursor, io::Read};
@@ -25,25 +25,13 @@ pub fn create_package_dir() {
         .join(".glang");
 
     if !config_path.exists() {
-        match fs::create_dir_all(&config_path) {
-            Ok(_) => {}
-            Err(e) => log_error(&format!(
-                "unable to build '.glang' configuration directory ({e})"
-            )),
-        }
+        fs::create_dir_all(&config_path).expect("Unable to build '.glang' configuration directory");
     }
 
     let package_dir = get_package_path();
 
     if !package_dir.exists() {
-        match fs::create_dir_all(&package_dir) {
-            Ok(_) => {}
-            Err(e) => {
-                log_error(&format!("failed to create 'kennels' directory ({e})"));
-
-                return;
-            }
-        }
+        fs::create_dir_all(&package_dir).expect("Unable to create 'kennels' directory");
 
         let _ = fs::write(
             package_dir.join("kennels.glang"),
@@ -58,40 +46,21 @@ pub fn add_package(name: &str) {
     log_header("Checking kennels registry");
 
     let mut resp =
-        match get("https://raw.githubusercontent.com/george-language/glang/main/registry.json") {
-            Ok(r) => r,
-            Err(e) => {
-                log_error(&format!("failed to retrieve registry ({e})"));
-
-                return;
-            }
-        };
+        get("https://raw.githubusercontent.com/george-language/glang/main/registry.json")
+            .expect("Unable to retrieve kennels registry");
 
     let mut registry_json = String::new();
 
-    if let Err(e) = resp.read_to_string(&mut registry_json) {
-        log_error(&format!("failed to read registry data ({e})"));
+    resp.read_to_string(&mut registry_json)
+        .expect("Unable to read registry data");
 
-        return;
-    }
+    let packages: Vec<PackageRegistry> =
+        serde_json::from_str(&registry_json).expect("Unable to parse registry json");
 
-    let packages: Vec<PackageRegistry> = match serde_json::from_str(&registry_json) {
-        Ok(p) => p,
-        Err(e) => {
-            log_error(&format!("failed to parse registry JSON ({e})"));
-
-            return;
-        }
-    };
-
-    let package = match packages.iter().find(|p| p.name == name) {
-        Some(p) => p,
-        None => {
-            log_error(&format!("kennel '{name}' not found in registry"));
-
-            return;
-        }
-    };
+    let package = packages
+        .iter()
+        .find(|p| p.name == name)
+        .expect("Kennel not found in registry");
 
     let package_path = get_package_path().join(&package.name);
 
@@ -103,21 +72,10 @@ pub fn add_package(name: &str) {
 
     log_message(&format!("Downloading kennel from '{}'", package.url));
 
-    let zip_bytes = match get(&package.url) {
-        Ok(r) => match r.bytes() {
-            Ok(b) => b,
-            Err(e) => {
-                log_error(&format!("failed to get zip content ({e})"));
-
-                return;
-            }
-        },
-        Err(e) => {
-            log_error(&format!("failed to download zip ({e})"));
-
-            return;
-        }
-    };
+    let zip_bytes = get(&package.url)
+        .expect("Unable to get zip content")
+        .bytes()
+        .expect("Unable to get zip bytes");
 
     log_message(&format!(
         "Moving kennel to '{}'",
@@ -125,14 +83,7 @@ pub fn add_package(name: &str) {
     ));
 
     let reader = Cursor::new(zip_bytes);
-    let mut archive = match ZipArchive::new(reader) {
-        Ok(archive) => archive,
-        Err(e) => {
-            log_error(&format!("failed to open zip archive ({e})"));
-
-            return;
-        }
-    };
+    let mut archive = ZipArchive::new(reader).expect("Unable to create zip archive for kennel");
 
     for i in 0..archive.len() {
         let mut file = archive.by_index(i).unwrap();
@@ -148,14 +99,10 @@ pub fn add_package(name: &str) {
         };
 
         if file.name().ends_with('/') {
-            fs::create_dir_all(&path).unwrap_or_else(|e| {
-                log_error(&format!("failed to create dir {path:?} ({e})"));
-            });
+            fs::create_dir_all(&path).expect("Unable to create kennel directory");
         } else {
             if let Some(parent) = path.parent() {
-                fs::create_dir_all(parent).unwrap_or_else(|e| {
-                    log_error(&format!("failed to create dir {parent:?} ({e})"));
-                });
+                fs::create_dir_all(parent).expect("Unable to create kennel directory");
             }
 
             let mut outfile = File::create(&path).unwrap();
@@ -190,11 +137,13 @@ pub fn add_package(name: &str) {
         .expect("'requires' field of 'kennel.toml' must be an array of external kennel names");
 
     for requirement in requirements {
-        let pkg_name = requirement.as_str().unwrap_or("");
+        let pkg_name = requirement
+            .as_str()
+            .expect("Invalid requirement of kennel.toml");
 
         if pkg_name == name {
-            log_error(
-                "cannot require the kennel dependency of another kennel (circular requirements)",
+            println!(
+                "Cannot require the kennel dependency of another kennel (circular requirements)",
             );
 
             return;
