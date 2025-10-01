@@ -2,9 +2,9 @@ use dirs::{cache_dir, home_dir};
 use glang_logging::{log_header, log_message};
 use reqwest::blocking::get;
 use std::{
+    env,
     fs::{self, File},
-    io::{Cursor, Write, copy},
-    path::PathBuf,
+    io::copy,
     process::{Command, exit},
 };
 
@@ -94,4 +94,54 @@ pub fn update_self() {
 /// ```rust
 /// uninstall_self()
 /// ```
-pub fn uninstall_self() {}
+pub fn uninstall_self() {
+    if cfg!(target_os = "windows") {
+        log_header("Uninstalling glang (bin) and all components");
+
+        log_message("Removing '.glang' directory");
+
+        fs::remove_dir_all(
+            home_dir()
+                .expect("Unable to access user home directory")
+                .join(".glang"),
+        )
+        .expect("Unable to remove '.glang' directory");
+
+        log_message("Running uninstaller script");
+
+        let uninstaller = env::current_exe()
+            .expect("Unable to retrieve current executable")
+            .parent()
+            .expect("Unable to retrieve current parent folder")
+            .join("unins000.exe"); // inno setup script
+
+        let _ = Command::new(&uninstaller)
+            .spawn()
+            .expect("Unable to spawn uninstaller script");
+
+        exit(0)
+    } else if cfg!(target_os = "macos") {
+        log_header("Uninstalling glang (bin) and all components");
+
+        log_message("Removing '.glang' directory");
+
+        fs::remove_dir_all(
+            home_dir()
+                .expect("Unable to access user home directory")
+                .join(".glang"),
+        )
+        .expect("Unable to remove '.glang' directory");
+
+        log_message("Removing '/Applications/GeorgeLanguage'");
+
+        let cmd = "sleep 2 && rm -rf /Applications/GeorgeLanguage";
+
+        let _ = Command::new("sh")
+            .arg("-c")
+            .arg(&cmd)
+            .spawn()
+            .expect("Unable to remove '/Applications/GeorgeLanguage'");
+
+        exit(0)
+    }
+}
