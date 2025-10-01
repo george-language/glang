@@ -2,7 +2,12 @@ use crate::package_path::get_package_path;
 use glang_logging::{log_header, log_message, log_package_status};
 use reqwest::blocking::get;
 use serde::Deserialize;
-use std::{fs, fs::File, io::Cursor, io::Read};
+use std::{
+    fs,
+    fs::File,
+    io::Read,
+    io::{Cursor, copy},
+};
 use stringcase::snake_case;
 use toml::Table;
 use zip::ZipArchive;
@@ -106,7 +111,7 @@ pub fn add_package(name: &str) {
             }
 
             let mut outfile = File::create(&path).unwrap();
-            std::io::copy(&mut file, &mut outfile).unwrap();
+            copy(&mut file, &mut outfile).unwrap();
         }
     }
 
