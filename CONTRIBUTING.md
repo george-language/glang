@@ -4,7 +4,7 @@ Hi there! Thanks for your interest in contributing to **GLang**, whether you're 
 
 ## New Around Here?
 
-The best way to get started is by joining the conversations in our [Developer Discussions](https://github.com/mpsoftwarefoundation/GeorgeLanguage/discussions/categories/developers-discussion).
+The best way to get started is by joining the conversations in our [Developer Discussions](https://github.com/george-language/glang/discussions/categories/developers-discussion).
 Ask questions, share ideas, or just see what others are working on (it's a great way to plug in!)
 
 > [!NOTE]
@@ -33,6 +33,6 @@ Even if you're not contributing directly to the main repo, creating Kennels help
 
 Found a bug? Got an idea? Want to tweak some docs?
 
-- Report issues here: [GLang Issues](https://github.com/mpsoftwarefoundation/GeorgeLanguage/issues)
+- Report issues here: [GLang Issues](https://github.com/george-language/glang/issues)
 
 Thanks again for helping make GLang better! Let’s build something cool together 👊
