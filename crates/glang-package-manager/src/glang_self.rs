@@ -4,7 +4,7 @@ use reqwest::blocking::get;
 use std::{
     env,
     fs::{self, File},
-    io::copy,
+    io::{Write, copy, stdin, stdout},
     process::{Command, exit},
 };
 
@@ -95,18 +95,33 @@ pub fn update_self() {
 /// uninstall_self()
 /// ```
 pub fn uninstall_self() {
+    log_header("Uninstalling glang and all components");
+
+    let mut confirmation = String::new();
+
+    print!("    -> Are you sure you want to continue? [Y/n]: ");
+    let _ = stdout().flush();
+
+    stdin()
+        .read_line(&mut confirmation)
+        .expect("Input text was invalid");
+
+    if !(confirmation.trim().to_lowercase() == "y") {
+        log_message("Cancelling uninstallation");
+
+        return;
+    }
+
+    log_message("Removing '.glang' directory");
+
+    fs::remove_dir_all(
+        home_dir()
+            .expect("Unable to access user home directory")
+            .join(".glang"),
+    )
+    .expect("Unable to remove '.glang' directory");
+
     if cfg!(target_os = "windows") {
-        log_header("Uninstalling glang (bin) and all components");
-
-        log_message("Removing '.glang' directory");
-
-        fs::remove_dir_all(
-            home_dir()
-                .expect("Unable to access user home directory")
-                .join(".glang"),
-        )
-        .expect("Unable to remove '.glang' directory");
-
         log_message("Running uninstaller script");
 
         let uninstaller = env::current_exe()
@@ -121,17 +136,6 @@ pub fn uninstall_self() {
 
         exit(0)
     } else if cfg!(target_os = "macos") {
-        log_header("Uninstalling glang (bin) and all components");
-
-        log_message("Removing '.glang' directory");
-
-        fs::remove_dir_all(
-            home_dir()
-                .expect("Unable to access user home directory")
-                .join(".glang"),
-        )
-        .expect("Unable to remove '.glang' directory");
-
         log_message("Removing '/Applications/GeorgeLanguage'");
 
         let cmd = "sleep 2 && rm -rf /Applications/GeorgeLanguage";
