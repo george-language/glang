@@ -41,16 +41,11 @@ jobs:
           cp -r LICENSE dist/GeorgeLanguage/
           cp -r README.md dist/GeorgeLanguage/
 
-      - name: Create zip file
-        run: |
-          cd dist
-          zip -r GeorgeLanguage+macos_setup.zip GeorgeLanguage
-
-      - name: Upload zip artifact
+      - name: Upload zip artifact (github automatically turns the folder into a .zip)
         uses: actions/upload-artifact@v4
         with:
-          name: GeorgeLanguage+macos_setup
-          path: dist/GeorgeLanguage+macos_setup.zip
+          name: GeorgeLanguage
+          path: dist/GeorgeLanguage
 
   build-windows:
     runs-on: windows-latest

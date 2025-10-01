@@ -2,7 +2,6 @@ use clap::{Parser as ClapParser, Subcommand};
 use glang_attributes::StandardError;
 use glang_interpreter::{Context, Interpreter};
 use glang_lexer::Lexer;
-use glang_logging::log_error;
 use glang_parser::Parser;
 use std::cell::RefCell;
 use std::{
@@ -24,6 +23,11 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
+    #[command(name = "self", about = "Manage the glang binary itself")]
+    GlangSelf {
+        #[command(subcommand)]
+        action: SelfCommands,
+    },
     #[command(about = "Run a string of glang source code")]
     Run { code: String },
     #[command(about = "Install a glang kennel from the internet")]
@@ -32,6 +36,14 @@ enum Commands {
     Remove { name: String },
     #[command(about = "Update an installed glang kennel to the latest version")]
     Update { name: String },
+}
+
+#[derive(Subcommand)]
+enum SelfCommands {
+    #[command(about = "Update glang to the latest version")]
+    Update,
+    #[command(about = "Uninstall glang from the system")]
+    Uninstall,
 }
 
 fn main() {
@@ -43,6 +55,14 @@ fn main() {
     let cli = Cli::parse();
 
     match (cli.command, cli.file) {
+        (Some(Commands::GlangSelf { action }), _) => match action {
+            SelfCommands::Update => {
+                glang_package_manager::update_self();
+            }
+            SelfCommands::Uninstall => {
+                glang_package_manager::uninstall_self();
+            }
+        },
         (Some(Commands::Run { code }), _) => {
             if let Some(err) = run("<stdin>", Some(code)) {
                 println!("{err}");
@@ -59,7 +79,7 @@ fn main() {
         }
         (None, Some(file)) => {
             if !file.ends_with(".glang") {
-                log_error("failed to read provided file (not a '.glang' file)");
+                println!("Unable to read provided file (not a '.glang' file)");
 
                 return;
             }
@@ -137,14 +157,7 @@ fn run(filename: &str, code: Option<String>) -> Option<StandardError> {
     let contents = if filename == "<stdin>" {
         code.unwrap_or_default()
     } else {
-        match fs::read_to_string(filename) {
-            Ok(s) => s,
-            Err(e) => {
-                log_error(&format!("failed to read provided '.glang' file ({e})"));
-
-                return None;
-            }
-        }
+        fs::read_to_string(filename).expect("Unable to read provided '.glang' file")
     };
 
     let total_time = Instant::now();
