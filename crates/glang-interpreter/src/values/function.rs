@@ -43,7 +43,7 @@ impl Function {
     pub fn generate_new_context(&self) -> Rc<RefCell<Context>> {
         let mut new_context = Context::new(
             self.name.clone(),
-            Some(self.context.as_ref().unwrap().clone()),
+            self.context.clone(),
             self.pos_start.clone(),
             None,
         );
@@ -71,9 +71,10 @@ impl Function {
                 self.pos_end.as_ref().unwrap().clone(),
                 Some(
                     format!(
-                        "{} takes {} positional argument(s) but the program gave {}",
+                        "{} takes {} argument{} but the program gave {}",
                         self.name,
                         arg_names.len(),
+                        if arg_names.len() > 1 { "s" } else { "" },
                         args.len()
                     )
                     .as_str(),
