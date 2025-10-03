@@ -322,7 +322,7 @@ impl Interpreter {
             .symbol_table
             .as_ref()
             .unwrap()
-            .borrow_mut()
+            .borrow()
             .get(var_name.as_str())
             .clone();
 
@@ -487,7 +487,7 @@ impl Interpreter {
         }
 
         let iterator_name = node.var_name_token.value.as_ref().unwrap().to_owned();
-        let symbol_table = context.borrow_mut().symbol_table.as_mut().unwrap().clone();
+        let symbol_table = context.borrow().symbol_table.as_ref().unwrap().clone();
 
         let range: Vec<f64> = if step_value.value > 0.0 {
             (start_value.value as i64..end_value.value as i64)
@@ -660,8 +660,8 @@ impl Interpreter {
         if file_to_import == importing_path {
             return result.failure(Some(StandardError::new(
                 "circular import",
-                import_value.borrow_mut().position_start().unwrap(),
-                import_value.borrow_mut().position_end().unwrap(),
+                import_value.borrow().position_start().unwrap(),
+                import_value.borrow().position_end().unwrap(),
                 None,
             )));
         }
