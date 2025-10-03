@@ -619,14 +619,14 @@ impl Interpreter {
         }
 
         let import_value = import_value.unwrap();
-        let import_position_path = import_value
+        let importing_path = import_value
             .borrow()
             .position_start()
             .unwrap()
             .filename
             .clone();
 
-        let importing_dir = Path::new(&import_position_path)
+        let importing_dir = Path::new(&importing_path)
             .parent()
             .unwrap_or_else(|| Path::new(""))
             .to_path_buf();
@@ -657,7 +657,7 @@ impl Interpreter {
             )));
         }
 
-        if file_to_import == import_position_path {
+        if file_to_import == importing_path {
             return result.failure(Some(StandardError::new(
                 "circular import",
                 import_value.borrow_mut().position_start().unwrap(),
