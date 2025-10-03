@@ -1,6 +1,6 @@
 use clap::{Parser as ClapParser, Subcommand};
 use glang_attributes::StandardError;
-use glang_interpreter::{Context, Interpreter, SymbolTable};
+use glang_interpreter::{Context, Interpreter};
 use glang_lexer::Lexer;
 use glang_parser::Parser;
 use std::cell::RefCell;
