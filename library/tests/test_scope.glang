@@ -1,0 +1,11 @@
+# file test_scope.glang: test glang's scope in function definitions
+
+func import() {
+    fetch std_math;
+
+    bark(math_pi);
+}
+
+bark(math_pi); # can't access this, it's in import()
+
+import();

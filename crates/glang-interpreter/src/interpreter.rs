@@ -19,16 +19,23 @@ use glang_parser::nodes::{
     variable_assign_node::VariableAssignNode, while_node::WhileNode,
 };
 use glang_parser::{Parser, nodes::variable_reassign_node::VariableRessignNode};
-use std::{cell::RefCell, fs, path::Path, rc::Rc};
+use std::{cell::RefCell, collections::HashMap, fs, path::Path, rc::Rc};
 
 pub struct Interpreter {
     pub global_symbol_table: Rc<RefCell<SymbolTable>>,
+    pub precached_std_lib: Option<Rc<RefCell<SymbolTable>>>,
+    imported_modules: Rc<RefCell<HashMap<String, Rc<RefCell<SymbolTable>>>>>,
 }
 
 impl Interpreter {
-    pub fn new() -> Self {
+    pub fn new(
+        precached_std_lib: Option<Rc<RefCell<SymbolTable>>>,
+        imported_modules: Rc<RefCell<HashMap<String, Rc<RefCell<SymbolTable>>>>>,
+    ) -> Self {
         let interpreter = Self {
             global_symbol_table: Rc::new(RefCell::new(SymbolTable::new(None))),
+            precached_std_lib,
+            imported_modules,
         };
 
         let builtins = [
@@ -44,6 +51,25 @@ impl Interpreter {
         }
 
         interpreter
+    }
+
+    pub fn preload_standard_library(&mut self, context: Rc<RefCell<Context>>) {
+        let mut std_lib: Rc<RefCell<SymbolTable>> = Rc::new(RefCell::new(SymbolTable::new(None)));
+
+        if !cfg!(feature = "no-std") {
+            if let Some(e) = self.evaluate(
+                "fetch _env(\"GLANG_STD\") + \"/fundamental/lib.glang\";",
+                context.clone(),
+            ) {
+                println!("{}", e);
+
+                return;
+            }
+
+            std_lib = context.borrow().symbol_table.as_ref().unwrap().clone();
+        }
+
+        self.precached_std_lib = Some(std_lib);
     }
 
     pub fn evaluate(&mut self, src: &str, context: Rc<RefCell<Context>>) -> Option<StandardError> {
@@ -585,13 +611,14 @@ impl Interpreter {
         context: Rc<RefCell<Context>>,
     ) -> RuntimeResult {
         let mut result = RuntimeResult::new();
-        let import = result.register(self.visit(node.node_to_import.as_ref(), context.clone()));
+        let import_value =
+            result.register(self.visit(node.node_to_import.as_ref(), context.clone()));
 
         if result.should_return() {
             return result;
         }
 
-        let import_value = import.unwrap();
+        let import_value = import_value.unwrap();
         let import_position_path = import_value
             .borrow()
             .position_start()
@@ -609,8 +636,8 @@ impl Interpreter {
             _ => {
                 return result.failure(Some(StandardError::new(
                     "expected type string",
-                    import_value.borrow_mut().position_start().unwrap(),
-                    import_value.borrow_mut().position_end().unwrap(),
+                    import_value.borrow().position_start().unwrap(),
+                    import_value.borrow().position_end().unwrap(),
                     Some("add the '.glang' file you would like to import"),
                 )));
             }
@@ -623,9 +650,9 @@ impl Interpreter {
 
         if fs::exists(&file_to_import).is_err() || !&file_to_import.ends_with(".glang") {
             return result.failure(Some(StandardError::new(
-                "file doesn't exist or isn't valid",
-                import_value.borrow_mut().position_start().unwrap(),
-                import_value.borrow_mut().position_end().unwrap(),
+                "invalid import",
+                import_value.borrow().position_start().unwrap(),
+                import_value.borrow().position_end().unwrap(),
                 Some("add the '.glang' file you would like to import"),
             )));
         }
@@ -639,6 +666,28 @@ impl Interpreter {
             )));
         }
 
+        // if we already have imported modules stored in memory, then use cached ones
+        if let Some(cached_symtab) = self.imported_modules.borrow().get(&file_to_import) {
+            let symbols: Vec<(String, Option<Rc<RefCell<Value>>>)> = cached_symtab
+                .borrow()
+                .symbols
+                .iter()
+                .map(|(k, v)| (k.clone(), v.clone()))
+                .collect();
+
+            for (name, value) in symbols {
+                context
+                    .borrow_mut()
+                    .symbol_table
+                    .as_ref()
+                    .unwrap()
+                    .borrow_mut()
+                    .set(name, value);
+            }
+
+            return result.success(Some(Number::null_value()));
+        }
+
         let mut contents = String::new();
 
         match fs::read_to_string(&file_to_import) {
@@ -646,8 +695,8 @@ impl Interpreter {
             Err(_) => {
                 return result.failure(Some(StandardError::new(
                     &format!("file contents couldn't be read properly on {file_to_import}"),
-                    import_value.borrow_mut().position_start().unwrap(),
-                    import_value.borrow_mut().position_end().unwrap(),
+                    import_value.borrow().position_start().unwrap(),
+                    import_value.borrow().position_end().unwrap(),
                     Some("add a UTF-8 encoded '.glang' file you would like to import"),
                 )));
             }
@@ -667,18 +716,55 @@ impl Interpreter {
             return result.failure(ast.error);
         }
 
-        let mut interpreter = Interpreter::new();
+        let mut interpreter = Interpreter::new(
+            if self.precached_std_lib.is_some() {
+                self.precached_std_lib.clone()
+            } else {
+                None
+            },
+            self.imported_modules.clone(),
+        );
         let module_context = Rc::new(RefCell::new(Context::new(
             "<module>".to_string(),
             None,
             None,
+            Some(interpreter.global_symbol_table.clone()),
         )));
-        module_context.borrow_mut().symbol_table = Some(self.global_symbol_table.clone());
+
+        if let Some(std_lib) = self.precached_std_lib.clone() {
+            let symbols: Vec<(String, Option<Rc<RefCell<Value>>>)> = std_lib
+                .borrow()
+                .symbols
+                .iter()
+                .map(|(k, v)| (k.clone(), v.clone()))
+                .collect();
+
+            for (name, value) in symbols {
+                module_context
+                    .borrow_mut()
+                    .symbol_table
+                    .as_ref()
+                    .unwrap()
+                    .borrow_mut()
+                    .set(name, value);
+            }
+        }
+
         let module_result = interpreter.visit(ast.node.unwrap().as_ref(), module_context.clone());
 
         if module_result.error.is_some() {
             return result.failure(module_result.error);
         }
+
+        self.imported_modules.borrow_mut().insert(
+            file_to_import.clone(),
+            module_context
+                .borrow()
+                .symbol_table
+                .as_ref()
+                .unwrap()
+                .clone(),
+        );
 
         let symbols: Vec<(String, Option<Rc<RefCell<Value>>>)> = module_context
             .borrow()

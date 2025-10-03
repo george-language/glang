@@ -10,6 +10,7 @@ use glang_lexer::Lexer;
 use glang_parser::Parser;
 use std::{
     cell::RefCell,
+    collections::HashMap,
     env, fs,
     io::{Write, stdin, stdout},
     rc::Rc,
@@ -46,6 +47,7 @@ impl BuiltInFunction {
             self.name.clone(),
             Some(self.context.as_ref().unwrap().clone()),
             self.pos_start.clone(),
+            None,
         );
         let parent_st = self
             .context
@@ -504,9 +506,13 @@ impl BuiltInFunction {
             return result.failure(ast.error);
         }
 
-        let mut interpreter = Interpreter::new();
-        let external_context =
-            Rc::new(RefCell::new(Context::new("<exec>".to_string(), None, None)));
+        let mut interpreter = Interpreter::new(None, Rc::new(RefCell::new(HashMap::new())));
+        let external_context = Rc::new(RefCell::new(Context::new(
+            "<exec>".to_string(),
+            None,
+            None,
+            None,
+        )));
         external_context.borrow_mut().symbol_table = Some(interpreter.global_symbol_table.clone());
         let external_result =
             interpreter.visit(ast.node.unwrap().as_ref(), external_context.clone());

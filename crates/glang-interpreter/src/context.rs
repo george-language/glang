@@ -15,12 +15,13 @@ impl Context {
         display_name: String,
         parent: Option<Rc<RefCell<Context>>>,
         parent_entry_pos: Option<Rc<Position>>,
+        symbol_table: Option<Rc<RefCell<SymbolTable>>>,
     ) -> Self {
         Self {
             display_name,
             parent,
             parent_entry_pos,
-            symbol_table: None,
+            symbol_table,
         }
     }
 }

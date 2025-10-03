@@ -7,7 +7,7 @@ use crate::{
 };
 use glang_attributes::{Position, StandardError};
 use glang_parser::AstNode;
-use std::{cell::RefCell, rc::Rc};
+use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 #[derive(Debug, Clone)]
 pub struct Function {
@@ -45,6 +45,7 @@ impl Function {
             self.name.clone(),
             Some(self.context.as_ref().unwrap().clone()),
             self.pos_start.clone(),
+            None,
         );
         let parent_st = self
             .context
@@ -124,7 +125,7 @@ impl Function {
 
     pub fn execute(&self, args: &[Rc<RefCell<Value>>]) -> RuntimeResult {
         let mut result = RuntimeResult::new();
-        let mut interpreter = Interpreter::new();
+        let mut interpreter = Interpreter::new(None, Rc::new(RefCell::new(HashMap::new())));
         let exec_context = self.generate_new_context();
 
         result.register(self.check_and_populate_args(&self.arg_names, args, exec_context.clone()));

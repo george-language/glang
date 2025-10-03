@@ -1,9 +1,10 @@
 use clap::{Parser as ClapParser, Subcommand};
 use glang_attributes::StandardError;
-use glang_interpreter::{Context, Interpreter};
+use glang_interpreter::{Context, Interpreter, SymbolTable};
 use glang_lexer::Lexer;
 use glang_parser::Parser;
 use std::cell::RefCell;
+use std::collections::HashMap;
 use std::{
     env, fs,
     io::{Write, stdin, stdout},
@@ -183,22 +184,14 @@ fn run(filename: &str, code: Option<String>) -> Option<StandardError> {
     let parsing_time = parsing_time.elapsed();
 
     let interpreting_time = Instant::now();
-    let mut interpreter = Interpreter::new();
+    let mut interpreter = Interpreter::new(None, Rc::new(RefCell::new(HashMap::new())));
     let context = Rc::new(RefCell::new(Context::new(
         "<program>".to_string(),
         None,
         None,
+        Some(interpreter.global_symbol_table.clone()),
     )));
-    context.borrow_mut().symbol_table = Some(interpreter.global_symbol_table.clone());
-
-    if !cfg!(feature = "no-std") {
-        if let Some(e) = interpreter.evaluate(
-            "fetch _env(\"GLANG_STD\") + \"/fundamental/lib.glang\";",
-            context.clone(),
-        ) {
-            return Some(e);
-        }
-    }
+    interpreter.preload_standard_library(context.clone());
 
     let result = interpreter.visit(ast.node.unwrap().as_ref(), context.clone());
 
