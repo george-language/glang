@@ -191,7 +191,10 @@ fn run(filename: &str, code: Option<String>) -> Option<StandardError> {
         None,
         Some(interpreter.global_symbol_table.clone()),
     )));
-    interpreter.preload_standard_library(context.clone());
+
+    if !cfg!(feature = "no-std") {
+        interpreter.preload_standard_library(context.clone());
+    }
 
     let result = interpreter.visit(ast.node.unwrap().as_ref(), context.clone());
 

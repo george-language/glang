@@ -9,6 +9,3 @@ license = { workspace = true }
 glang-attributes = { path = "../glang-attributes" }
 glang-lexer = { path = "../glang-lexer" }
 glang-parser = { path = "../glang-parser" }
-
-[features]
-no-std = []

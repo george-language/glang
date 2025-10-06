@@ -54,22 +54,16 @@ impl Interpreter {
     }
 
     pub fn preload_standard_library(&mut self, context: Rc<RefCell<Context>>) {
-        let mut std_lib: Rc<RefCell<SymbolTable>> = Rc::new(RefCell::new(SymbolTable::new(None)));
+        if let Some(e) = self.evaluate(
+            "fetch _env(\"GLANG_STD\") + \"/fundamental/lib.glang\";",
+            context.clone(),
+        ) {
+            println!("{}", e);
 
-        if !cfg!(feature = "no-std") {
-            if let Some(e) = self.evaluate(
-                "fetch _env(\"GLANG_STD\") + \"/fundamental/lib.glang\";",
-                context.clone(),
-            ) {
-                println!("{}", e);
-
-                return;
-            }
-
-            std_lib = context.borrow().symbol_table.as_ref().unwrap().clone();
+            return;
         }
 
-        self.precached_std_lib = Some(std_lib);
+        self.precached_std_lib = Some(context.borrow().symbol_table.as_ref().unwrap().clone());
     }
 
     pub fn evaluate(&mut self, src: &str, context: Rc<RefCell<Context>>) -> Option<StandardError> {
