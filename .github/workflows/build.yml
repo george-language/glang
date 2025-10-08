@@ -28,24 +28,34 @@ jobs:
 
       - name: Combine into universal binary
         run: |
-          mkdir -p dist/GeorgeLanguage
+          mkdir -p dist/payload/usr/local/bin
           lipo -create \
             target/x86_64-apple-darwin/release/glang \
             target/aarch64-apple-darwin/release/glang \
-            -output dist/GeorgeLanguage/glang
-          chmod +x dist/GeorgeLanguage/glang
+            -output dist/payload/usr/local/bin/glang
+          chmod +x dist/payload/usr/local/bin/glang
 
-      - name: Copy repo folders
+      - name: Add library files
         run: |
-          cp -r library dist/GeorgeLanguage/
-          cp -r LICENSE dist/GeorgeLanguage/
-          cp -r README.md dist/GeorgeLanguage/
+          mkdir -p dist/payload/Library/GeorgeLanguage
+          cp -r library dist/payload/Library/GeorgeLanguage/
+          cp LICENSE dist/payload/Library/GeorgeLanguage/
+          cp README.md dist/payload/Library/GeorgeLanguage/
 
-      - name: Upload zip artifact (github automatically turns the folder into a .zip)
+      - name: Create pkg installer
+        run: |
+          pkgbuild \
+            --root dist/payload \
+            --identifier com.george-language.glang \
+            --version ${{ github.ref_name }} \
+            --install-location / \
+            dist/GeorgeLanguage.pkg
+
+      - name: Upload pkg artifact
         uses: actions/upload-artifact@v4
         with:
-          name: GeorgeLanguage
-          path: dist/GeorgeLanguage
+          name: GeorgeLanguage+macos_setup
+          path: dist/GeorgeLanguage.pkg
 
   build-windows:
     runs-on: windows-latest
