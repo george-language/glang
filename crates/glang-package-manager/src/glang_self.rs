@@ -56,36 +56,30 @@ pub fn update_self() {
 
         let download_path = cache_dir()
             .expect("Unable to get user cache dir")
-            .with_file_name("glang-binary.zip");
+            .with_file_name("glang-binary.pkg");
 
         {
-            log_message("Retrieving zip data");
+            log_message("Retrieving package data");
 
             let mut resp = get(
-            "https://github.com/george-language/glang/releases/latest/download/GeorgeLanguage+macos_setup.zip",
+            "https://github.com/george-language/glang/releases/latest/download/GeorgeLanguage+macos_setup.pkg",
         ).expect("Unable to download macos content");
 
-            log_message("Creating temporary zip file");
+            log_message("Creating temporary pkg file");
 
-            let mut file = File::create(&download_path).expect("Unable to create glang zip file");
+            let mut file = File::create(&download_path).expect("Unable to create glang pkg file");
 
-            log_message("Writing component data to temporary zip file");
+            log_message("Writing component data to temporary pkg file");
 
             copy(&mut resp, &mut file).expect("Unable to write zip file");
         }
 
-        log_message("Extracting zip data into '/Applications/GeorgeLanguage'");
+        log_message("Launching glang installer");
 
-        let cmd = format!(
-            "sleep 2 && unzip -o {} -d /Applications/GeorgeLanguage",
-            download_path.to_string_lossy().to_string()
-        );
-
-        Command::new("sh")
-            .arg("-c")
-            .arg(&cmd)
+        let _ = Command::new("open")
+            .arg(&download_path)
             .spawn()
-            .expect("Unable to spawn unzip process");
+            .expect("Unable to launch installer");
 
         exit(0);
     }
@@ -140,16 +134,22 @@ pub fn uninstall_self() {
 
         exit(0)
     } else if cfg!(target_os = "macos") {
-        log_message("Removing '/Applications/GeorgeLanguage'");
+        log_message("Removing glang binary");
 
-        let cmd = "sleep 2 && rm -rf /Applications/GeorgeLanguage";
+        let cmd = r#"
+            sleep 2;
+            rm -f /usr/local/bin/glang;
+            rm -rf /Library/GeorgeLanguage;
+        "#;
+
+        log_message("Removing glang library");
 
         let _ = Command::new("sh")
             .arg("-c")
-            .arg(&cmd)
+            .arg(cmd)
             .spawn()
-            .expect("Unable to remove '/Applications/GeorgeLanguage'");
+            .expect("Unable to remove glang binary and library");
 
-        exit(0)
+        exit(0);
     }
 }
