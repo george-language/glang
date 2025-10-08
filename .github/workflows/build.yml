@@ -49,13 +49,13 @@ jobs:
             --identifier com.george-language.glang \
             --version ${{ github.ref_name }} \
             --install-location / \
-            dist/GeorgeLanguage.pkg
+            dist/GeorgeLanguage+macos_setup.pkg
 
       - name: Upload pkg artifact
         uses: actions/upload-artifact@v4
         with:
           name: GeorgeLanguage+macos_setup
-          path: dist/GeorgeLanguage.pkg
+          path: dist/GeorgeLanguage+macos_setup.pkg
 
   build-windows:
     runs-on: windows-latest
