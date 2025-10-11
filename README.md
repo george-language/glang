@@ -69,10 +69,6 @@ We made GLang because we believe beginner-friendly languages don’t have to be 
 
 You can download GLang [here](https://george-language.github.io/docs/install/), or check out the quick setup instructions in the [guide book](https://george-language.github.io/book/).
 
-## Wanna Help Out?
-
-GLang is a growing pup - contributors, testers, and idea-sharers like you can feed it! Check out [CONTRIBUTING.md](./CONTRIBUTING.md) or bark at us via Issues.
-
 ## License
 
 George Language is licensed under **GPL v3**.
