@@ -5,7 +5,7 @@
          width="25%">
   </picture>
 
-[Website](https://sites.google.com/view/george-lang/home/) | [Download](https://sites.google.com/view/george-lang/install/) | [Learn](https://sites.google.com/view/george-lang/documentation/guide-book/) | [Documentation](https://sites.google.com/view/george-lang/documentation/standard-docs/)
+[Website](https://george-language.github.io/) | [Download](https://george-language.github.io/install/) | [Learn](https://george-language.github.io/book/) | [Documentation](https://george-language.github.io/docs/)
 
 _A dog-themed, interpreted programming language for beginners._
 </div>
@@ -67,7 +67,7 @@ We made GLang because we believe beginner-friendly languages don’t have to be 
 
 ## Installation
 
-You can download GLang [here](https://sites.google.com/view/george-lang/install/), or check out the quick setup instructions in the [Guide Book](https://sites.google.com/view/george-lang/documentation/guide-book/).
+You can download GLang [here](https://george-language.github.io/install/), or check out the quick setup instructions in the [guide book](https://george-language.github.io/book/).
 
 ## Wanna Help Out?
 

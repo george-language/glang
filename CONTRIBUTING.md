@@ -24,8 +24,8 @@ If you run into any bugs or quirks, check out the [Issues section](#-issues-sect
 
 **Kennels** are GLang’s package system, introduced in version 2.3. Think of them as little doghouses full of awesome code!
 
-- Learn what Kennels are: [About Kennels](https://sites.google.com/view/george-lang/documentation/standard-docs/kennels/about-kennels)
-- Build your own: [Creating Kennels](https://sites.google.com/view/george-lang/documentation/standard-docs/kennels/creating-kennels)
+- Learn what Kennels are: [About Kennels](https://george-language.github.io/docs/kennels/)
+- Build your own: [Creating Kennels](https://george-language.github.io/docs/kennels/creating)
 
 Even if you're not contributing directly to the main repo, creating Kennels helps the ecosystem grow and that’s a **huge** help!
 
