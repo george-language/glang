@@ -67,7 +67,7 @@ We made GLang because we believe beginner-friendly languages don’t have to be 
 
 ## Installation
 
-You can download GLang [here](https://george-language.github.io/install/), or check out the quick setup instructions in the [guide book](https://george-language.github.io/book/).
+You can download GLang [here](https://george-language.github.io/docs/install/), or check out the quick setup instructions in the [guide book](https://george-language.github.io/book/).
 
 ## Wanna Help Out?
 
