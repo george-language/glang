@@ -5,7 +5,7 @@
          width="25%">
   </picture>
 
-[Website](https://george-language.github.io/) | [Download](https://george-language.github.io/install/) | [Learn](https://george-language.github.io/book/) | [Documentation](https://george-language.github.io/docs/)
+[Website](https://george-language.github.io/) | [Download](https://george-language.github.io/docs/install/) | [Learn](https://george-language.github.io/book/) | [Documentation](https://george-language.github.io/docs/)
 
 _A dog-themed, interpreted programming language for beginners._
 </div>
