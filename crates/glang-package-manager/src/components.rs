@@ -1,4 +1,4 @@
-use dirs::{cache_dir, home_dir};
+use dirs::{download_dir, home_dir};
 use glang_logging::{log_header, log_message};
 use reqwest::blocking::get;
 use std::{
@@ -23,8 +23,8 @@ pub fn update_self() {
     if cfg!(target_os = "windows") {
         log_header("Downloading glang-latest for Windows");
 
-        let download_path = cache_dir()
-            .expect("Unable to get user cache dir")
+        let download_path = download_dir()
+            .expect("Unable to get user downloads directory")
             .with_file_name("glang-installer.exe");
 
         {
@@ -32,14 +32,14 @@ pub fn update_self() {
 
             let mut resp = get(
             "https://github.com/george-language/glang/releases/latest/download/GeorgeLanguage+windows_setup.exe",
-        ).expect("Unable to download windows content");
+        ).expect("Unable to retrieve installer data");
 
-            log_message("Creating temporary installer file");
+            log_message("Creating installer file");
 
             let mut file =
                 File::create(&download_path).expect("Unable to create glang installer file");
 
-            log_message("Writing installer data to temporary installer file");
+            log_message("Writing data");
 
             copy(&mut resp, &mut file).expect("Unable to write installer file");
         }
@@ -52,10 +52,10 @@ pub fn update_self() {
 
         exit(0);
     } else if cfg!(target_os = "macos") {
-        log_header("Downloading glang-latest for MacOS");
+        log_header("Downloading glang-latest for macOS");
 
-        let download_path = cache_dir()
-            .expect("Unable to get user cache dir")
+        let download_path = download_dir()
+            .expect("Unable to get user downloads directory")
             .with_file_name("glang-binary.pkg");
 
         {
@@ -65,13 +65,14 @@ pub fn update_self() {
             "https://github.com/george-language/glang/releases/latest/download/GeorgeLanguage+macos_setup.pkg",
         ).expect("Unable to download macos content");
 
-            log_message("Creating temporary pkg file");
+            log_message("Creating package file");
 
-            let mut file = File::create(&download_path).expect("Unable to create glang pkg file");
+            let mut file =
+                File::create(&download_path).expect("Unable to create glang package file");
 
-            log_message("Writing component data to temporary pkg file");
+            log_message("Writing data");
 
-            copy(&mut resp, &mut file).expect("Unable to write zip file");
+            copy(&mut resp, &mut file).expect("Unable to write package file");
         }
 
         log_message("Launching glang installer");
