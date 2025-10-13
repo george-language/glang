@@ -514,6 +514,11 @@ impl BuiltInFunction {
             None,
         )));
         external_context.borrow_mut().symbol_table = Some(interpreter.global_symbol_table.clone());
+
+        if !cfg!(feature = "no-std") {
+            interpreter.preload_standard_library(external_context.clone());
+        }
+
         let external_result =
             interpreter.visit(ast.node.unwrap().as_ref(), external_context.clone());
 
