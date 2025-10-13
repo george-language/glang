@@ -863,7 +863,7 @@ impl Interpreter {
         }
 
         let mut return_value = result.register(match *value_to_call.unwrap().borrow() {
-            Value::FunctionValue(ref value) => value.execute(&args),
+            Value::FunctionValue(ref value) => value.execute(&args, self),
             Value::BuiltInFunction(ref value) => value.execute(&args),
             _ => {
                 return result.failure(Some(StandardError::new(

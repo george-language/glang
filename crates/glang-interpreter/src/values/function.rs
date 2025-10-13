@@ -124,9 +124,12 @@ impl Function {
         result.success(None)
     }
 
-    pub fn execute(&self, args: &[Rc<RefCell<Value>>]) -> RuntimeResult {
+    pub fn execute(
+        &self,
+        args: &[Rc<RefCell<Value>>],
+        interpreter: &mut Interpreter,
+    ) -> RuntimeResult {
         let mut result = RuntimeResult::new();
-        let mut interpreter = Interpreter::new(None, Rc::new(RefCell::new(HashMap::new())));
         let exec_context = self.generate_new_context();
 
         result.register(self.check_and_populate_args(&self.arg_names, args, exec_context.clone()));

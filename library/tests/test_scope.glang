@@ -6,6 +6,6 @@ func import() {
     bark(math_pi);
 }
 
-bark(math_pi); # can't access this, it's in import()
-
 import();
+
+bark(math_pi); # can't access this, it's in import()

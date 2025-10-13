@@ -32,7 +32,7 @@ impl Position {
             && character == '\n'
         {
             self.line_num += 1;
-            self.column_num -= 1;
+            self.column_num = 1;
         }
 
         self.clone()
