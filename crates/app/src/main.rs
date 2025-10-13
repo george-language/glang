@@ -3,11 +3,12 @@ use glang_attributes::StandardError;
 use glang_interpreter::{Context, Interpreter};
 use glang_lexer::Lexer;
 use glang_parser::Parser;
-use std::cell::RefCell;
-use std::collections::HashMap;
 use std::{
+    cell::RefCell,
+    collections::HashMap,
     env, fs,
     io::{Write, stdin, stdout},
+    path::PathBuf,
     rc::Rc,
     time::Instant,
 };
@@ -109,11 +110,17 @@ fn main() {
 /// - `GLANG_PKG` is the path to the kennels directory ('.glang/kennels/')
 fn set_env_variables() {
     unsafe {
-        let std_path = env::current_exe()
+        let mut std_path = env::current_exe()
             .expect("Unable to retrieve executable path")
             .parent()
             .unwrap()
             .join("library");
+
+        // on macos, library is only next to the executable during development
+        // on actual install its inside /Library/GeorgeLanguage/
+        if cfg!(target_os = "macos") && !std_path.exists() {
+            std_path = PathBuf::from("/Library/GeorgeLanguage/library");
+        }
 
         let pkg_path = dirs::home_dir()
             .expect("Unable to retrieve user home directory")
