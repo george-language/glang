@@ -308,7 +308,8 @@ impl Lexer {
 
     fn make_string(&mut self) -> Result<Token, StandardError> {
         let mut string = String::new();
-        let pos_start = self.position.clone();
+        let mut pos_start = self.position.clone();
+        pos_start.column_num -= 1; // move back 1
         let mut escape_char = false;
 
         self.advance();
@@ -387,7 +388,8 @@ impl Lexer {
 
         self.advance();
 
-        let pos_end = self.position.clone();
+        let mut pos_end = self.position.clone();
+        pos_end.column_num -= 1; // move back 1
 
         Ok(Token::new(
             TokenType::TT_STR,
