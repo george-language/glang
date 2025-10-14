@@ -251,7 +251,7 @@ impl Lexer {
                 num_str.push('.');
             } else if LETTERS.contains(character) {
                 return Err(StandardError::new(
-                    "object names cannot start with numerical values",
+                    "identifiers cannot start with numerical values",
                     Rc::new(pos_start),
                     Rc::new(self.position.clone()),
                     None,
