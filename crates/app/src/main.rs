@@ -8,7 +8,7 @@ use std::{
     collections::HashMap,
     env, fs,
     io::{Write, stdin, stdout},
-    path::PathBuf,
+    path::{Path, PathBuf},
     rc::Rc,
     time::Instant,
 };
@@ -167,6 +167,8 @@ fn run(filename: &str, code: Option<String>) -> Option<StandardError> {
     } else {
         fs::read_to_string(filename).expect("Unable to read provided '.glang' file")
     };
+
+    let filename = Path::new(filename);
 
     let total_time = Instant::now();
 

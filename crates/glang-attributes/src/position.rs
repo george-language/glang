@@ -1,9 +1,11 @@
+use std::path::{Path, PathBuf};
+
 #[derive(Debug, Clone)]
 pub struct Position {
     pub index: isize,
     pub line_num: isize,
     pub column_num: isize,
-    pub filename: String,
+    pub filename: PathBuf,
     pub file_contents: String,
 }
 
@@ -12,14 +14,14 @@ impl Position {
         index: isize,
         line_num: isize,
         column_num: isize,
-        filename: &str,
+        filename: &Path,
         file_contents: &str,
     ) -> Self {
         Self {
             index,
             line_num,
             column_num,
-            filename: filename.to_string(),
+            filename: filename.to_path_buf(),
             file_contents: file_contents.to_string(),
         }
     }

@@ -19,18 +19,24 @@ use glang_parser::nodes::{
     variable_assign_node::VariableAssignNode, while_node::WhileNode,
 };
 use glang_parser::{Parser, nodes::variable_reassign_node::VariableRessignNode};
-use std::{cell::RefCell, collections::HashMap, fs, path::Path, rc::Rc};
+use std::{
+    cell::RefCell,
+    collections::HashMap,
+    fs,
+    path::{Path, PathBuf},
+    rc::Rc,
+};
 
 pub struct Interpreter {
     pub global_symbol_table: Rc<RefCell<SymbolTable>>,
     pub precached_std_lib: Option<Rc<RefCell<SymbolTable>>>,
-    imported_modules: Rc<RefCell<HashMap<String, Rc<RefCell<SymbolTable>>>>>,
+    imported_modules: Rc<RefCell<HashMap<PathBuf, Rc<RefCell<SymbolTable>>>>>,
 }
 
 impl Interpreter {
     pub fn new(
         precached_std_lib: Option<Rc<RefCell<SymbolTable>>>,
-        imported_modules: Rc<RefCell<HashMap<String, Rc<RefCell<SymbolTable>>>>>,
+        imported_modules: Rc<RefCell<HashMap<PathBuf, Rc<RefCell<SymbolTable>>>>>,
     ) -> Self {
         let interpreter = Self {
             global_symbol_table: Rc::new(RefCell::new(SymbolTable::new(None))),
@@ -67,7 +73,7 @@ impl Interpreter {
     }
 
     pub fn evaluate(&mut self, src: &str, context: Rc<RefCell<Context>>) -> Option<StandardError> {
-        let mut lexer = Lexer::new("<eval>", src.to_string());
+        let mut lexer = Lexer::new(Path::new("<eval>"), src.to_string());
         let token_result = lexer.make_tokens();
 
         if token_result.is_err() {
@@ -625,7 +631,7 @@ impl Interpreter {
             .unwrap_or_else(|| Path::new(""))
             .to_path_buf();
 
-        let file_to_import = match *import_value.borrow() {
+        let file_to_import = importing_dir.join(PathBuf::from(match *import_value.borrow() {
             Value::StringValue(ref string) => string.as_string(),
             _ => {
                 return result.failure(Some(StandardError::new(
@@ -635,14 +641,9 @@ impl Interpreter {
                     Some("add the '.glang' file you would like to import"),
                 )));
             }
-        };
+        }));
 
-        let file_to_import = importing_dir
-            .join(&file_to_import)
-            .to_string_lossy()
-            .into_owned();
-
-        if fs::exists(&file_to_import).is_err() || !&file_to_import.ends_with(".glang") {
+        if !(file_to_import.exists() || !file_to_import.ends_with(".glang")) {
             return result.failure(Some(StandardError::new(
                 "invalid import",
                 import_value.borrow().position_start().unwrap(),
@@ -688,7 +689,10 @@ impl Interpreter {
             Ok(extra) => contents.push_str(&extra),
             Err(_) => {
                 return result.failure(Some(StandardError::new(
-                    &format!("file contents couldn't be read properly on {file_to_import}"),
+                    &format!(
+                        "file contents couldn't be read properly on {}",
+                        file_to_import.to_string_lossy()
+                    ),
                     import_value.borrow().position_start().unwrap(),
                     import_value.borrow().position_end().unwrap(),
                     Some("add a UTF-8 encoded '.glang' file you would like to import"),

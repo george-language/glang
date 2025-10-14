@@ -13,7 +13,7 @@ use crate::{
 };
 use glang_attributes::{Position, StandardError};
 use glang_lexer::{Token, TokenType};
-use std::rc::Rc;
+use std::{path::Path, rc::Rc};
 
 pub struct Parser {
     pub tokens: Rc<[Token]>,
@@ -1469,7 +1469,7 @@ impl Parser {
 fn test_ast() {
     use glang_lexer::Lexer;
 
-    let mut lexer = Lexer::new("<test>", "function(1 + 1);".to_owned());
+    let mut lexer = Lexer::new(Path::new("<test>"), "function(1 + 1);".to_owned());
     let tokens = lexer.make_tokens().ok().unwrap();
 
     let mut parser = Parser::new(&tokens);

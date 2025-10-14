@@ -3,11 +3,14 @@ use crate::token_type::TokenType;
 use glang_attributes::Position;
 use glang_attributes::StandardError;
 use glang_attributes::keywords::*;
-use std::collections::HashMap;
-use std::rc::Rc;
+use std::{
+    collections::HashMap,
+    path::{Path, PathBuf},
+    rc::Rc,
+};
 
 pub struct Lexer {
-    pub filename: String,
+    pub filename: PathBuf,
     pub text: String,
     pub chars: Rc<[char]>,
     pub position: Position,
@@ -15,12 +18,12 @@ pub struct Lexer {
 }
 
 impl Lexer {
-    pub fn new(filename: &str, text: String) -> Self {
+    pub fn new(filename: &Path, text: String) -> Self {
         let contents = text.replace("\r\n", "\n"); // on windows, the duplicate \r can cause issues, so it's best to remove it
         let contents = contents.trim_end(); // we trim the end of the contents so that the lexer can't advance into an empty newline
 
         let mut lexer = Self {
-            filename: filename.to_string(),
+            filename: filename.to_path_buf(),
             text: contents.to_string(),
             chars: contents.chars().collect::<Vec<_>>().into(),
             position: Position::new(-1, 0, 0, filename, contents), // initially start at index -1 because we are advancing into the first char (index 0)
@@ -509,7 +512,7 @@ impl Lexer {
 // Test the output of tokens from a lexed string
 #[test]
 fn test_tokens() {
-    let mut lexer = Lexer::new("<test>", "function(1 + 1);".to_owned());
+    let mut lexer = Lexer::new(Path::new("<test>"), "function(1 + 1);".to_owned());
     let tokens = lexer.make_tokens().ok().unwrap();
 
     assert_eq!(tokens.len(), 8); // including EOF token
