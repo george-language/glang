@@ -6,6 +6,7 @@ on:
   push:
     branches:
       - experimental
+  workflow_dispatch:
 
 jobs:
   build-macos:
