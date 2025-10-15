@@ -15,7 +15,9 @@ _A dog-themed, interpreted programming language for beginners._
 GLang was made because beginner-friendly languages don’t have to be boring. GLang is:
 
 - **Approachable:** Simple syntax and fun naming conventions to help users learn quick. Functions like `bark`, `chew`, and `uhoh` make coding more intuitive and playful.
+
 - **Educational:** Teaches real programming concepts under the hood, like data structures (lists, strings) and collections such as hashmap.
+
 - **All-In-One:** The `glang` binary includes the GLang runtime, package management, and component tools like `glang self update`
 
 ## Features
