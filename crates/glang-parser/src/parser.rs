@@ -149,10 +149,10 @@ impl Parser {
 
         if parse_result.error.is_some() {
             return parse_result.failure(Some(StandardError::new(
-                "expected an object or operator",
+                "expected keyword, object, function, expression",
                 self.current_pos_start(),
                 self.current_pos_end(),
-                Some("add one of the following: integer, float, identifier, 'not', '+', '-', '(', or '['"),
+                None,
             )));
         }
 
@@ -462,7 +462,7 @@ impl Parser {
                 "expected keyword",
                 self.current_pos_start(),
                 self.current_pos_end(),
-                Some("add the 'walk' keyword to represent a for loop"),
+                Some("add the 'walk' keyword to initialize a walk loop"),
             )));
         }
 
@@ -474,7 +474,7 @@ impl Parser {
                 "expected identifier",
                 self.current_pos_start(),
                 self.current_pos_end(),
-                Some("add an object name like 'i' to represent a for loop's iterator"),
+                Some("add an object name like 'i' for the iterator name"),
             )));
         }
 
@@ -668,7 +668,7 @@ impl Parser {
                 "expected keyword",
                 self.current_pos_start(),
                 self.current_pos_end(),
-                Some("add the 'try' keyword to represent a block of code that is unsafe"),
+                Some("add the 'try' keyword to isolate unsafe code"),
             )));
         }
 
@@ -713,7 +713,7 @@ impl Parser {
                 "expected keyword",
                 self.current_pos_start(),
                 self.current_pos_end(),
-                Some("add the 'catch' keyword to represent the block of code to fall back to if the 'try' block fails"),
+                Some("add the 'catch' keyword to isolate the safe code to execute if the 'try' block fails"),
             )));
         }
 
@@ -725,7 +725,7 @@ impl Parser {
                 "expected identifier",
                 self.current_pos_start(),
                 self.current_pos_end(),
-                Some("add a name for the exception error like 'error'"),
+                Some("add a name for caught error like 'error'"),
             )));
         }
 
