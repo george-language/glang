@@ -608,7 +608,7 @@ impl Parser {
                 "expected keyword",
                 self.current_pos_start(),
                 self.current_pos_end(),
-                Some("add the 'while' keyword to represent a while loop"),
+                Some("add the 'while' keyword to initialize a while loop"),
             )));
         }
 
