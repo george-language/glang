@@ -220,7 +220,12 @@ fn run(filename: &str, code: Option<String>) -> Option<StandardError> {
         println!("Time to interpret: {:?}ms", interpreting_time.as_millis());
     }
 
-    result.error
+    if result.should_propagate() {
+        // if the error is propagating, it is already displayed in the terminal
+        None
+    } else {
+        result.error
+    }
 }
 
 /// Starts the glang REPL using stdio
