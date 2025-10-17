@@ -4,7 +4,7 @@
 # returns true if decimal otherwise false
 func isdecimal(num) {
     if type(num) != "number" {
-        uhoh("expected type number in 'isdecimal'");
+        uhoh("expected type number");
     }
 
     # this will only work if the object has a decimal place

@@ -4,15 +4,15 @@
 # returns the char at the specified index
 func charat(str, index) {
     if type(str) != "string" {
-        uhoh("expected type string in 'charat'");
+        uhoh("argument 'str' must be type string");
     }
 
     if type(index) != "number" {
-        uhoh("argument 'index' must be type number in 'charat'");
+        uhoh("argument 'index' must be type number");
     }
 
     if index < 0 {
-        uhoh("cannot index a strings characters at a value less than 0 in 'charat'");
+        uhoh("cannot index a strings characters at a value less than 0");
     }
 
     give str ^ index;
@@ -22,11 +22,11 @@ func charat(str, index) {
 # returns true if starts with chars otherwise false
 func startswith(str, chars) {
     if type(str) != "string" {
-        uhoh("expected type string in 'startswith'");
+        uhoh("argument 'str' must be type string");
     }
 
     if type(chars) != "string" {
-        uhoh("argument 'chars' must be type string in 'startswith'");
+        uhoh("argument 'chars' must be type string");
     }
 
     if length(chars) > length(str) {
@@ -46,11 +46,11 @@ func startswith(str, chars) {
 # returns true if ends with chars otherwise false
 func endswith(str, chars) {
     if type(str) != "string" {
-        uhoh("expected type string in 'endswith'");
+        uhoh("argument 'str' must be type string");
     }
 
     if type(chars) != "string" {
-        uhoh("argument 'chars' must be type string in 'endswith'");
+        uhoh("argument 'chars' must be type string");
     }
 
     if length(chars) > length(str) {
@@ -74,11 +74,11 @@ func endswith(str, chars) {
 # returns the two strings combined as a new string
 func join(string_a, string_b) {
     if type(string_a) != "string" {
-        uhoh("argument 'string_a' must be type string in 'join'");
+        uhoh("argument 'string_a' must be type string");
     }
 
     if type(string_b) != "string" {
-        uhoh("argument 'string_b' must be type string in 'join'");
+        uhoh("argument 'string_b' must be type string");
     }
 
     give string_a + string_b;

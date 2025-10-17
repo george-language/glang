@@ -4,7 +4,7 @@
 # returns null
 func push(list, value) {
     if type(list) != "list" {
-        uhoh("expected type list");
+        uhoh("argument 'list' must be type list");
     }
 
     give list * value;
@@ -28,7 +28,7 @@ func append(list_a, list_b) {
 # returns the removed value from the list
 func remove(list, index) {
     if type(list) != "list" {
-        uhoh("expected type list");
+        uhoh("argument 'list' must be type list");
     }
 
     if type(index) != "number" {
@@ -42,7 +42,7 @@ func remove(list, index) {
 # returns the value at the retrieved index
 func retrieve(list, index) {
     if type(list) != "list" {
-        uhoh("expected type list");
+        uhoh("argument 'list' must be type list");
     }
 
     if type(index) != "number" {
@@ -89,7 +89,7 @@ func contains(value, object) {
         give false;
     } alsoif type(value) == "string" {
         if type(object) != "string" {
-            uhoh("expected object as type string");
+            uhoh("argument 'object' must be type string");
         }
 
         walk i = 0 through length(value) - length(object) {
@@ -110,6 +110,6 @@ func contains(value, object) {
 
         give false;
     } otherwise {
-        uhoh("expected value as type list or string");
+        uhoh("argument 'value' must be type list or string");
     }
 }
