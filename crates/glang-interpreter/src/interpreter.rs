@@ -880,6 +880,12 @@ impl Interpreter {
         });
 
         if result.should_return() {
+            if result.should_propagate() {
+                let err = result.error.as_mut().unwrap();
+                err.pos_start = node.pos_start.as_ref().unwrap().clone();
+                err.pos_end = node.pos_end.as_ref().unwrap().clone();
+            }
+
             return result;
         }
 

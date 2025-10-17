@@ -8,6 +8,7 @@ pub struct StandardError {
     pub pos_start: Rc<Position>,
     pub pos_end: Rc<Position>,
     pub help: Option<String>,
+    pub error_propagates: bool,
 }
 
 impl StandardError {
@@ -26,6 +27,7 @@ impl StandardError {
             } else {
                 None
             },
+            error_propagates: false,
         }
     }
 

@@ -80,4 +80,12 @@ impl RuntimeResult {
             || self.loop_should_continue
             || self.loop_should_break
     }
+
+    pub fn should_propagate(&self) -> bool {
+        if let Some(err) = &self.error {
+            return err.error_propagates;
+        }
+
+        false
+    }
 }

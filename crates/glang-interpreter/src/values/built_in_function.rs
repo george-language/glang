@@ -438,12 +438,15 @@ impl BuiltInFunction {
             }
         };
 
-        result.failure(Some(StandardError::new(
+        let mut error = StandardError::new(
             message.borrow().as_string().as_str(),
             message.borrow().position_start().unwrap().clone(),
             message.borrow().position_end().unwrap().clone(),
             None,
-        )))
+        );
+        error.error_propagates = true;
+
+        result.failure(Some(error))
     }
 
     pub fn execute_type(
