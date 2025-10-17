@@ -241,7 +241,7 @@ impl Interpreter {
                 format!("variable name '{var_name}' is undefined").as_str(),
                 node.pos_start.as_ref().unwrap().clone(),
                 node.pos_end.as_ref().unwrap().clone(),
-                Some("you can define a variable like 'obj my_variable = 1;'"),
+                Some("define a variable with the syntax 'obj <variable name> = <value>;'"),
             )));
         }
 
@@ -331,7 +331,7 @@ impl Interpreter {
                 format!("variable name '{var_name}' is undefined").as_str(),
                 node.pos_start.as_ref().unwrap().clone(),
                 node.pos_end.as_ref().unwrap().clone(),
-                Some("you can define a variable like 'obj my_variable = 1;'"),
+                Some("define a variable with the syntax 'obj <variable name> = <value>;'"),
             )));
         }
 
@@ -638,7 +638,7 @@ impl Interpreter {
                     "expected type string",
                     import_value.borrow().position_start().unwrap(),
                     import_value.borrow().position_end().unwrap(),
-                    Some("add the '.glang' file you would like to import"),
+                    Some("add the '.glang' file to import"),
                 )));
             }
         }));
@@ -648,7 +648,7 @@ impl Interpreter {
                 "invalid import",
                 import_value.borrow().position_start().unwrap(),
                 import_value.borrow().position_end().unwrap(),
-                Some("add the '.glang' file you would like to import"),
+                Some("add the '.glang' file to import"),
             )));
         }
 
@@ -695,7 +695,7 @@ impl Interpreter {
                     ),
                     import_value.borrow().position_start().unwrap(),
                     import_value.borrow().position_end().unwrap(),
-                    Some("add a UTF-8 encoded '.glang' file you would like to import"),
+                    Some("add a UTF-8 encoded '.glang' file to import"),
                 )));
             }
         }

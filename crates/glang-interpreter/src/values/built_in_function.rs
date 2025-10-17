@@ -246,7 +246,7 @@ impl BuiltInFunction {
                     "file contents couldn't be read properly",
                     file_arg.borrow().position_start().unwrap().clone(),
                     file_arg.borrow().position_end().unwrap().clone(),
-                    Some("add a UTF-8 encoded file you would like to read"),
+                    Some("add a UTF-8 encoded file to read"),
                 )));
             }
         }
@@ -488,7 +488,7 @@ impl BuiltInFunction {
                     "expected type string",
                     code_arg.borrow().position_start().unwrap().clone(),
                     code_arg.borrow().position_end().unwrap().clone(),
-                    Some("add the glang code you would like to execute"),
+                    Some("add the glang code to execute"),
                 )));
             }
         };
@@ -554,7 +554,7 @@ impl BuiltInFunction {
                     "expected type string",
                     env_arg.borrow().position_start().unwrap().clone(),
                     env_arg.borrow().position_end().unwrap().clone(),
-                    Some("add the glang code you would like to execute"),
+                    Some("add the glang code to execute"),
                 )));
             }
         };
