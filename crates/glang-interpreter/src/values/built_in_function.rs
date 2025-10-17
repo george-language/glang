@@ -73,9 +73,10 @@ impl BuiltInFunction {
                 self.pos_end.as_ref().unwrap().clone(),
                 Some(
                     format!(
-                        "{} takes {} positional argument(s) but the program gave {}",
+                        "{} takes {} argument{} but the program gave {}",
                         self.name,
                         arg_names.len(),
+                        if arg_names.len() > 1 { "s" } else { "" },
                         args.len()
                     )
                     .as_str(),
