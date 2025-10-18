@@ -341,16 +341,11 @@ impl Interpreter {
             value.as_ref().unwrap().borrow_mut().set_const(false); // no longer a constant, cause we cloned
         }
 
-        value
-            .as_mut()
-            .unwrap()
-            .borrow_mut()
-            .set_context(Some(context.clone()));
-        value
-            .as_mut()
-            .unwrap()
-            .borrow_mut()
-            .set_position(node.pos_start.clone(), node.pos_end.clone());
+        // prevent recursion issues by borrowing already borrowed objects
+        if let Some(v) = &mut value.as_mut().unwrap().try_borrow_mut().ok() {
+            v.set_context(Some(context.clone()));
+            v.set_position(node.pos_start.clone(), node.pos_end.clone());
+        }
 
         result.success(value)
     }
@@ -848,11 +843,10 @@ impl Interpreter {
             return result;
         }
 
-        value_to_call
-            .as_mut()
-            .unwrap()
-            .borrow_mut()
-            .set_position(node.pos_start.clone(), node.pos_end.clone());
+        // prevent recursion issues by borrowing already borrowed objects
+        if let Some(v) = &mut value_to_call.as_mut().unwrap().try_borrow_mut().ok() {
+            v.set_position(node.pos_start.clone(), node.pos_end.clone());
+        }
 
         for arg_node in &node.arg_nodes {
             let arg = result.register(self.visit(arg_node.as_ref(), context.clone()));
