@@ -32,6 +32,15 @@ impl SymbolTable {
             return;
         }
 
+        // otherwise try to update the parent scope
+        if let Some(parent) = &self.parent {
+            if parent.borrow().get(&name).is_some() {
+                parent.borrow_mut().set(name, value);
+
+                return;
+            }
+        }
+
         self.symbols.insert(name, value);
     }
 
