@@ -9,6 +9,7 @@ use crate::{
         variable_assign_node::VariableAssignNode, variable_reassign_node::VariableRessignNode,
         while_node::WhileNode,
     },
+    operator::Operator,
     parse_result::ParseResult,
 };
 use glang_attributes::{Position, StandardError};
@@ -135,7 +136,7 @@ impl Parser {
         }
 
         let node = parse_result.register(self.binary_operator(
-            "arithmetic_expr",
+            Operator::ArithmeticExpr,
             &[
                 (TokenType::TT_EE, ""),
                 (TokenType::TT_NE, ""),
@@ -161,7 +162,7 @@ impl Parser {
 
     fn arithmetic_expr(&mut self) -> ParseResult {
         self.binary_operator(
-            "term",
+            Operator::Term,
             &[(TokenType::TT_PLUS, ""), (TokenType::TT_MINUS, "")],
             None,
         )
@@ -930,7 +931,7 @@ impl Parser {
         }
 
         let node = parse_result.register(self.binary_operator(
-            "comparison_expr",
+            Operator::ComparisonExpr,
             &[
                 (TokenType::TT_KEYWORD, "and"),
                 (TokenType::TT_KEYWORD, "or"),
@@ -1128,7 +1129,7 @@ impl Parser {
         let mut parse_result = ParseResult::new();
         let token = self.current_token_copy();
 
-        if [TokenType::TT_INT, TokenType::TT_FLOAT].contains(&token.token_type) {
+        if token.token_type == TokenType::TT_NUM {
             parse_result.register_advancement();
             self.advance();
 
@@ -1234,7 +1235,11 @@ impl Parser {
     }
 
     fn power(&mut self) -> ParseResult {
-        self.binary_operator("call", &[(TokenType::TT_POW, "")], Some("factor"))
+        self.binary_operator(
+            Operator::Call,
+            &[(TokenType::TT_POW, "")],
+            Some(Operator::Factor),
+        )
     }
 
     fn factor(&mut self) -> ParseResult {
@@ -1260,7 +1265,7 @@ impl Parser {
 
     fn term(&mut self) -> ParseResult {
         self.binary_operator(
-            "factor",
+            Operator::Factor,
             &[
                 (TokenType::TT_MUL, ""),
                 (TokenType::TT_DIV, ""),
@@ -1407,20 +1412,19 @@ impl Parser {
 
     fn binary_operator(
         &mut self,
-        func_a: &str,
+        func_a: Operator,
         ops: &[(TokenType, &str)],
-        func_b: Option<&str>,
+        func_b: Option<Operator>,
     ) -> ParseResult {
-        let func_b = func_b.unwrap_or(func_a);
+        let func_b = func_b.unwrap_or(func_a.clone());
 
         let mut parse_result = ParseResult::new();
         let mut left = parse_result.register(match func_a {
-            "comparison_expr" => self.comparison_expr(),
-            "arithmetic_expr" => self.arithmetic_expr(),
-            "term" => self.term(),
-            "factor" => self.factor(),
-            "call" => self.call(),
-            _ => panic!("CRITICAL ERROR: GLANG COULD NOT FIND EXPRESSION IN BINARY OPERATOR"),
+            Operator::ComparisonExpr => self.comparison_expr(),
+            Operator::ArithmeticExpr => self.arithmetic_expr(),
+            Operator::Term => self.term(),
+            Operator::Factor => self.factor(),
+            Operator::Call => self.call(),
         });
 
         if parse_result.error.is_some() {
@@ -1441,12 +1445,11 @@ impl Parser {
             parse_result.register_advancement();
             self.advance();
             let right = parse_result.register(match func_b {
-                "comparison_expr" => self.comparison_expr(),
-                "arithmetic_expr" => self.arithmetic_expr(),
-                "term" => self.term(),
-                "factor" => self.factor(),
-                "call" => self.call(),
-                _ => panic!("CRITICAL ERROR: GLANG COULD NOT FIND EXPRESSION IN BINARY OPERATOR"),
+                Operator::ComparisonExpr => self.comparison_expr(),
+                Operator::ArithmeticExpr => self.arithmetic_expr(),
+                Operator::Term => self.term(),
+                Operator::Factor => self.factor(),
+                Operator::Call => self.call(),
             });
 
             if parse_result.error.is_some() {

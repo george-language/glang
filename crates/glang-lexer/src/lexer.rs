@@ -245,7 +245,12 @@ impl Lexer {
                 num_str.push(character);
             } else if character == '.' {
                 if dot_count == 1 {
-                    break;
+                    return Err(StandardError::new(
+                        "invalid numerical value",
+                        Rc::new(pos_start),
+                        Rc::new(self.position.clone()),
+                        None,
+                    ));
                 }
                 dot_count += 1;
                 num_str.push('.');
@@ -265,14 +270,8 @@ impl Lexer {
 
         let pos_end = self.position.clone();
 
-        let token_type = if dot_count == 0 {
-            TokenType::TT_INT
-        } else {
-            TokenType::TT_FLOAT
-        };
-
         Ok(Token::new(
-            token_type,
+            TokenType::TT_NUM,
             Some(num_str),
             Some(pos_start),
             Some(pos_end),
@@ -520,9 +519,9 @@ fn test_tokens() {
     assert_eq!(tokens.len(), 8); // including EOF token
     assert_eq!(tokens[0].token_type, TokenType::TT_IDENTIFIER);
     assert_eq!(tokens[1].token_type, TokenType::TT_LPAREN);
-    assert_eq!(tokens[2].token_type, TokenType::TT_INT);
+    assert_eq!(tokens[2].token_type, TokenType::TT_NUM);
     assert_eq!(tokens[3].token_type, TokenType::TT_PLUS);
-    assert_eq!(tokens[4].token_type, TokenType::TT_INT);
+    assert_eq!(tokens[4].token_type, TokenType::TT_NUM);
     assert_eq!(tokens[5].token_type, TokenType::TT_RPAREN);
     assert_eq!(tokens[6].token_type, TokenType::TT_SEMICOLON);
     assert_eq!(tokens[7].token_type, TokenType::TT_EOF);

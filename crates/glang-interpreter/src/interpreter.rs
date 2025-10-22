@@ -116,7 +116,7 @@ impl Interpreter {
     }
 
     fn visit_number_node(&self, node: &NumberNode, context: Rc<RefCell<Context>>) -> RuntimeResult {
-        let value = Number::from(node.token.value.as_ref().unwrap().parse().unwrap());
+        let value = Number::from(node.value);
         value.borrow_mut().set_context(Some(context.clone()));
         value
             .borrow_mut()

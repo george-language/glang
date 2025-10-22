@@ -3,8 +3,7 @@ use std::fmt::{Display, Formatter, Result};
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[allow(non_camel_case_types)]
 pub enum TokenType {
-    TT_INT,
-    TT_FLOAT,
+    TT_NUM,
     TT_STR,
     TT_IDENTIFIER,
     TT_KEYWORD,
@@ -36,8 +35,7 @@ pub enum TokenType {
 impl Display for TokenType {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         let text = match self {
-            TokenType::TT_INT => "INT",
-            TokenType::TT_FLOAT => "FLOAT",
+            TokenType::TT_NUM => "NUMBER",
             TokenType::TT_STR => "STRING",
             TokenType::TT_IDENTIFIER => "IDENTIFIER",
             TokenType::TT_KEYWORD => "KEYWORD",
