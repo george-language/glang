@@ -9,12 +9,20 @@ use crate::{
         variable_assign_node::VariableAssignNode, variable_reassign_node::VariableRessignNode,
         while_node::WhileNode,
     },
-    operator::Operator,
     parse_result::ParseResult,
 };
 use glang_attributes::{Position, StandardError};
 use glang_lexer::{Token, TokenType};
 use std::{path::Path, rc::Rc};
+
+#[derive(Debug, Clone)]
+enum Operator {
+    ComparisonExpr,
+    ArithmeticExpr,
+    Term,
+    Factor,
+    Call,
+}
 
 pub struct Parser {
     pub tokens: Rc<[Token]>,

@@ -1,5 +1,4 @@
 pub mod nodes;
-pub mod operator;
 pub mod parse_result;
 pub mod parser;
 
