@@ -2,12 +2,14 @@ use clap::{Parser as ClapParser, Subcommand};
 use glang_attributes::StandardError;
 use glang_interpreter::{Context, Interpreter};
 use glang_lexer::Lexer;
+use glang_logging::log_error;
 use glang_parser::Parser;
 use std::{
     cell::RefCell,
     collections::HashMap,
     env, fs,
     io::{Write, stdin, stdout},
+    panic,
     path::{Path, PathBuf},
     rc::Rc,
     time::Instant,
@@ -49,6 +51,23 @@ enum SelfCommands {
 }
 
 fn main() {
+    panic::set_hook(Box::new(|info| {
+        if let Some(location) = info.location() {
+            log_error(&format!(
+                "Error occured in {}:{}:{}",
+                location.file(),
+                location.line(),
+                location.column()
+            ));
+        }
+
+        if let Some(msg) = info.payload().downcast_ref::<&str>() {
+            log_error(msg);
+        } else if let Some(msg) = info.payload().downcast_ref::<String>() {
+            log_error(&msg);
+        }
+    }));
+
     set_env_variables();
 
     // we have to run this everytime the glang executable is ran to double check 'kennels/' always exists

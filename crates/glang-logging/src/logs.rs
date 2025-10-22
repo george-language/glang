@@ -8,6 +8,10 @@ pub fn log_message(msg: &str) {
     println!("    -> {msg}");
 }
 
+pub fn log_error(msg: &str) {
+    println!("{RED}{msg}{RESET}")
+}
+
 pub fn log_package_status(package: &str, installed: bool) {
     log_message(&format!(
         "Kennel '{}' is {}",
