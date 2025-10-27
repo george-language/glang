@@ -27,18 +27,18 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
-    #[command(name = "self", about = "Manage the glang binary itself")]
+    #[command(name = "self", about = "Manage the glang binary and components")]
     GlangSelf {
         #[command(subcommand)]
         action: SelfCommands,
     },
     #[command(about = "Run a string of glang source code")]
     Run { code: String },
-    #[command(about = "Install a glang kennel from the internet")]
+    #[command(about = "Install a kennel from the internet")]
     Install { name: String },
-    #[command(about = "Remove an installed glang kennel")]
+    #[command(about = "Remove an installed kennel")]
     Remove { name: String },
-    #[command(about = "Update an installed glang kennel to the latest version")]
+    #[command(about = "Update an installed kennel to the latest version")]
     Update { name: String },
 }
 
