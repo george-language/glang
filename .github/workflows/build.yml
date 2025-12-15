@@ -53,7 +53,7 @@ jobs:
             dist/GeorgeLanguage+macos_setup.pkg
 
       - name: Upload pkg artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: GeorgeLanguage+macos_setup
           path: dist/GeorgeLanguage+macos_setup.pkg
@@ -80,7 +80,7 @@ jobs:
         run: iscc installer.iss
 
       - name: Upload exe artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: GeorgeLanguage+windows_setup
           path: dist/GeorgeLanguage+windows_setup.exe
