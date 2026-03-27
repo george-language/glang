@@ -59,7 +59,7 @@ impl Display for StandardError {
             self.text,
             self.span.filename.to_string_lossy(),
             self.span.start.line_num,
-            self.span.start.column_num
+            self.span.start.column_num + 1
         ));
 
         output.push_str(&format!(
