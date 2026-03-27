@@ -782,7 +782,7 @@ impl Parser {
         let mut parse_result = ParseResult::new();
         let next_tok = match self.next_token_copy() {
             Some(tok) => tok,
-            None => Token::new(TokenType::TT_EOF, None, self.current_span()),
+            None => Token::new(TokenType::TT_EOF, None, Span::empty()),
         };
 
         if self
@@ -942,7 +942,7 @@ impl Parser {
                 Span::new(
                     &self.current_span().filename,
                     pos_start,
-                    self.current_position_start(),
+                    self.current_position_end(),
                 ),
             )))));
         } else if self
@@ -956,7 +956,7 @@ impl Parser {
                 Span::new(
                     &self.current_span().filename,
                     pos_start,
-                    self.current_position_start(),
+                    self.current_position_end(),
                 ),
             )))));
         } else if self
@@ -970,7 +970,7 @@ impl Parser {
                 Span::new(
                     &self.current_span().filename,
                     pos_start,
-                    self.current_position_start(),
+                    self.current_position_end(),
                 ),
             )))));
         }

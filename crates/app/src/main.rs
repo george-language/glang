@@ -271,7 +271,9 @@ fn launch_repl() {
             break;
         }
 
-        if let Some(e) = run("<stdin>", Some(code)) {
+        if let Some(mut e) = run("<stdin>", Some(code.clone())) {
+            e.contents = Some(code);
+
             println!("{e}");
 
             continue; // keep evaluating more code

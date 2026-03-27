@@ -5,6 +5,7 @@ use std::{fmt::Display, fs};
 #[derive(Clone)]
 pub struct StandardError {
     pub text: String,
+    pub contents: Option<String>,
     pub span: Span,
     pub help: Option<String>,
     pub error_propagates: bool,
@@ -14,6 +15,7 @@ impl StandardError {
     pub fn new(text: &str, span: Span, help: Option<&str>) -> Self {
         Self {
             text: text.to_string(),
+            contents: None,
             span,
             help: help.map(|h| h.to_string()),
             error_propagates: false,
@@ -29,8 +31,8 @@ impl StandardError {
                 result.push_str(&format!(" {BOLD}{:>3} |{RESET} {}\n", i, line));
 
                 let line_len = line.len();
-                let col_start = span.start.column_num.clamp(0, line_len);
-                let col_end = span.end.column_num.clamp(0, line_len);
+                let col_start = span.start.column_num.saturating_sub(1);
+                let col_end = span.end.column_num.saturating_sub(1);
                 let arrow_len = (col_end.saturating_sub(col_start)).max(1);
                 let mut arrow_line = " ".repeat(col_start) + &"^".repeat(arrow_len);
 
@@ -49,9 +51,14 @@ impl StandardError {
 impl Display for StandardError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut output = String::new();
-        let contents = match fs::read_to_string(&self.span.filename) {
-            Ok(contents) => contents,
-            Err(_) => String::new(),
+
+        let contents = if let Some(c) = &self.contents {
+            c.to_owned()
+        } else {
+            match fs::read_to_string(&self.span.filename) {
+                Ok(contents) => contents,
+                Err(_) => String::new(),
+            }
         };
 
         output.push_str(&format!(
@@ -59,7 +66,7 @@ impl Display for StandardError {
             self.text,
             self.span.filename.to_string_lossy(),
             self.span.start.line_num,
-            self.span.start.column_num + 1
+            self.span.start.column_num
         ));
 
         output.push_str(&format!(
