@@ -118,9 +118,7 @@ impl Interpreter {
     fn visit_number_node(&self, node: &NumberNode, context: Rc<RefCell<Context>>) -> RuntimeResult {
         let value = Number::from(node.value);
         value.borrow_mut().set_context(Some(context.clone()));
-        value
-            .borrow_mut()
-            .set_position(node.pos_start.clone(), node.pos_end.clone());
+        value.borrow_mut().set_span(node.span.clone());
 
         RuntimeResult::new().success(Some(value))
     }
@@ -141,8 +139,7 @@ impl Interpreter {
 
         let list = List::from(elements);
         list.borrow_mut().set_context(Some(context.clone()));
-        list.borrow_mut()
-            .set_position(node.pos_start.clone(), node.pos_end.clone());
+        list.borrow_mut().set_span(node.span.clone());
 
         result.success(Some(list))
     }
@@ -154,9 +151,7 @@ impl Interpreter {
     ) -> RuntimeResult {
         let string = Str::from(node.token.value.as_ref().unwrap());
         string.borrow_mut().set_context(Some(context.clone()));
-        string
-            .borrow_mut()
-            .set_position(node.pos_start.clone(), node.pos_end.clone());
+        string.borrow_mut().set_span(node.span.clone());
 
         RuntimeResult::new().success(Some(string))
     }
@@ -180,13 +175,12 @@ impl Interpreter {
         if constant.is_some() && constant.unwrap().borrow().is_const() {
             return result.failure(Some(StandardError::new(
                 "cannot reassign the value of a constant",
-                node.pos_start.as_ref().unwrap().to_owned(),
-                node.pos_end.as_ref().unwrap().to_owned(),
+                node.span.clone(),
                 None,
             )));
         }
 
-        let mut value = result.register(self.visit(node.value_node.as_ref(), context.clone()));
+        let value = result.register(self.visit(node.value_node.as_ref(), context.clone()));
 
         if result.should_return() {
             return result;
@@ -222,8 +216,7 @@ impl Interpreter {
         if constant.is_some() && constant.unwrap().borrow().is_const() {
             return result.failure(Some(StandardError::new(
                 "cannot reassign the value of a constant",
-                node.pos_start.as_ref().unwrap().to_owned(),
-                node.pos_end.as_ref().unwrap().to_owned(),
+                node.span.clone(),
                 None,
             )));
         }
@@ -239,13 +232,12 @@ impl Interpreter {
         {
             return result.failure(Some(StandardError::new(
                 format!("variable name '{var_name}' is undefined").as_str(),
-                node.pos_start.as_ref().unwrap().clone(),
-                node.pos_end.as_ref().unwrap().clone(),
+                node.span.clone(),
                 Some("define a variable with the syntax 'obj <variable name> = <value>;'"),
             )));
         }
 
-        let mut value = result.register(self.visit(node.value_node.as_ref(), context.clone()));
+        let value = result.register(self.visit(node.value_node.as_ref(), context.clone()));
 
         if result.should_return() {
             return result;
@@ -281,8 +273,7 @@ impl Interpreter {
         if constant.is_some() && constant.unwrap().borrow().is_const() {
             return result.failure(Some(StandardError::new(
                 "cannot reassign the value of a constant",
-                node.pos_start.as_ref().unwrap().to_owned(),
-                node.pos_end.as_ref().unwrap().to_owned(),
+                node.span.clone(),
                 None,
             )));
         }
@@ -329,8 +320,7 @@ impl Interpreter {
         if value.is_none() {
             return result.failure(Some(StandardError::new(
                 format!("variable name '{var_name}' is undefined").as_str(),
-                node.pos_start.as_ref().unwrap().clone(),
-                node.pos_end.as_ref().unwrap().clone(),
+                node.span.clone(),
                 Some("define a variable with the syntax 'obj <variable name> = <value>;'"),
             )));
         }
@@ -344,7 +334,7 @@ impl Interpreter {
         // prevent recursion issues by borrowing already borrowed objects
         if let Some(v) = &mut value.as_mut().unwrap().try_borrow_mut().ok() {
             v.set_context(Some(context.clone()));
-            v.set_position(node.pos_start.clone(), node.pos_end.clone());
+            v.set_span(node.span.clone());
         }
 
         result.success(value)
@@ -407,8 +397,7 @@ impl Interpreter {
             _ => {
                 return result.failure(Some(StandardError::new(
                     "expected start value as number",
-                    node.pos_start.as_ref().unwrap().clone(),
-                    node.pos_end.as_ref().unwrap().clone(),
+                    node.span.clone(),
                     None,
                 )));
             }
@@ -427,8 +416,7 @@ impl Interpreter {
             _ => {
                 return result.failure(Some(StandardError::new(
                     "expected end value as number",
-                    node.pos_start.as_ref().unwrap().clone(),
-                    node.pos_end.as_ref().unwrap().clone(),
+                    node.span.clone(),
                     None,
                 )));
             }
@@ -450,8 +438,7 @@ impl Interpreter {
                 _ => {
                     return result.failure(Some(StandardError::new(
                         "expected step value as number",
-                        node.pos_start.as_ref().unwrap().clone(),
-                        node.pos_end.as_ref().unwrap().clone(),
+                        node.span.clone(),
                         None,
                     )));
                 }
@@ -467,16 +454,7 @@ impl Interpreter {
         if step_value.value == 0.0 {
             return result.failure(Some(StandardError::new(
                 "step value of a 'walk' loop cannot be 0",
-                node.step_value_node
-                    .as_ref()
-                    .unwrap()
-                    .position_start()
-                    .unwrap(),
-                node.step_value_node
-                    .as_ref()
-                    .unwrap()
-                    .position_end()
-                    .unwrap(),
+                node.step_value_node.as_ref().unwrap().span(),
                 Some("use a step value like 'step = 1' to control how many iteration steps occur"),
             )));
         }
@@ -614,12 +592,7 @@ impl Interpreter {
         }
 
         let import_value = import_value.unwrap();
-        let importing_path = import_value
-            .borrow()
-            .position_start()
-            .unwrap()
-            .filename
-            .clone();
+        let importing_path = import_value.borrow().span().filename.clone();
 
         let importing_dir = Path::new(&importing_path)
             .parent()
@@ -631,8 +604,7 @@ impl Interpreter {
             _ => {
                 return result.failure(Some(StandardError::new(
                     "expected type string",
-                    import_value.borrow().position_start().unwrap(),
-                    import_value.borrow().position_end().unwrap(),
+                    import_value.borrow().span(),
                     Some("add the '.glang' file to import"),
                 )));
             }
@@ -641,8 +613,7 @@ impl Interpreter {
         if !(file_to_import.exists() || !file_to_import.ends_with(".glang")) {
             return result.failure(Some(StandardError::new(
                 "invalid import",
-                import_value.borrow().position_start().unwrap(),
-                import_value.borrow().position_end().unwrap(),
+                import_value.borrow().span(),
                 Some("add the '.glang' file to import"),
             )));
         }
@@ -650,8 +621,7 @@ impl Interpreter {
         if file_to_import == importing_path {
             return result.failure(Some(StandardError::new(
                 "circular import",
-                import_value.borrow().position_start().unwrap(),
-                import_value.borrow().position_end().unwrap(),
+                import_value.borrow().span(),
                 None,
             )));
         }
@@ -688,8 +658,7 @@ impl Interpreter {
                         "file contents couldn't be read properly on {}",
                         file_to_import.to_string_lossy()
                     ),
-                    import_value.borrow().position_start().unwrap(),
-                    import_value.borrow().position_end().unwrap(),
+                    import_value.borrow().span(),
                     Some("add a UTF-8 encoded '.glang' file to import"),
                 )));
             }
@@ -815,9 +784,7 @@ impl Interpreter {
             node.should_auto_return,
         ))));
         func_value.borrow_mut().set_context(Some(context.clone()));
-        func_value
-            .borrow_mut()
-            .set_position(node.pos_start.clone(), node.pos_end.clone());
+        func_value.borrow_mut().set_span(node.span.clone());
 
         if !&func_name.is_empty() {
             context
@@ -845,7 +812,7 @@ impl Interpreter {
 
         // prevent recursion issues by borrowing already borrowed objects
         if let Some(v) = &mut value_to_call.as_mut().unwrap().try_borrow_mut().ok() {
-            v.set_position(node.pos_start.clone(), node.pos_end.clone());
+            v.set_span(node.span.clone());
         }
 
         for arg_node in &node.arg_nodes {
@@ -866,8 +833,7 @@ impl Interpreter {
             _ => {
                 return result.failure(Some(StandardError::new(
                     "expected function as call",
-                    node.pos_start.as_ref().unwrap().clone(),
-                    node.pos_end.as_ref().unwrap().clone(),
+                    node.span.clone(),
                     None,
                 )));
             }
@@ -877,8 +843,7 @@ impl Interpreter {
             // if the call contains an error from 'uhoh', propagate it upward
             if result.should_propagate() {
                 let err = result.error.as_mut().unwrap();
-                err.pos_start = node.pos_start.as_ref().unwrap().clone();
-                err.pos_end = node.pos_end.as_ref().unwrap().clone();
+                err.span = node.span.clone();
 
                 println!("{err}");
             }
@@ -890,7 +855,7 @@ impl Interpreter {
             .as_mut()
             .unwrap()
             .borrow_mut()
-            .set_position(node.pos_start.clone(), node.pos_end.clone());
+            .set_span(node.span.clone());
         return_value
             .as_mut()
             .unwrap()
@@ -957,8 +922,7 @@ impl Interpreter {
 
         match operation_result {
             Ok(val) => {
-                val.borrow_mut()
-                    .set_position(node.pos_start.clone(), node.pos_end.clone());
+                val.borrow_mut().set_span(node.span.clone());
                 result.success(Some(val))
             }
             Err(err) => result.failure(Some(err)),
@@ -992,8 +956,7 @@ impl Interpreter {
         } else {
             operation_result = Err(StandardError::new(
                 "unsupported unary operation",
-                value.borrow().position_start().unwrap(),
-                value.borrow().position_end().unwrap(),
+                value.borrow().span(),
                 None,
             ))
         }
@@ -1006,7 +969,7 @@ impl Interpreter {
                 .ok()
                 .unwrap()
                 .borrow_mut()
-                .set_position(node.pos_start.clone(), node.pos_end.clone());
+                .set_span(node.span.clone());
 
             result.success(Some(operation_result.ok().unwrap()))
         } else {
@@ -1020,7 +983,7 @@ impl Interpreter {
         context: Rc<RefCell<Context>>,
     ) -> RuntimeResult {
         let mut result = RuntimeResult::new();
-        let mut value: Option<Rc<RefCell<Value>>> = None;
+        let value: Option<Rc<RefCell<Value>>>;
 
         if node.node_to_return.is_some() {
             value = result
@@ -1040,16 +1003,16 @@ impl Interpreter {
 
     fn visit_continue_node(
         &mut self,
-        node: &ContinueNode,
-        context: Rc<RefCell<Context>>,
+        _node: &ContinueNode,
+        _context: Rc<RefCell<Context>>,
     ) -> RuntimeResult {
         RuntimeResult::new().success_continue()
     }
 
     fn visit_break_node(
         &mut self,
-        node: &BreakNode,
-        context: Rc<RefCell<Context>>,
+        _node: &BreakNode,
+        _context: Rc<RefCell<Context>>,
     ) -> RuntimeResult {
         RuntimeResult::new().success_break()
     }

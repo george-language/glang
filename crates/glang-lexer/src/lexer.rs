@@ -1,6 +1,6 @@
-use crate::token::Token;
-use crate::token_type::TokenType;
+use crate::token::{Token, TokenType};
 use glang_attributes::Position;
+use glang_attributes::Span;
 use glang_attributes::StandardError;
 use glang_attributes::keywords::*;
 use std::{
@@ -13,7 +13,7 @@ pub struct Lexer {
     pub filename: PathBuf,
     pub text: String,
     pub chars: Rc<[char]>,
-    pub position: Position,
+    pub cursor: Position,
     pub current_char: Option<char>,
 }
 
@@ -21,24 +21,28 @@ impl Lexer {
     pub fn new(filename: &Path, text: String) -> Self {
         let contents = text.replace("\r\n", "\n"); // on windows, the duplicate \r can cause issues, so it's best to remove it
         let contents = contents.trim_end(); // we trim the end of the contents so that the lexer can't advance into an empty newline
+        let chars: Rc<[char]> = contents.chars().collect::<Vec<_>>().into();
 
-        let mut lexer = Self {
+        let lexer = Self {
             filename: filename.to_path_buf(),
             text: contents.to_string(),
-            chars: contents.chars().collect::<Vec<_>>().into(),
-            position: Position::new(-1, 0, 0, filename, contents), // initially start at index -1 because we are advancing into the first char (index 0)
-            current_char: None,
+            chars: chars.clone(),
+            cursor: Position::new(0, 1, 1),
+            current_char: if chars.len() > 0 {
+                Some(chars[0])
+            } else {
+                None
+            },
         };
-        lexer.advance();
 
         lexer
     }
 
     fn advance(&mut self) {
-        self.position.advance(self.current_char);
+        self.cursor.advance(self.current_char);
 
-        if self.position.index >= 0 && (self.position.index as usize) < self.chars.len() {
-            self.current_char = Some(self.chars[self.position.index as usize]);
+        if self.cursor.index >= 0 && (self.cursor.index as usize) < self.chars.len() {
+            self.current_char = Some(self.chars[self.cursor.index as usize]);
         } else {
             self.current_char = None;
         }
@@ -63,8 +67,7 @@ impl Lexer {
                     let token = Token::new(
                         TokenType::TT_SEMICOLON,
                         None,
-                        Some(self.position.clone()),
-                        None,
+                        Span::new(&self.filename, self.cursor.clone(), self.cursor.clone()),
                     );
 
                     self.advance();
@@ -81,8 +84,11 @@ impl Lexer {
                     Err(error) => return Err(error),
                 },
                 '+' => {
-                    let token =
-                        Token::new(TokenType::TT_PLUS, None, Some(self.position.clone()), None);
+                    let token = Token::new(
+                        TokenType::TT_PLUS,
+                        None,
+                        Span::new(&self.filename, self.cursor.clone(), self.cursor.clone()),
+                    );
 
                     self.advance();
 
@@ -90,32 +96,44 @@ impl Lexer {
                 }
                 '-' => Some(self.make_minus_or_arrow()),
                 '*' => {
-                    let token =
-                        Token::new(TokenType::TT_MUL, None, Some(self.position.clone()), None);
+                    let token = Token::new(
+                        TokenType::TT_MUL,
+                        None,
+                        Span::new(&self.filename, self.cursor.clone(), self.cursor.clone()),
+                    );
 
                     self.advance();
 
                     Some(token)
                 }
                 '/' => {
-                    let token =
-                        Token::new(TokenType::TT_DIV, None, Some(self.position.clone()), None);
+                    let token = Token::new(
+                        TokenType::TT_DIV,
+                        None,
+                        Span::new(&self.filename, self.cursor.clone(), self.cursor.clone()),
+                    );
 
                     self.advance();
 
                     Some(token)
                 }
                 '^' => {
-                    let token =
-                        Token::new(TokenType::TT_POW, None, Some(self.position.clone()), None);
+                    let token = Token::new(
+                        TokenType::TT_POW,
+                        None,
+                        Span::new(&self.filename, self.cursor.clone(), self.cursor.clone()),
+                    );
 
                     self.advance();
 
                     Some(token)
                 }
                 '%' => {
-                    let token =
-                        Token::new(TokenType::TT_MOD, None, Some(self.position.clone()), None);
+                    let token = Token::new(
+                        TokenType::TT_MOD,
+                        None,
+                        Span::new(&self.filename, self.cursor.clone(), self.cursor.clone()),
+                    );
 
                     self.advance();
 
@@ -125,8 +143,7 @@ impl Lexer {
                     let token = Token::new(
                         TokenType::TT_LPAREN,
                         None,
-                        Some(self.position.clone()),
-                        None,
+                        Span::new(&self.filename, self.cursor.clone(), self.cursor.clone()),
                     );
 
                     self.advance();
@@ -137,8 +154,7 @@ impl Lexer {
                     let token = Token::new(
                         TokenType::TT_RPAREN,
                         None,
-                        Some(self.position.clone()),
-                        None,
+                        Span::new(&self.filename, self.cursor.clone(), self.cursor.clone()),
                     );
 
                     self.advance();
@@ -149,8 +165,7 @@ impl Lexer {
                     let token = Token::new(
                         TokenType::TT_LSQUARE,
                         None,
-                        Some(self.position.clone()),
-                        None,
+                        Span::new(&self.filename, self.cursor.clone(), self.cursor.clone()),
                     );
 
                     self.advance();
@@ -161,8 +176,7 @@ impl Lexer {
                     let token = Token::new(
                         TokenType::TT_RSQUARE,
                         None,
-                        Some(self.position.clone()),
-                        None,
+                        Span::new(&self.filename, self.cursor.clone(), self.cursor.clone()),
                     );
 
                     self.advance();
@@ -173,8 +187,7 @@ impl Lexer {
                     let token = Token::new(
                         TokenType::TT_LBRACKET,
                         None,
-                        Some(self.position.clone()),
-                        None,
+                        Span::new(&self.filename, self.cursor.clone(), self.cursor.clone()),
                     );
 
                     self.advance();
@@ -185,8 +198,7 @@ impl Lexer {
                     let token = Token::new(
                         TokenType::TT_RBRACKET,
                         None,
-                        Some(self.position.clone()),
-                        None,
+                        Span::new(&self.filename, self.cursor.clone(), self.cursor.clone()),
                     );
 
                     self.advance();
@@ -201,20 +213,20 @@ impl Lexer {
                 '<' => Some(self.make_less_than()),
                 '>' => Some(self.make_greater_than()),
                 ',' => {
-                    let token =
-                        Token::new(TokenType::TT_COMMA, None, Some(self.position.clone()), None);
+                    let token = Token::new(
+                        TokenType::TT_COMMA,
+                        None,
+                        Span::new(&self.filename, self.cursor.clone(), self.cursor.clone()),
+                    );
+
                     self.advance();
+
                     Some(token)
                 }
                 unknown_char => {
-                    let pos_start = self.position.clone();
-
-                    self.advance();
-
                     return Err(StandardError::new(
                         format!("unkown character '{unknown_char}'").as_str(),
-                        Rc::new(pos_start),
-                        Rc::new(self.position.clone()),
+                        Span::new(&self.filename, self.cursor.clone(), self.cursor.clone()),
                         None,
                     ));
                 }
@@ -228,8 +240,7 @@ impl Lexer {
         tokens.push(Token::new(
             TokenType::TT_EOF,
             None,
-            Some(self.position.clone()),
-            None,
+            Span::new(&self.filename, self.cursor.clone(), self.cursor.clone()),
         ));
 
         Ok(tokens)
@@ -238,7 +249,7 @@ impl Lexer {
     fn make_number(&mut self) -> Result<Token, StandardError> {
         let mut num_str = String::new();
         let mut dot_count = 0;
-        let pos_start = self.position.clone();
+        let pos_start = self.cursor.clone();
 
         while let Some(character) = self.current_char {
             if character.is_ascii_digit() {
@@ -247,18 +258,17 @@ impl Lexer {
                 if dot_count == 1 {
                     return Err(StandardError::new(
                         "invalid numerical value",
-                        Rc::new(pos_start),
-                        Rc::new(self.position.clone()),
+                        Span::new(&self.filename, pos_start, self.cursor.clone()),
                         None,
                     ));
                 }
+
                 dot_count += 1;
                 num_str.push('.');
             } else if LETTERS.contains(character) {
                 return Err(StandardError::new(
                     "identifiers cannot start with numerical values",
-                    Rc::new(pos_start),
-                    Rc::new(self.position.clone()),
+                    Span::new(&self.filename, pos_start, self.cursor.clone()),
                     None,
                 ));
             } else {
@@ -268,20 +278,18 @@ impl Lexer {
             self.advance();
         }
 
-        let pos_end = self.position.clone();
+        let pos_end = self.cursor.clone();
 
         Ok(Token::new(
             TokenType::TT_NUM,
             Some(num_str),
-            Some(pos_start),
-            Some(pos_end),
+            Span::new(&self.filename, pos_start, pos_end),
         ))
     }
 
     fn make_identifier(&mut self) -> Token {
         let mut id_string = String::new();
-        let mut pos_start = self.position.clone();
-        pos_start.column_num -= 1; // move back 1
+        let pos_start = self.cursor.clone();
 
         while let Some(character) = self.current_char {
             if LETTERS_DIGITS.contains(character) {
@@ -293,8 +301,7 @@ impl Lexer {
             }
         }
 
-        let mut pos_end = self.position.clone();
-        pos_end.column_num -= 1; // move back 1
+        let pos_end = self.cursor.clone();
 
         let token_type = if KEYWORDS.contains(&id_string.as_str()) {
             TokenType::TT_KEYWORD
@@ -302,13 +309,16 @@ impl Lexer {
             TokenType::TT_IDENTIFIER
         };
 
-        Token::new(token_type, Some(id_string), Some(pos_start), Some(pos_end))
+        Token::new(
+            token_type,
+            Some(id_string),
+            Span::new(&self.filename, pos_start, pos_end),
+        )
     }
 
     fn make_string(&mut self) -> Result<Token, StandardError> {
         let mut string = String::new();
-        let mut pos_start = self.position.clone();
-        pos_start.column_num -= 1; // move back 1
+        let pos_start = self.cursor.clone();
         let mut escape_char = false;
 
         self.advance();
@@ -345,8 +355,7 @@ impl Lexer {
                     } else {
                         return Err(StandardError::new(
                             "invalid ANSI escape sequence (expected '[')",
-                            Rc::new(pos_start),
-                            Rc::new(self.position.clone()),
+                            Span::new(&self.filename, pos_start, self.cursor.clone()),
                             None,
                         ));
                     }
@@ -356,8 +365,7 @@ impl Lexer {
                 } else {
                     return Err(StandardError::new(
                         "invalid escape character",
-                        Rc::new(pos_start),
-                        Rc::new(self.position.clone()),
+                        Span::new(&self.filename, pos_start, self.cursor.clone()),
                         None,
                     ));
                 }
@@ -379,28 +387,25 @@ impl Lexer {
         if self.current_char != Some('"') {
             return Err(StandardError::new(
                 "unfinished string",
-                Rc::new(pos_start),
-                Rc::new(self.position.clone()),
+                Span::new(&self.filename, pos_start, self.cursor.clone()),
                 Some("add a '\"' at the end of the string to close it"),
             ));
         }
 
         self.advance();
 
-        let mut pos_end = self.position.clone();
-        pos_end.column_num -= 1; // move back 1
+        let pos_end = self.cursor.clone();
 
         Ok(Token::new(
             TokenType::TT_STR,
             Some(string),
-            Some(pos_start),
-            Some(pos_end),
+            Span::new(&self.filename, pos_start, pos_end),
         ))
     }
 
     fn make_minus_or_arrow(&mut self) -> Token {
         let mut token_type = TokenType::TT_MINUS;
-        let pos_start = self.position.clone();
+        let pos_start = self.cursor.clone();
         self.advance();
 
         if let Some(character) = self.current_char
@@ -410,14 +415,18 @@ impl Lexer {
             token_type = TokenType::TT_ARROW;
         }
 
-        let pos_end = self.position.clone();
+        let pos_end = self.cursor.clone();
 
-        Token::new(token_type, None, Some(pos_start), Some(pos_end))
+        Token::new(
+            token_type,
+            None,
+            Span::new(&self.filename, pos_start, pos_end),
+        )
     }
 
     fn make_equals(&mut self) -> Token {
         let mut token_type = TokenType::TT_EQ;
-        let pos_start = self.position.clone();
+        let pos_start = self.cursor.clone();
         self.advance();
 
         if let Some(character) = self.current_char
@@ -427,13 +436,17 @@ impl Lexer {
             token_type = TokenType::TT_EE;
         }
 
-        let pos_end = self.position.clone();
+        let pos_end = self.cursor.clone();
 
-        Token::new(token_type, None, Some(pos_start), Some(pos_end))
+        Token::new(
+            token_type,
+            None,
+            Span::new(&self.filename, pos_start, pos_end),
+        )
     }
 
     fn make_not_equals(&mut self) -> Result<Token, StandardError> {
-        let pos_start = self.position.clone();
+        let pos_start = self.cursor.clone();
         self.advance();
 
         if let Some(character) = self.current_char
@@ -441,31 +454,29 @@ impl Lexer {
         {
             self.advance();
 
-            let pos_end = self.position.clone();
+            let pos_end = self.cursor.clone();
 
             return Ok(Token::new(
                 TokenType::TT_NE,
                 None,
-                Some(pos_start),
-                Some(pos_end),
+                Span::new(&self.filename, pos_start, pos_end),
             ));
         }
 
         self.advance();
 
-        let pos_end = self.position.clone();
+        let pos_end = self.cursor.clone();
 
         Err(StandardError::new(
             "expected '=' after '!'",
-            Rc::new(pos_start),
-            Rc::new(pos_end),
+            Span::new(&self.filename, pos_start, pos_end),
             Some("add a '=' after the '!' character"),
         ))
     }
 
     fn make_less_than(&mut self) -> Token {
         let mut token_type = TokenType::TT_LT;
-        let pos_start = self.position.clone();
+        let pos_start = self.cursor.clone();
         self.advance();
 
         if let Some(character) = self.current_char
@@ -475,14 +486,18 @@ impl Lexer {
             token_type = TokenType::TT_LTE;
         }
 
-        let pos_end = self.position.clone();
+        let pos_end = self.cursor.clone();
 
-        Token::new(token_type, None, Some(pos_start), Some(pos_end))
+        Token::new(
+            token_type,
+            None,
+            Span::new(&self.filename, pos_start, pos_end),
+        )
     }
 
     fn make_greater_than(&mut self) -> Token {
         let mut token_type = TokenType::TT_GT;
-        let pos_start = self.position.clone();
+        let pos_start = self.cursor.clone();
         self.advance();
 
         if let Some(character) = self.current_char
@@ -492,9 +507,13 @@ impl Lexer {
             token_type = TokenType::TT_GTE;
         }
 
-        let pos_end = self.position.clone();
+        let pos_end = self.cursor.clone();
 
-        Token::new(token_type, None, Some(pos_start), Some(pos_end))
+        Token::new(
+            token_type,
+            None,
+            Span::new(&self.filename, pos_start, pos_end),
+        )
     }
 
     fn skip_comment(&mut self) {

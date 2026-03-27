@@ -5,7 +5,7 @@ use crate::{
     symbol_table::SymbolTable,
     values::{number::Number, string::Str, value::Value},
 };
-use glang_attributes::{Position, StandardError};
+use glang_attributes::{Span, StandardError};
 use glang_lexer::Lexer;
 use glang_parser::Parser;
 use std::{
@@ -21,8 +21,7 @@ pub struct BuiltInFunction {
     pub name: String,
     pub context: Option<Rc<RefCell<Context>>>,
     pub is_const: bool,
-    pub pos_start: Option<Rc<Position>>,
-    pub pos_end: Option<Rc<Position>>,
+    pub span: Span,
 }
 
 impl BuiltInFunction {
@@ -31,8 +30,7 @@ impl BuiltInFunction {
             name: name.to_string(),
             context: None,
             is_const: false,
-            pos_start: None,
-            pos_end: None,
+            span: Span::empty(),
         }
     }
 
@@ -46,7 +44,7 @@ impl BuiltInFunction {
         let mut new_context = Context::new(
             self.name.clone(),
             Some(self.context.as_ref().unwrap().clone()),
-            self.pos_start.clone(),
+            Some(self.span.clone()),
             None,
         );
         let parent_st = self
@@ -69,8 +67,7 @@ impl BuiltInFunction {
         if args.len() > arg_names.len() || args.len() < arg_names.len() {
             return result.failure(Some(StandardError::new(
                 "invalid function call",
-                self.pos_start.as_ref().unwrap().clone(),
-                self.pos_end.as_ref().unwrap().clone(),
+                self.span.clone(),
                 Some(
                     format!(
                         "{} takes {} argument{} but the program gave {}",
@@ -182,8 +179,7 @@ impl BuiltInFunction {
             _ => {
                 return result.failure(Some(StandardError::new(
                     "expected type string",
-                    message_arg.borrow().position_start().unwrap().clone(),
-                    message_arg.borrow().position_end().unwrap().clone(),
+                    message_arg.borrow().span(),
                     Some("add a message like 'Enter a number:' to get user input"),
                 )));
             }
@@ -221,8 +217,7 @@ impl BuiltInFunction {
             _ => {
                 return result.failure(Some(StandardError::new(
                     "expected type string",
-                    file_arg.borrow().position_start().unwrap().clone(),
-                    file_arg.borrow().position_end().unwrap().clone(),
+                    file_arg.borrow().span(),
                     Some("add a filename to read like 'test.txt'"),
                 )));
             }
@@ -231,8 +226,7 @@ impl BuiltInFunction {
         if fs::exists(&filename).is_err() {
             return result.failure(Some(StandardError::new(
                 "file doesn't exist",
-                file_arg.borrow().position_start().unwrap().clone(),
-                file_arg.borrow().position_end().unwrap().clone(),
+                file_arg.borrow().span(),
                 Some("add a filename to read like 'test.txt'"),
             )));
         }
@@ -244,8 +238,7 @@ impl BuiltInFunction {
             Err(_) => {
                 return result.failure(Some(StandardError::new(
                     "file contents couldn't be read properly",
-                    file_arg.borrow().position_start().unwrap().clone(),
-                    file_arg.borrow().position_end().unwrap().clone(),
+                    file_arg.borrow().span(),
                     Some("add a UTF-8 encoded file to read"),
                 )));
             }
@@ -278,8 +271,7 @@ impl BuiltInFunction {
             _ => {
                 return result.failure(Some(StandardError::new(
                     "expected type string",
-                    file_arg.borrow().position_start().unwrap().clone(),
-                    file_arg.borrow().position_end().unwrap().clone(),
+                    file_arg.borrow().span(),
                     Some("add a filename to write to like 'test.txt'"),
                 )));
             }
@@ -290,8 +282,7 @@ impl BuiltInFunction {
             _ => {
                 return result.failure(Some(StandardError::new(
                     "expected type string",
-                    file_arg.borrow().position_start().unwrap().clone(),
-                    file_arg.borrow().position_end().unwrap().clone(),
+                    file_arg.borrow().span(),
                     Some("add the file contents to write into the file"),
                 )));
             }
@@ -302,8 +293,7 @@ impl BuiltInFunction {
             Err(_) => {
                 return result.failure(Some(StandardError::new(
                     "file contents couldn't be written properly",
-                    file_arg.borrow().position_start().unwrap().clone(),
-                    file_arg.borrow().position_end().unwrap().clone(),
+                    file_arg.borrow().span(),
                     None,
                 )));
             }
@@ -364,17 +354,15 @@ impl BuiltInFunction {
                 Err(e) => {
                     return result.failure(Some(StandardError::new(
                         format!("string couldn't be converted to number {e}").as_str(),
-                        string_to_convert.borrow().position_start().unwrap().clone(),
-                        string_to_convert.borrow().position_end().unwrap().clone(),
-                        Some("make sure the string is represented as a valid number like '1.0'"),
+                        string_to_convert.borrow().span(),
+                        Some("ensure the string is represented as a valid number like '1.0'"),
                     )));
                 }
             },
             _ => {
                 return result.failure(Some(StandardError::new(
                     "expected type string",
-                    string_to_convert.borrow().position_start().unwrap().clone(),
-                    string_to_convert.borrow().position_end().unwrap().clone(),
+                    string_to_convert.borrow().span(),
                     Some("add a string like '1.0' to convert to a number object"),
                 )));
             }
@@ -403,8 +391,7 @@ impl BuiltInFunction {
             _ => {
                 return result.failure(Some(StandardError::new(
                     "expected type string or list",
-                    object_arg.borrow().position_start().unwrap().clone(),
-                    object_arg.borrow().position_end().unwrap().clone(),
+                    object_arg.borrow().span(),
                     None,
                 )));
             }
@@ -432,8 +419,7 @@ impl BuiltInFunction {
             _ => {
                 return result.failure(Some(StandardError::new(
                     "expected type string",
-                    error.borrow().position_start().unwrap(),
-                    error.borrow().position_end().unwrap(),
+                    error.borrow().span(),
                     Some("add an error message"),
                 )));
             }
@@ -441,8 +427,7 @@ impl BuiltInFunction {
 
         let mut error = StandardError::new(
             message.borrow().as_string().as_str(),
-            message.borrow().position_start().unwrap().clone(),
-            message.borrow().position_end().unwrap().clone(),
+            message.borrow().span(),
             None,
         );
         error.error_propagates = true;
@@ -486,17 +471,14 @@ impl BuiltInFunction {
             _ => {
                 return result.failure(Some(StandardError::new(
                     "expected type string",
-                    code_arg.borrow().position_start().unwrap().clone(),
-                    code_arg.borrow().position_end().unwrap().clone(),
+                    code_arg.borrow().span(),
                     Some("add the glang code to execute"),
                 )));
             }
         };
+        let filename = code_arg.borrow().span().filename;
 
-        let mut lexer = Lexer::new(
-            &code_arg.borrow().position_start().unwrap().filename,
-            code.clone(),
-        );
+        let mut lexer = Lexer::new(&filename, code.clone());
         let token_result = lexer.make_tokens();
 
         if token_result.is_err() {
@@ -552,8 +534,7 @@ impl BuiltInFunction {
             _ => {
                 return result.failure(Some(StandardError::new(
                     "expected type string",
-                    env_arg.borrow().position_start().unwrap().clone(),
-                    env_arg.borrow().position_end().unwrap().clone(),
+                    env_arg.borrow().span(),
                     Some("add the glang code to execute"),
                 )));
             }
@@ -563,8 +544,7 @@ impl BuiltInFunction {
             Ok(var) => result.success(Some(Str::from(&var))),
             Err(_) => result.failure(Some(StandardError::new(
                 "unable to access environment variable",
-                env_arg.borrow().position_start().unwrap().clone(),
-                env_arg.borrow().position_end().unwrap().clone(),
+                env_arg.borrow().span(),
                 None,
             ))),
         }

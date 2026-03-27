@@ -1,5 +1,5 @@
 use crate::nodes::ast_node::AstNode;
-use glang_attributes::Position;
+use glang_attributes::Span;
 use glang_lexer::Token;
 use std::rc::Rc;
 
@@ -9,8 +9,7 @@ pub struct FunctionDefinitionNode {
     pub arg_name_tokens: Rc<[Token]>,
     pub body_node: Box<AstNode>,
     pub should_auto_return: bool,
-    pub pos_start: Option<Rc<Position>>,
-    pub pos_end: Option<Rc<Position>>,
+    pub span: Span,
 }
 
 impl FunctionDefinitionNode {
@@ -25,14 +24,17 @@ impl FunctionDefinitionNode {
             arg_name_tokens: Rc::from(arg_name_tokens),
             body_node: body_node.to_owned(),
             should_auto_return,
-            pos_start: if let Some(var_name) = var_name_token {
-                Some(Rc::new(var_name.pos_end.unwrap()))
-            } else if !arg_name_tokens.is_empty() {
-                Some(Rc::new(arg_name_tokens[0].pos_start.clone().unwrap()))
-            } else {
-                body_node.position_start()
-            },
-            pos_end: body_node.position_end(),
+            span: Span::new(
+                &arg_name_tokens[0].span.filename,
+                if let Some(var_name) = var_name_token {
+                    var_name.span.end
+                } else if !arg_name_tokens.is_empty() {
+                    arg_name_tokens[0].span.start.clone()
+                } else {
+                    body_node.position_start()
+                },
+                body_node.position_end(),
+            ),
         }
     }
 }

@@ -1,5 +1,5 @@
 use crate::{context::Context, values::value::Value};
-use glang_attributes::{Position, StandardError};
+use glang_attributes::{Span, StandardError};
 use std::{cell::RefCell, rc::Rc};
 
 #[derive(Debug, Clone)]
@@ -7,8 +7,7 @@ pub struct Number {
     pub value: f64,
     pub context: Option<Rc<RefCell<Context>>>,
     pub is_const: bool,
-    pub pos_start: Option<Rc<Position>>,
-    pub pos_end: Option<Rc<Position>>,
+    pub span: Span,
 }
 
 impl Number {
@@ -17,8 +16,7 @@ impl Number {
             value,
             context: None,
             is_const: false,
-            pos_start: None,
-            pos_end: None,
+            span: Span::empty(),
         }
     }
 
@@ -56,8 +54,7 @@ impl Number {
                         if right_val == 0.0 {
                             return Err(StandardError::new(
                                 "division by zero",
-                                value.pos_start.clone().unwrap(),
-                                value.pos_end.clone().unwrap(),
+                                value.span.clone(),
                                 None,
                             ));
                         }
@@ -67,8 +64,7 @@ impl Number {
                         if right_val <= 0.0 {
                             return Err(StandardError::new(
                                 "powered by operator less than or equal to 0",
-                                value.pos_start.clone().unwrap(),
-                                value.pos_end.clone().unwrap(),
+                                value.span.clone(),
                                 None,
                             ));
                         }
@@ -79,8 +75,7 @@ impl Number {
                         if right_val <= 0.0 {
                             return Err(StandardError::new(
                                 "modded by operator less than or equal to 0",
-                                value.pos_start.clone().unwrap(),
-                                value.pos_end.clone().unwrap(),
+                                value.span.clone(),
                                 None,
                             ));
                         }
@@ -113,20 +108,19 @@ impl Number {
     pub fn illegal_operation(&self, other: Option<Rc<RefCell<Value>>>) -> StandardError {
         let (pos_end, help_msg) = if let Some(illegal) = other {
             (
-                illegal.borrow().position_end().unwrap().clone(),
+                illegal.borrow().position_end().clone(),
                 Some(format!(
                     "the left type is a number and the right type is a {}",
                     illegal.borrow().object_type()
                 )),
             )
         } else {
-            (self.pos_end.as_ref().unwrap().clone(), None)
+            (self.span.end.clone(), None)
         };
 
         StandardError::new(
             "operation not supported by type",
-            self.pos_start.as_ref().unwrap().clone(),
-            pos_end,
+            Span::new(&self.span.filename, self.span.start.clone(), pos_end),
             help_msg.as_deref(),
         )
     }

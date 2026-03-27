@@ -1,28 +1,16 @@
-use std::path::{Path, PathBuf};
-
 #[derive(Debug, Clone)]
 pub struct Position {
-    pub index: isize,
-    pub line_num: isize,
-    pub column_num: isize,
-    pub filename: PathBuf,
-    pub file_contents: String,
+    pub index: usize,
+    pub line_num: usize,
+    pub column_num: usize,
 }
 
 impl Position {
-    pub fn new(
-        index: isize,
-        line_num: isize,
-        column_num: isize,
-        filename: &Path,
-        file_contents: &str,
-    ) -> Self {
+    pub fn new(index: usize, line_num: usize, column_num: usize) -> Self {
         Self {
             index,
             line_num,
             column_num,
-            filename: filename.to_path_buf(),
-            file_contents: file_contents.to_string(),
         }
     }
 
@@ -34,7 +22,7 @@ impl Position {
             && character == '\n'
         {
             self.line_num += 1;
-            self.column_num = 1;
+            self.column_num = 0;
         }
 
         self.clone()

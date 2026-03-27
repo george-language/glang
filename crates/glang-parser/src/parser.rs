@@ -11,9 +11,12 @@ use crate::{
     },
     parse_result::ParseResult,
 };
-use glang_attributes::{Position, StandardError};
+use glang_attributes::{Position, Span, StandardError};
 use glang_lexer::{Token, TokenType};
-use std::{path::Path, rc::Rc};
+use std::{
+    path::{Path, PathBuf},
+    rc::Rc,
+};
 
 #[derive(Debug, Clone)]
 enum Operator {
@@ -78,28 +81,16 @@ impl Parser {
         None
     }
 
-    fn current_pos_start(&self) -> Rc<Position> {
-        Rc::new(
-            self.current_token
-                .as_ref()
-                .unwrap()
-                .pos_start
-                .as_ref()
-                .unwrap()
-                .clone(),
-        )
+    fn current_span(&self) -> Span {
+        self.current_token.as_ref().unwrap().span.clone()
     }
 
-    fn current_pos_end(&self) -> Rc<Position> {
-        Rc::new(
-            self.current_token
-                .as_ref()
-                .unwrap()
-                .pos_end
-                .as_ref()
-                .unwrap()
-                .clone(),
-        )
+    fn current_position_start(&self) -> Position {
+        self.current_token.as_ref().unwrap().span.start.clone()
+    }
+
+    fn current_position_end(&self) -> Position {
+        self.current_token.as_ref().unwrap().span.end.clone()
     }
 
     pub fn parse(&mut self) -> ParseResult {
@@ -109,8 +100,7 @@ impl Parser {
         {
             return parse_result.failure(Some(StandardError::new(
                 "expected keyword, object, function, expression",
-                self.current_pos_start(),
-                self.current_pos_end(),
+                self.current_span(),
                 None,
             )));
         }
@@ -159,8 +149,7 @@ impl Parser {
         if parse_result.error.is_some() {
             return parse_result.failure(Some(StandardError::new(
                 "expected keyword, object, function, expression",
-                self.current_pos_start(),
-                self.current_pos_end(),
+                self.current_span(),
                 None,
             )));
         }
@@ -179,13 +168,12 @@ impl Parser {
     fn list_expr(&mut self) -> ParseResult {
         let mut parse_result = ParseResult::new();
         let mut element_nodes: Vec<Box<AstNode>> = Vec::new();
-        let pos_start = self.current_pos_start();
+        let pos_start = self.current_position_start();
 
         if self.current_token_ref().token_type != TokenType::TT_LSQUARE {
             return parse_result.failure(Some(StandardError::new(
                 "expected list initializing bracket",
-                self.current_pos_start(),
-                self.current_pos_end(),
+                self.current_span(),
                 Some("add a '[' to start the list"),
             )));
         }
@@ -202,8 +190,7 @@ impl Parser {
             if parse_result.error.is_some() {
                 return parse_result.failure(Some(StandardError::new(
                     "expected closing bracket or list element",
-                    self.current_pos_start(),
-                    self.current_pos_end(),
+                    self.current_span(),
                     Some("add a ']' to close the list or add a list element followed by a comma"),
                 )));
             }
@@ -230,8 +217,7 @@ impl Parser {
             if self.current_token_ref().token_type != TokenType::TT_RSQUARE {
                 return parse_result.failure(Some(StandardError::new(
                     "expected ']' or next list element",
-                    self.current_pos_start(),
-                    self.current_pos_end(),
+                    self.current_span(),
                     Some("add a ']' to close the list or add a list element followed by a comma"),
                 )));
             }
@@ -242,8 +228,11 @@ impl Parser {
 
         parse_result.success(Some(Box::new(AstNode::List(ListNode::new(
             &element_nodes,
-            Some(pos_start),
-            Some(self.current_pos_end()),
+            Span::new(
+                &self.current_span().filename,
+                pos_start.clone(),
+                self.current_position_end().clone(),
+            ),
         )))))
     }
 
@@ -283,8 +272,7 @@ impl Parser {
                 return (
                     parse_result.failure(Some(StandardError::new(
                         "expected '{'",
-                        self.current_pos_start(),
-                        self.current_pos_end(),
+                        self.current_span(),
                         Some("add a '{' to define the body"),
                     ))),
                     None,
@@ -308,8 +296,7 @@ impl Parser {
                 return (
                     parse_result.failure(Some(StandardError::new(
                         "expected '}'",
-                        self.current_pos_start(),
-                        self.current_pos_end(),
+                        self.current_span(),
                         Some("add a '}' to close the body"),
                     ))),
                     None,
@@ -390,8 +377,7 @@ impl Parser {
             return (
                 parse_result.failure(Some(StandardError::new(
                     "expected keyword",
-                    self.current_pos_start(),
-                    self.current_pos_end(),
+                    self.current_span(),
                     Some(format!("add the '{keyword}' keyword").as_str()),
                 ))),
                 Vec::new(),
@@ -412,8 +398,7 @@ impl Parser {
             return (
                 parse_result.failure(Some(StandardError::new(
                     "expected '{'",
-                    self.current_pos_start(),
-                    self.current_pos_end(),
+                    self.current_span(),
                     Some("add a '{' to define the body"),
                 ))),
                 Vec::new(),
@@ -436,8 +421,7 @@ impl Parser {
             return (
                 parse_result.failure(Some(StandardError::new(
                     "expected '}'",
-                    self.current_pos_start(),
-                    self.current_pos_end(),
+                    self.current_span(),
                     Some("add a '}' to close the body"),
                 ))),
                 Vec::new(),
@@ -469,8 +453,7 @@ impl Parser {
         {
             return parse_result.failure(Some(StandardError::new(
                 "expected keyword",
-                self.current_pos_start(),
-                self.current_pos_end(),
+                self.current_span(),
                 Some("add the 'walk' keyword to initialize a walk loop"),
             )));
         }
@@ -481,8 +464,7 @@ impl Parser {
         if self.current_token_ref().token_type != TokenType::TT_IDENTIFIER {
             return parse_result.failure(Some(StandardError::new(
                 "expected identifier",
-                self.current_pos_start(),
-                self.current_pos_end(),
+                self.current_span(),
                 Some("add an object name like 'i' for the iterator name"),
             )));
         }
@@ -495,8 +477,7 @@ impl Parser {
         if self.current_token_ref().token_type != TokenType::TT_EQ {
             return parse_result.failure(Some(StandardError::new(
                 "expected '='",
-                self.current_pos_start(),
-                self.current_pos_end(),
+                self.current_span(),
                 Some(
                     format!(
                         "add an '=' to set the value of the variable '{}'",
@@ -522,8 +503,7 @@ impl Parser {
         {
             return parse_result.failure(Some(StandardError::new(
                 "expected 'through'",
-                self.current_pos_start(),
-                self.current_pos_end(),
+                self.current_span(),
                 Some("add the 'through' keyword to define a range 'n through n'"),
             )));
         }
@@ -549,8 +529,7 @@ impl Parser {
             if self.current_token_ref().token_type != TokenType::TT_EQ {
                 return parse_result.failure(Some(StandardError::new(
                     "expected '='",
-                    self.current_pos_start(),
-                    self.current_pos_end(),
+                    self.current_span(),
                     Some("add an '=' to set the step amount"),
                 )));
             }
@@ -570,8 +549,7 @@ impl Parser {
         if self.current_token_ref().token_type != TokenType::TT_LBRACKET {
             return parse_result.failure(Some(StandardError::new(
                 "expected '{'",
-                self.current_pos_start(),
-                self.current_pos_end(),
+                self.current_span(),
                 Some("add a '{' to define the body"),
             )));
         }
@@ -588,8 +566,7 @@ impl Parser {
         if self.current_token_ref().token_type != TokenType::TT_RBRACKET {
             return parse_result.failure(Some(StandardError::new(
                 "expected '}'",
-                self.current_pos_start(),
-                self.current_pos_end(),
+                self.current_span(),
                 Some("add a '}' to close the body"),
             )));
         }
@@ -615,8 +592,7 @@ impl Parser {
         {
             return parse_result.failure(Some(StandardError::new(
                 "expected keyword",
-                self.current_pos_start(),
-                self.current_pos_end(),
+                self.current_span(),
                 Some("add the 'while' keyword to initialize a while loop"),
             )));
         }
@@ -633,8 +609,7 @@ impl Parser {
         if self.current_token_ref().token_type != TokenType::TT_LBRACKET {
             return parse_result.failure(Some(StandardError::new(
                 "expected '{'",
-                self.current_pos_start(),
-                self.current_pos_end(),
+                self.current_span(),
                 Some("add a '{' to define the body"),
             )));
         }
@@ -651,8 +626,7 @@ impl Parser {
         if self.current_token_ref().token_type != TokenType::TT_RBRACKET {
             return parse_result.failure(Some(StandardError::new(
                 "expected '}'",
-                self.current_pos_start(),
-                self.current_pos_end(),
+                self.current_span(),
                 Some("add a '}' to close the body"),
             )));
         }
@@ -675,8 +649,7 @@ impl Parser {
         {
             return parse_result.failure(Some(StandardError::new(
                 "expected keyword",
-                self.current_pos_start(),
-                self.current_pos_end(),
+                self.current_span(),
                 Some("add the 'try' keyword to isolate unsafe code"),
             )));
         }
@@ -687,8 +660,7 @@ impl Parser {
         if self.current_token_ref().token_type != TokenType::TT_LBRACKET {
             return parse_result.failure(Some(StandardError::new(
                 "expected '{'",
-                self.current_pos_start(),
-                self.current_pos_end(),
+                self.current_span(),
                 Some("add a '{' to define the body"),
             )));
         }
@@ -705,8 +677,7 @@ impl Parser {
         if self.current_token_ref().token_type != TokenType::TT_RBRACKET {
             return parse_result.failure(Some(StandardError::new(
                 "expected '}'",
-                self.current_pos_start(),
-                self.current_pos_end(),
+                self.current_span(),
                 Some("add a '}' to close the body"),
             )));
         }
@@ -720,8 +691,7 @@ impl Parser {
         {
             return parse_result.failure(Some(StandardError::new(
                 "expected keyword",
-                self.current_pos_start(),
-                self.current_pos_end(),
+                self.current_span(),
                 Some("add the 'catch' keyword to isolate the safe code to execute if the 'try' block fails"),
             )));
         }
@@ -732,8 +702,7 @@ impl Parser {
         if self.current_token_ref().token_type != TokenType::TT_IDENTIFIER {
             return parse_result.failure(Some(StandardError::new(
                 "expected identifier",
-                self.current_pos_start(),
-                self.current_pos_end(),
+                self.current_span(),
                 Some("add a name for caught error like 'error'"),
             )));
         }
@@ -746,8 +715,7 @@ impl Parser {
         if self.current_token_ref().token_type != TokenType::TT_LBRACKET {
             return parse_result.failure(Some(StandardError::new(
                 "expected '{'",
-                self.current_pos_start(),
-                self.current_pos_end(),
+                self.current_span(),
                 Some("add a '{' to define the body"),
             )));
         }
@@ -764,8 +732,7 @@ impl Parser {
         if self.current_token_ref().token_type != TokenType::TT_RBRACKET {
             return parse_result.failure(Some(StandardError::new(
                 "expected '}'",
-                self.current_pos_start(),
-                self.current_pos_end(),
+                self.current_span(),
                 Some("add a '}' to close the body"),
             )));
         }
@@ -789,8 +756,7 @@ impl Parser {
         {
             return parse_result.failure(Some(StandardError::new(
                 "expected keyword",
-                self.current_pos_start(),
-                self.current_pos_end(),
+                self.current_span(),
                 Some("add the 'fetch' keyword to import other '.glang' files"),
             )));
         }
@@ -816,7 +782,7 @@ impl Parser {
         let mut parse_result = ParseResult::new();
         let next_tok = match self.next_token_copy() {
             Some(tok) => tok,
-            None => Token::new(TokenType::TT_EOF, None, None, None),
+            None => Token::new(TokenType::TT_EOF, None, self.current_span()),
         };
 
         if self
@@ -829,8 +795,7 @@ impl Parser {
             if self.current_token_copy().token_type != TokenType::TT_IDENTIFIER {
                 return parse_result.failure(Some(StandardError::new(
                     "expected identifier",
-                    self.current_pos_start(),
-                    self.current_pos_end(),
+                    self.current_span(),
                     Some("add a name for this object like 'hotdog'"),
                 )));
             }
@@ -843,8 +808,7 @@ impl Parser {
             if self.current_token_copy().token_type != TokenType::TT_EQ {
                 return parse_result.failure(Some(StandardError::new(
                     "expected '='",
-                    self.current_pos_start(),
-                    self.current_pos_end(),
+                    self.current_span(),
                     Some(
                         format!(
                             "add an '=' to set the value of the variable '{}'",
@@ -898,8 +862,7 @@ impl Parser {
             if self.current_token_copy().token_type != TokenType::TT_IDENTIFIER {
                 return parse_result.failure(Some(StandardError::new(
                     "expected identifier",
-                    self.current_pos_start(),
-                    self.current_pos_end(),
+                    self.current_span(),
                     Some("add a name for this constant like 'HOT_DOG'"),
                 )));
             }
@@ -912,8 +875,7 @@ impl Parser {
             if self.current_token_copy().token_type != TokenType::TT_EQ {
                 return parse_result.failure(Some(StandardError::new(
                     "expected '='",
-                    self.current_pos_start(),
-                    self.current_pos_end(),
+                    self.current_span(),
                     Some(
                         format!(
                             "add an '=' to set the value of the constant '{}'",
@@ -950,8 +912,7 @@ impl Parser {
         if parse_result.error.is_some() {
             return parse_result.failure(Some(StandardError::new(
                 "expected keyword, object, function, expression",
-                self.current_pos_start(),
-                self.current_pos_end(),
+                self.current_span(),
                 None,
             )));
         }
@@ -961,7 +922,7 @@ impl Parser {
 
     fn statement(&mut self) -> ParseResult {
         let mut parse_result = ParseResult::new();
-        let pos_start = self.current_pos_start();
+        let pos_start = self.current_position_start();
 
         if self
             .current_token_ref()
@@ -978,8 +939,11 @@ impl Parser {
 
             return parse_result.success(Some(Box::new(AstNode::Return(ReturnNode::new(
                 expr,
-                Some(pos_start),
-                Some(self.current_pos_start()),
+                Span::new(
+                    &self.current_span().filename,
+                    pos_start,
+                    self.current_position_start(),
+                ),
             )))));
         } else if self
             .current_token_ref()
@@ -989,8 +953,11 @@ impl Parser {
             self.advance();
 
             return parse_result.success(Some(Box::new(AstNode::Continue(ContinueNode::new(
-                Some(pos_start),
-                Some(self.current_pos_start()),
+                Span::new(
+                    &self.current_span().filename,
+                    pos_start,
+                    self.current_position_start(),
+                ),
             )))));
         } else if self
             .current_token_ref()
@@ -1000,8 +967,11 @@ impl Parser {
             self.advance();
 
             return parse_result.success(Some(Box::new(AstNode::Break(BreakNode::new(
-                Some(pos_start),
-                Some(self.current_pos_start()),
+                Span::new(
+                    &self.current_span().filename,
+                    pos_start,
+                    self.current_position_start(),
+                ),
             )))));
         }
 
@@ -1010,8 +980,11 @@ impl Parser {
         if parse_result.error.is_some() {
             return parse_result.failure(Some(StandardError::new(
                 "expected keyword, object, function, expression",
-                pos_start,
-                self.current_pos_end(),
+                Span::new(
+                    &self.current_span().filename,
+                    pos_start,
+                    self.current_position_end(),
+                ),
                 None,
             )));
         }
@@ -1022,13 +995,16 @@ impl Parser {
     fn statements(&mut self) -> ParseResult {
         let mut parse_result = ParseResult::new();
         let mut statements: Vec<Box<AstNode>> = Vec::new();
-        let pos_start = self.current_pos_start();
+        let pos_start = self.current_position_start();
 
         if self.current_token_ref().token_type == TokenType::TT_EOF {
             return parse_result.success(Some(Box::new(AstNode::List(ListNode::new(
                 &[],
-                Some(pos_start),
-                Some(self.current_pos_end()),
+                Span::new(
+                    &self.current_span().filename,
+                    pos_start,
+                    self.current_position_end(),
+                ),
             )))));
         }
 
@@ -1062,8 +1038,11 @@ impl Parser {
 
         parse_result.success(Some(Box::new(AstNode::List(ListNode::new(
             &statements,
-            Some(pos_start),
-            Some(self.current_pos_end()),
+            Span::new(
+                &self.current_span().filename,
+                pos_start,
+                self.current_position_end(),
+            ),
         )))))
     }
 
@@ -1090,8 +1069,7 @@ impl Parser {
                 if parse_result.error.is_some() {
                     return parse_result.failure(Some(StandardError::new(
                         "expected keyword, object, function, expression",
-                        self.current_pos_start(),
-                        self.current_pos_end(),
+                        self.current_span(),
                         None,
                     )));
                 }
@@ -1114,8 +1092,7 @@ impl Parser {
                 if self.current_token_ref().token_type != TokenType::TT_RPAREN {
                     return parse_result.failure(Some(StandardError::new(
                         "expected ',' or ')'",
-                        self.current_pos_start(),
-                        self.current_pos_end(),
+                        self.current_span(),
                         Some("add a ',' to input all the function arguments or close with a ')' to call the function"),
                     )));
                 }
@@ -1171,8 +1148,7 @@ impl Parser {
             } else {
                 return parse_result.failure(Some(StandardError::new(
                     "expected closing parenthesis",
-                    self.current_pos_start(),
-                    self.current_pos_end(),
+                    self.current_span(),
                     Some("add a ')' to close the original '('"),
                 )));
             }
@@ -1236,8 +1212,7 @@ impl Parser {
 
         parse_result.failure(Some(StandardError::new(
             "expected object, keyword, function, or expression",
-            Rc::new(token.pos_start.unwrap()),
-            Rc::new(token.pos_end.unwrap()),
+            token.span,
             None,
         )))
     }
@@ -1292,8 +1267,7 @@ impl Parser {
         {
             return parse_result.failure(Some(StandardError::new(
                 "expected keyword",
-                self.current_pos_start(),
-                self.current_pos_end(),
+                self.current_span(),
                 Some("add the 'func' keyword to define a function"),
             )));
         }
@@ -1311,8 +1285,7 @@ impl Parser {
             if self.current_token_ref().token_type != TokenType::TT_LPAREN {
                 return parse_result.failure(Some(StandardError::new(
                     "expected '('",
-                    self.current_pos_start(),
-                    self.current_pos_end(),
+                    self.current_span(),
                     Some("add a '(' to define the function arguments"),
                 )));
             }
@@ -1322,8 +1295,7 @@ impl Parser {
             if self.current_token_ref().token_type != TokenType::TT_LPAREN {
                 return parse_result.failure(Some(StandardError::new(
                     "expected identifier or '('",
-                    self.current_pos_start(),
-                    self.current_pos_end(),
+                    self.current_span(),
                     Some("add a name for this function like 'greet' or use '(' to define an anonymous function"),
                 )));
             }
@@ -1351,8 +1323,7 @@ impl Parser {
                 if self.current_token_ref().token_type != TokenType::TT_IDENTIFIER {
                     return parse_result.failure(Some(StandardError::new(
                         "expected identifier",
-                        self.current_pos_start(),
-                        self.current_pos_end(),
+                        self.current_span(),
                         Some("add a name for the function arguments like 'name'"),
                     )));
                 }
@@ -1366,16 +1337,14 @@ impl Parser {
             if self.current_token_ref().token_type != TokenType::TT_RPAREN {
                 return parse_result.failure(Some(StandardError::new(
                     "expected ')'",
-                    self.current_pos_start(),
-                    self.current_pos_end(),
+                    self.current_span(),
                     Some("add another function argument or complete the function with ')'"),
                 )));
             }
         } else if self.current_token_ref().token_type != TokenType::TT_RPAREN {
             return parse_result.failure(Some(StandardError::new(
                 "expected indentifier or ')'",
-                self.current_pos_start(),
-                self.current_pos_end(),
+                self.current_span(),
                 Some("add a name for the function arguments like 'name' or complete the function with ')'"),
             )));
         }
@@ -1386,8 +1355,7 @@ impl Parser {
         if self.current_token_ref().token_type != TokenType::TT_LBRACKET {
             return parse_result.failure(Some(StandardError::new(
                 "expected '{'",
-                self.current_pos_start(),
-                self.current_pos_end(),
+                self.current_span(),
                 Some("add a '{' to define the body of the function"),
             )));
         }
@@ -1404,8 +1372,7 @@ impl Parser {
         if self.current_token_ref().token_type != TokenType::TT_RBRACKET {
             return parse_result.failure(Some(StandardError::new(
                 "expected '}'",
-                self.current_pos_start(),
-                self.current_pos_end(),
+                self.current_span(),
                 Some("add a '}' to close the body"),
             )));
         }

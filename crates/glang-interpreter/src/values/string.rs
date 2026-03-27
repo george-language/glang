@@ -2,7 +2,7 @@ use crate::{
     context::Context,
     values::{number::Number, value::Value},
 };
-use glang_attributes::{Position, StandardError};
+use glang_attributes::{Span, StandardError};
 use std::{cell::RefCell, rc::Rc};
 
 #[derive(Debug, Clone)]
@@ -10,8 +10,7 @@ pub struct Str {
     pub value: String,
     pub context: Option<Rc<RefCell<Context>>>,
     pub is_const: bool,
-    pub pos_start: Option<Rc<Position>>,
-    pub pos_end: Option<Rc<Position>>,
+    pub span: Span,
 }
 
 impl Str {
@@ -20,8 +19,7 @@ impl Str {
             value,
             context: None,
             is_const: false,
-            pos_start: None,
-            pos_end: None,
+            span: Span::empty(),
         }
     }
 
@@ -110,8 +108,7 @@ impl Str {
                     if value.value < 0.0 {
                         return Err(StandardError::new(
                             "cannot multiply string by a negative value",
-                            other.borrow().position_start().unwrap(),
-                            other.borrow().position_end().unwrap(),
+                            other.borrow().span(),
                             None,
                         ));
                     }
@@ -125,8 +122,7 @@ impl Str {
                     if value.value < -1.0 {
                         return Err(StandardError::new(
                             "cannot access a negative index",
-                            value.pos_start.clone().unwrap(),
-                            value.pos_end.clone().unwrap(),
+                            value.span.clone(),
                             Some(
                                 "use an index greater than or equal to 0 or use -1 to reverse the string",
                             ),
@@ -142,8 +138,7 @@ impl Str {
                     if (value.value as usize) >= self.value.len() {
                         return Err(StandardError::new(
                             "index is out of bounds",
-                            value.pos_start.clone().unwrap(),
-                            value.pos_end.clone().unwrap(),
+                            value.span.clone(),
                             None,
                         ));
                     }
@@ -166,20 +161,19 @@ impl Str {
     pub fn illegal_operation(&self, other: Option<Rc<RefCell<Value>>>) -> StandardError {
         let (pos_end, help_msg) = if let Some(illegal) = other {
             (
-                illegal.borrow().position_end().unwrap().clone(),
+                illegal.borrow().position_end().clone(),
                 Some(format!(
                     "the left type is a string and the right type is a {}",
                     illegal.borrow().object_type()
                 )),
             )
         } else {
-            (self.pos_end.as_ref().unwrap().clone(), None)
+            (self.span.end.clone(), None)
         };
 
         StandardError::new(
             "operation not supported by type",
-            self.pos_start.as_ref().unwrap().clone(),
-            pos_end,
+            Span::new(&self.span.filename, self.span.start.clone(), pos_end),
             help_msg.as_deref(),
         )
     }

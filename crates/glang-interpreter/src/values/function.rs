@@ -5,9 +5,9 @@ use crate::{
     symbol_table::SymbolTable,
     values::{number::Number, value::Value},
 };
-use glang_attributes::{Position, StandardError};
+use glang_attributes::{Span, StandardError};
 use glang_parser::AstNode;
-use std::{cell::RefCell, collections::HashMap, rc::Rc};
+use std::{cell::RefCell, rc::Rc};
 
 #[derive(Debug, Clone)]
 pub struct Function {
@@ -17,8 +17,7 @@ pub struct Function {
     pub should_auto_return: bool,
     pub context: Option<Rc<RefCell<Context>>>,
     pub is_const: bool,
-    pub pos_start: Option<Rc<Position>>,
-    pub pos_end: Option<Rc<Position>>,
+    pub span: Span,
 }
 
 impl Function {
@@ -35,8 +34,7 @@ impl Function {
             should_auto_return,
             context: None,
             is_const: false,
-            pos_start: None,
-            pos_end: None,
+            span: Span::empty(),
         }
     }
 
@@ -44,7 +42,7 @@ impl Function {
         let mut new_context = Context::new(
             self.name.clone(),
             self.context.clone(),
-            self.pos_start.clone(),
+            Some(self.span.clone()),
             None,
         );
         let parent_st = self
@@ -67,8 +65,7 @@ impl Function {
         if args.len() > arg_names.len() || args.len() < arg_names.len() {
             return result.failure(Some(StandardError::new(
                 "invalid function call",
-                self.pos_start.as_ref().unwrap().clone(),
-                self.pos_end.as_ref().unwrap().clone(),
+                self.span.clone(),
                 Some(
                     format!(
                         "{} takes {} argument{} but the program gave {}",

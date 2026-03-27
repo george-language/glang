@@ -1,13 +1,12 @@
 use crate::nodes::ast_node::AstNode;
-use glang_attributes::Position;
-use std::rc::Rc;
+use glang_attributes::Span;
+use std::{path::Path, rc::Rc};
 
 #[derive(Debug, Clone)]
 pub struct IfNode {
     pub cases: Rc<[(Box<AstNode>, Box<AstNode>, bool)]>,
     pub else_case: Option<(Box<AstNode>, bool)>,
-    pub pos_start: Option<Rc<Position>>,
-    pub pos_end: Option<Rc<Position>>,
+    pub span: Span,
 }
 
 impl IfNode {
@@ -18,12 +17,15 @@ impl IfNode {
         Self {
             cases: Rc::from(cases),
             else_case: else_case.to_owned(),
-            pos_start: cases[0].0.position_start(),
-            pos_end: if else_case.is_none() {
-                cases[cases.len() - 1].0.position_start()
-            } else {
-                else_case.unwrap().0.position_end()
-            },
+            span: Span::new(
+                &cases[0].0.span().filename,
+                cases[0].0.position_start(),
+                if else_case.is_none() {
+                    cases[cases.len() - 1].0.position_start()
+                } else {
+                    else_case.unwrap().0.position_end()
+                },
+            ),
         }
     }
 }

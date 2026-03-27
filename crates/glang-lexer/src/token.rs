@@ -1,38 +1,50 @@
-use crate::token_type::TokenType;
-use glang_attributes::Position;
-use std::fmt::{Display, Formatter, Result};
+use glang_attributes::Span;
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[allow(non_camel_case_types)]
+pub enum TokenType {
+    TT_NUM,
+    TT_STR,
+    TT_IDENTIFIER,
+    TT_KEYWORD,
+    TT_PLUS,
+    TT_MINUS,
+    TT_MUL,
+    TT_DIV,
+    TT_POW,
+    TT_MOD,
+    TT_EQ,
+    TT_LPAREN,
+    TT_RPAREN,
+    TT_LSQUARE,
+    TT_RSQUARE,
+    TT_LBRACKET,
+    TT_RBRACKET,
+    TT_EE,
+    TT_NE,
+    TT_LT,
+    TT_GT,
+    TT_LTE,
+    TT_GTE,
+    TT_COMMA,
+    TT_ARROW,
+    TT_SEMICOLON,
+    TT_EOF,
+}
 
 #[derive(Debug, Clone)]
 pub struct Token {
     pub token_type: TokenType,
     pub value: Option<String>,
-    pub pos_start: Option<Position>,
-    pub pos_end: Option<Position>,
+    pub span: Span,
 }
 
 impl Token {
-    pub fn new(
-        token_type: TokenType,
-        value: Option<String>,
-        pos_start: Option<Position>,
-        pos_end: Option<Position>,
-    ) -> Self {
-        let start = pos_start.clone();
-        let mut end = pos_end;
-
-        if end.is_none() {
-            if let Some(s) = &start {
-                let mut advanced = s.clone();
-                advanced.advance(None);
-                end = Some(advanced);
-            }
-        }
-
+    pub fn new(token_type: TokenType, value: Option<String>, span: Span) -> Self {
         Self {
             token_type,
             value,
-            pos_start: start,
-            pos_end: end,
+            span,
         }
     }
 
@@ -41,20 +53,6 @@ impl Token {
             self.token_type == token_type && self.value.as_ref().unwrap() == value
         } else {
             false
-        }
-    }
-}
-
-impl Display for Token {
-    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
-        if let Some(ref value) = self.value {
-            if !value.is_empty() {
-                write!(f, "{}:{}", self.token_type, value)
-            } else {
-                write!(f, "{}", self.token_type)
-            }
-        } else {
-            write!(f, "{}", self.token_type)
         }
     }
 }

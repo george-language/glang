@@ -1,13 +1,11 @@
 use crate::nodes::ast_node::AstNode;
-use glang_attributes::Position;
-use std::rc::Rc;
+use glang_attributes::Span;
 
 #[derive(Debug, Clone)]
 pub struct WhileNode {
     pub condition_node: Box<AstNode>,
     pub body_node: Box<AstNode>,
-    pub pos_start: Option<Rc<Position>>,
-    pub pos_end: Option<Rc<Position>>,
+    pub span: Span,
 }
 
 impl WhileNode {
@@ -15,8 +13,11 @@ impl WhileNode {
         Self {
             condition_node: condition_node.clone(),
             body_node: body_node.clone(),
-            pos_start: condition_node.position_start(),
-            pos_end: body_node.position_end(),
+            span: Span::new(
+                &condition_node.span().filename,
+                condition_node.position_start(),
+                body_node.position_end(),
+            ),
         }
     }
 }

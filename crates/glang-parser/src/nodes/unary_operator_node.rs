@@ -1,25 +1,23 @@
 use crate::nodes::ast_node::AstNode;
-use glang_attributes::Position;
+use glang_attributes::Span;
 use glang_lexer::Token;
-use std::rc::Rc;
 
 #[derive(Debug, Clone)]
 pub struct UnaryOperatorNode {
     pub op_token: Token,
     pub node: Box<AstNode>,
-    pub pos_start: Option<Rc<Position>>,
-    pub pos_end: Option<Rc<Position>>,
+    pub span: Span,
 }
 
 impl UnaryOperatorNode {
     pub fn new(op_token: Token, node: Box<AstNode>) -> Self {
         let pos_end = node.position_end();
+        let filename = node.span().filename;
 
         Self {
             op_token: op_token.to_owned(),
             node,
-            pos_start: Some(Rc::new(op_token.pos_start.unwrap())),
-            pos_end,
+            span: Span::new(&filename, op_token.span.start, pos_end),
         }
     }
 }

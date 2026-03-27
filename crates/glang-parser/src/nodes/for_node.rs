@@ -1,7 +1,6 @@
 use crate::nodes::ast_node::AstNode;
-use glang_attributes::Position;
+use glang_attributes::Span;
 use glang_lexer::Token;
-use std::rc::Rc;
 
 #[derive(Debug, Clone)]
 pub struct ForNode {
@@ -10,8 +9,7 @@ pub struct ForNode {
     pub end_value_node: Box<AstNode>,
     pub step_value_node: Option<Box<AstNode>>,
     pub body_node: Box<AstNode>,
-    pub pos_start: Option<Rc<Position>>,
-    pub pos_end: Option<Rc<Position>>,
+    pub span: Span,
 }
 
 impl ForNode {
@@ -28,8 +26,7 @@ impl ForNode {
             end_value_node,
             step_value_node,
             body_node,
-            pos_start: Some(Rc::new(var_name_token.pos_start.unwrap())),
-            pos_end: Some(Rc::new(var_name_token.pos_end.unwrap())),
+            span: var_name_token.span,
         }
     }
 }

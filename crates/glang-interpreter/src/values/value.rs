@@ -5,7 +5,7 @@ use crate::{
         string::Str,
     },
 };
-use glang_attributes::{Position, StandardError};
+use glang_attributes::{Position, Span, StandardError};
 use std::{cell::RefCell, rc::Rc};
 
 #[derive(Debug, Clone)]
@@ -18,48 +18,43 @@ pub enum Value {
 }
 
 impl Value {
-    pub fn position_start(&self) -> Option<Rc<Position>> {
+    pub fn span(&self) -> Span {
         match self {
-            Value::NumberValue(value) => value.pos_start.clone(),
-            Value::ListValue(value) => value.pos_start.clone(),
-            Value::StringValue(value) => value.pos_start.clone(),
-            Value::FunctionValue(value) => value.pos_start.clone(),
-            Value::BuiltInFunction(value) => value.pos_start.clone(),
+            Value::NumberValue(value) => value.span.clone(),
+            Value::ListValue(value) => value.span.clone(),
+            Value::StringValue(value) => value.span.clone(),
+            Value::FunctionValue(value) => value.span.clone(),
+            Value::BuiltInFunction(value) => value.span.clone(),
         }
     }
 
-    pub fn position_end(&self) -> Option<Rc<Position>> {
+    pub fn position_start(&self) -> Position {
         match self {
-            Value::NumberValue(value) => value.pos_end.clone(),
-            Value::ListValue(value) => value.pos_end.clone(),
-            Value::StringValue(value) => value.pos_end.clone(),
-            Value::FunctionValue(value) => value.pos_end.clone(),
-            Value::BuiltInFunction(value) => value.pos_end.clone(),
+            Value::NumberValue(value) => value.span.start.clone(),
+            Value::ListValue(value) => value.span.start.clone(),
+            Value::StringValue(value) => value.span.start.clone(),
+            Value::FunctionValue(value) => value.span.start.clone(),
+            Value::BuiltInFunction(value) => value.span.start.clone(),
         }
     }
 
-    pub fn set_position(&mut self, pos_start: Option<Rc<Position>>, pos_end: Option<Rc<Position>>) {
+    pub fn position_end(&self) -> Position {
         match self {
-            Value::NumberValue(value) => {
-                value.pos_start = pos_start;
-                value.pos_end = pos_end;
-            }
-            Value::ListValue(value) => {
-                value.pos_start = pos_start;
-                value.pos_end = pos_end;
-            }
-            Value::StringValue(value) => {
-                value.pos_start = pos_start;
-                value.pos_end = pos_end;
-            }
-            Value::FunctionValue(value) => {
-                value.pos_start = pos_start;
-                value.pos_end = pos_end;
-            }
-            Value::BuiltInFunction(value) => {
-                value.pos_start = pos_start;
-                value.pos_end = pos_end;
-            }
+            Value::NumberValue(value) => value.span.end.clone(),
+            Value::ListValue(value) => value.span.end.clone(),
+            Value::StringValue(value) => value.span.end.clone(),
+            Value::FunctionValue(value) => value.span.end.clone(),
+            Value::BuiltInFunction(value) => value.span.end.clone(),
+        }
+    }
+
+    pub fn set_span(&mut self, span: Span) {
+        match self {
+            Value::NumberValue(value) => value.span = span,
+            Value::ListValue(value) => value.span = span,
+            Value::StringValue(value) => value.span = span,
+            Value::FunctionValue(value) => value.span = span,
+            Value::BuiltInFunction(value) => value.span = span,
         }
     }
 
@@ -94,8 +89,7 @@ impl Value {
             Value::StringValue(value) => value.perform_operation(operator, other),
             _ => Err(StandardError::new(
                 format!("type doesn't support the '{operator}' operator").as_str(),
-                self.position_start().unwrap(),
-                self.position_end().unwrap(),
+                self.span(),
                 None,
             )),
         }
