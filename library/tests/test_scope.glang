@@ -12,4 +12,14 @@ try {
     skip;
 }
 
+obj x = 10;
+
+func modify() {
+    x = 20; # copy of x, only available to modify
+}
+
+modify();
+
+assert_eq(x, 10);
+
 bark("test_scope.glang: Successful");

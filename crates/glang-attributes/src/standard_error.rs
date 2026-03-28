@@ -28,7 +28,7 @@ impl StandardError {
 
         for i in span.start.line_num..=span.end.line_num {
             if let Some(line) = lines.get((i - 1) as usize) {
-                result.push_str(&format!(" {BOLD}{:>3} |{RESET} {}\n", i, line));
+                result.push_str(&format!("| {ITALIC}{}{RESET}\n", line));
 
                 let col_start = span.start.column_num.saturating_sub(1);
                 let col_end = span.end.column_num.saturating_sub(1);
@@ -39,7 +39,7 @@ impl StandardError {
                     arrow_line.push_str(&format!(" {DIM_GREEN}help:{RESET} {}", msg));
                 }
 
-                result.push_str(&format!("     {BOLD}|{RESET} {}", arrow_line));
+                result.push_str(&format!("| {}", arrow_line));
             }
         }
 
@@ -61,7 +61,7 @@ impl Display for StandardError {
         };
 
         output.push_str(&format!(
-            "{BOLD}{DIM_RED}error:{RESET} {}\n    {BOLD}-->{RESET} {}:{}:{}\n",
+            "{BOLD}{DIM_RED}Error:{RESET} {}\n| in > {}:{}:{}\n",
             self.text,
             self.span.filename.to_string_lossy(),
             self.span.start.line_num,
@@ -69,7 +69,7 @@ impl Display for StandardError {
         ));
 
         output.push_str(&format!(
-            "     {BOLD}|{RESET}\n{}\n",
+            "|\n{}\n",
             self.format_code_as_messup(&contents, &self.span)
         ));
 

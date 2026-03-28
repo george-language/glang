@@ -1,0 +1,17 @@
+# file test_recursion.glang: test glang's recursion functionality
+
+# calculates the factorial of an integer n recursively
+func factorial(n) {
+    # Base case: When n is 0 or 1, stop the recursion
+    if n <= 1 {
+        give 1;
+    }
+    # Recursive case: Call the function with n-1
+    otherwise {
+        give n * factorial(n - 1);
+    }
+}
+
+assert_eq(factorial(5), 120);
+
+bark("test_recursion.glang: Successful");
