@@ -1,5 +1,19 @@
-# file test_loop.glang: test a large iteration of glang's 'walk' loop
+# file test_loop.glang: test a large iteration of glang's 'walk' and 'while' loops
+
+obj x = 0;
 
 walk i = 0 through 10000 {
-    bark(i);
+    x = i;
 }
+
+assert_eq(x, 9999);
+
+obj y = 0;
+
+while y != 10 {
+    y = y + 1;
+}
+
+assert_eq(y, 10);
+
+bark("test_loop.glang: Successful");

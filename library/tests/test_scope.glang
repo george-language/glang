@@ -2,10 +2,14 @@
 
 func import() {
     fetch std_math;
-
-    bark(math_pi);
 }
 
 import();
 
-bark(math_pi); # can't access this, it's in import()
+try {
+    math_pi # can't access this, it's in import()
+} catch _ {
+    skip;
+}
+
+bark("test_scope.glang: Successful");

@@ -7,3 +7,19 @@ func assert(expr) {
         uhoh("assertion failed, resulting expression was not true");
     }
 }
+
+# assert that a == b (throws an error if false)
+# returns null
+func assert_eq(a, b) {
+    if a != b {
+        uhoh("assertion failed, a != b");
+    }
+}
+
+# assert that a != b (throws an error if false)
+# returns null
+func assert_ne(a, b) {
+    if a == b {
+        uhoh("assertion failed, a == b");
+    }
+}

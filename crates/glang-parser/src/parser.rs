@@ -1443,6 +1443,7 @@ impl Parser {
 #[test]
 fn test_ast() {
     use glang_lexer::Lexer;
+    use std::path::Path;
 
     let mut lexer = Lexer::new(Path::new("<test>"), "function(1 + 1);".to_owned());
     let tokens = lexer.make_tokens().ok().unwrap();

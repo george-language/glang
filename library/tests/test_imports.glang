@@ -2,4 +2,6 @@
 
 fetch std_math;
 
-bark(math_pi); # object defined in math module
+assert_eq(math_pi, 3.141592653589793); # object defined in math module
+
+bark("test_imports.glang: Successful");

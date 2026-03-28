@@ -6,7 +6,7 @@ stay y = x;
 
 x = 20;
 
-bark(y); # y should remain 10 because it copied the value of x
+assert_eq(y, 10); # y should remain 10 because it copied the value of x
 
 # test assigning variables value as constants
 stay CONST = [1, 2, 3];
@@ -14,4 +14,6 @@ obj variable = CONST;
 
 push(variable, 4); # this can happen, because variables copy the values of constants
 
-bark(CONST); # should remain [1, 2, 3]
+assert_eq(CONST, [1, 2, 3]); # should remain [1, 2, 3]
+
+bark("test_constants.glang: Successful");

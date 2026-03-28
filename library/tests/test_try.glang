@@ -3,5 +3,7 @@
 try {
     1 / 0;
 } catch error {
-    bark("Some error occured: " + error);
+    assert_eq(error, "division by zero");
 }
+
+bark("test_try.glang: Successful");
