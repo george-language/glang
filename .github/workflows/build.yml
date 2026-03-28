@@ -50,7 +50,7 @@ jobs:
             --identifier com.george-language.glang \
             --version ${{ github.ref_name }} \
             --install-location / \
-            dist/GeorgeLanguage+macos_setup.pkg
+            dist/GeorgeLanguage-${{ github.ref_name }}-macos_setup.pkg
 
       - name: Upload to GitHub Release
         if: github.event_name == 'release'
