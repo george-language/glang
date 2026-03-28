@@ -41,7 +41,7 @@ impl Lexer {
     fn advance(&mut self) {
         self.cursor.advance(self.current_char);
 
-        if self.cursor.index >= 0 && (self.cursor.index as usize) < self.chars.len() {
+        if (self.cursor.index as usize) < self.chars.len() {
             self.current_char = Some(self.chars[self.cursor.index as usize]);
         } else {
             self.current_char = None;

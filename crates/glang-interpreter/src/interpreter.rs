@@ -21,7 +21,7 @@ use glang_parser::nodes::{
 use glang_parser::{Parser, nodes::variable_reassign_node::VariableRessignNode};
 use std::{
     cell::RefCell,
-    collections::HashMap,
+    collections::{HashMap, HashSet},
     fs,
     path::{Path, PathBuf},
     rc::Rc,
@@ -775,6 +775,18 @@ impl Interpreter {
 
         for arg_name in node.arg_name_tokens.iter() {
             arg_names.push(arg_name.value.as_ref().unwrap().clone());
+        }
+
+        let mut seen = HashSet::new();
+
+        for (i, name) in arg_names.iter().enumerate() {
+            if !seen.insert(name) {
+                return result.failure(Some(StandardError::new(
+                    "duplicate argument",
+                    node.arg_name_tokens[i].span.clone(),
+                    Some(format!("remove the duplicate argument '{}'", name).as_str()),
+                )));
+            }
         }
 
         let func_value = Rc::new(RefCell::new(Value::FunctionValue(Function::new(

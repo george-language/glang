@@ -1,6 +1,5 @@
-use glang_attributes::{Position, Span};
+use glang_attributes::Span;
 use glang_lexer::Token;
-use std::rc::Rc;
 
 #[derive(Debug, Clone)]
 pub struct NumberNode {

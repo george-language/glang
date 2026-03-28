@@ -1,5 +1,5 @@
 use crate::nodes::ast_node::AstNode;
-use glang_attributes::{Position, Span};
+use glang_attributes::Span;
 use glang_lexer::Token;
 
 #[derive(Debug, Clone)]

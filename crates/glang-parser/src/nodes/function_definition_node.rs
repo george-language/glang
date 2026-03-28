@@ -25,7 +25,7 @@ impl FunctionDefinitionNode {
             body_node: body_node.to_owned(),
             should_auto_return,
             span: Span::new(
-                &arg_name_tokens[0].span.filename,
+                &body_node.span().filename,
                 if let Some(var_name) = var_name_token {
                     var_name.span.end
                 } else if !arg_name_tokens.is_empty() {

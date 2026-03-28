@@ -1,6 +1,6 @@
 use crate::nodes::ast_node::AstNode;
 use glang_attributes::Span;
-use std::{path::Path, rc::Rc};
+use std::rc::Rc;
 
 #[derive(Debug, Clone)]
 pub struct IfNode {

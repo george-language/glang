@@ -13,10 +13,7 @@ use crate::{
 };
 use glang_attributes::{Position, Span, StandardError};
 use glang_lexer::{Token, TokenType};
-use std::{
-    path::{Path, PathBuf},
-    rc::Rc,
-};
+use std::rc::Rc;
 
 #[derive(Debug, Clone)]
 enum Operator {
@@ -368,7 +365,7 @@ impl Parser {
     ) {
         let mut parse_result = ParseResult::new();
         let mut cases: Vec<(Box<AstNode>, Box<AstNode>, bool)> = Vec::new();
-        let mut else_case: Option<(Box<AstNode>, bool)> = None;
+        let else_case: Option<(Box<AstNode>, bool)>;
 
         if !self
             .current_token_ref()
