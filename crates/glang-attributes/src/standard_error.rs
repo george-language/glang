@@ -30,8 +30,8 @@ impl StandardError {
             if let Some(line) = lines.get((i - 1) as usize) {
                 result.push_str(&format!(" {BOLD}{:>3} |{RESET} {}\n", i, line));
 
-                let col_start = span.start.column_num.saturating_sub(1) + 1;
-                let col_end = span.end.column_num.saturating_sub(1) + 1;
+                let col_start = span.start.column_num.saturating_sub(1);
+                let col_end = span.end.column_num.saturating_sub(1);
                 let arrow_len = (col_end.saturating_sub(col_start)).max(1);
                 let mut arrow_line = " ".repeat(col_start) + &"^".repeat(arrow_len);
 
