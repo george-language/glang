@@ -16,7 +16,7 @@ edition = "2024"
 repository = "https://github.com/george-language/glang.git"
 description = "The George Programming Language"
 authors = ["The George Language Foundation"]
-license = "GPL v3"
+license = "GPL-3.0"
 
 [workspace.dependencies]
 glang = { path = "crates/app" }
