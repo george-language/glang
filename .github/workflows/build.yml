@@ -52,11 +52,14 @@ jobs:
             --install-location / \
             dist/GeorgeLanguage+macos_setup.pkg
 
-      - name: Upload pkg artifact
-        uses: actions/upload-artifact@v7
-        with:
-          name: GeorgeLanguage+macos_setup
-          path: dist/GeorgeLanguage+macos_setup.pkg
+      - name: Upload to GitHub Release
+        if: github.event_name == 'release'
+        run: |
+          gh release upload ${{ github.ref_name }} \
+            dist/GeorgeLanguage-${{ github.ref_name }}-macos_setup.pkg \
+            --clobber
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   build-windows:
     runs-on: windows-latest
@@ -79,8 +82,11 @@ jobs:
       - name: Build installer with Inno Setup
         run: iscc installer.iss
 
-      - name: Upload exe artifact
-        uses: actions/upload-artifact@v7
-        with:
-          name: GeorgeLanguage+windows_setup
-          path: dist/GeorgeLanguage+windows_setup.exe
+      - name: Upload to GitHub Release
+        if: github.event_name == 'release'
+        run: |
+          gh release upload ${{ github.ref_name }} \
+            dist/GeorgeLanguage-${{ github.ref_name }}-windows_setup.exe \
+            --clobber
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
