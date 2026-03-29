@@ -38,13 +38,13 @@ impl Interpreter {
     pub fn new(
         precached_std_lib: Option<Rc<RefCell<SymbolTable>>>,
         imported_modules: Rc<RefCell<HashMap<PathBuf, Rc<RefCell<SymbolTable>>>>>,
-        contents: String,
+        contents: &str,
     ) -> Self {
         let interpreter = Self {
             global_symbol_table: Rc::new(RefCell::new(SymbolTable::new(None))),
             precached_std_lib,
             imported_modules,
-            contents,
+            contents: contents.to_owned(),
         };
 
         let builtins = [
@@ -76,14 +76,14 @@ impl Interpreter {
     }
 
     pub fn evaluate(&mut self, src: &str, context: Rc<RefCell<Context>>) -> Option<StandardError> {
-        let mut lexer = Lexer::new(Path::new("<eval>"), src.to_string());
+        let mut lexer = Lexer::new(Path::new("<eval>"), src);
         let token_result = lexer.make_tokens();
 
         if token_result.is_err() {
             return token_result.err();
         }
 
-        let mut parser = Parser::new(&token_result.ok().unwrap(), src.to_string());
+        let mut parser = Parser::new(&token_result.ok().unwrap(), lexer.contents());
         let ast = parser.parse();
 
         if ast.error.is_some() {
@@ -667,14 +667,14 @@ impl Interpreter {
             }
         }
 
-        let mut lexer = Lexer::new(&file_to_import, contents.clone());
+        let mut lexer = Lexer::new(&file_to_import, &contents);
         let token_result = lexer.make_tokens();
 
         if token_result.is_err() {
             return result.failure(token_result.err());
         }
 
-        let mut parser = Parser::new(&token_result.ok().unwrap(), contents.clone());
+        let mut parser = Parser::new(&token_result.ok().unwrap(), lexer.contents());
         let ast = parser.parse();
 
         if ast.error.is_some() {
@@ -688,7 +688,7 @@ impl Interpreter {
                 None
             },
             self.imported_modules.clone(),
-            contents.clone(),
+            parser.contents(),
         );
         let module_context = Rc::new(RefCell::new(Context::new(
             "<module>".to_string(),

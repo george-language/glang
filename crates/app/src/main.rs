@@ -190,19 +190,15 @@ fn run(filename: &str, code: Option<String>) -> Option<StandardError> {
     let filename = Path::new(filename);
 
     let total_time = Instant::now();
-
     let lexing_time = Instant::now();
-    let mut lexer = Lexer::new(filename, contents.clone());
-    let token_result = lexer.make_tokens();
 
-    if token_result.is_err() {
-        return token_result.err();
-    }
+    let mut lexer = Lexer::new(filename, &contents);
+    let token_result = lexer.make_tokens().ok()?;
 
     let lexing_time = lexing_time.elapsed();
-
     let parsing_time = Instant::now();
-    let mut parser = Parser::new(&token_result.ok().unwrap(), contents.clone());
+
+    let mut parser = Parser::new(&token_result, lexer.contents());
     let ast = parser.parse();
 
     if ast.error.is_some() {
@@ -210,12 +206,12 @@ fn run(filename: &str, code: Option<String>) -> Option<StandardError> {
     }
 
     let parsing_time = parsing_time.elapsed();
-
     let interpreting_time = Instant::now();
+
     let mut interpreter = Interpreter::new(
         None,
         Rc::new(RefCell::new(HashMap::new())),
-        contents.clone(),
+        parser.contents(),
     );
     let context = Rc::new(RefCell::new(Context::new(
         "<program>".to_string(),

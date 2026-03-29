@@ -69,7 +69,7 @@ impl Display for StandardError {
         ));
 
         output.push_str(&format!(
-            "|\n{}\n",
+            "|\n{}",
             self.format_code_as_messup(&contents, &self.span)
         ));
 

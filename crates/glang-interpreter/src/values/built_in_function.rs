@@ -478,22 +478,25 @@ impl BuiltInFunction {
         };
         let filename = code_arg.borrow().span().filename;
 
-        let mut lexer = Lexer::new(&filename, code.clone());
+        let mut lexer = Lexer::new(&filename, &code);
         let token_result = lexer.make_tokens();
 
         if token_result.is_err() {
             return result.failure(token_result.err());
         }
 
-        let mut parser = Parser::new(&token_result.ok().unwrap(), code.clone());
+        let mut parser = Parser::new(&token_result.ok().unwrap(), lexer.contents());
         let ast = parser.parse();
 
         if ast.error.is_some() {
             return result.failure(ast.error);
         }
 
-        let mut interpreter =
-            Interpreter::new(None, Rc::new(RefCell::new(HashMap::new())), code.clone());
+        let mut interpreter = Interpreter::new(
+            None,
+            Rc::new(RefCell::new(HashMap::new())),
+            parser.contents(),
+        );
         let external_context = Rc::new(RefCell::new(Context::new(
             "<exec>".to_string(),
             None,

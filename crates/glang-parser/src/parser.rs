@@ -32,16 +32,35 @@ pub struct Parser {
 }
 
 impl Parser {
-    pub fn new(tokens: &[Token], contents: String) -> Self {
+    pub fn new(tokens: &[Token], contents: &str) -> Self {
         let mut parser = Self {
             tokens: Rc::from(tokens),
             token_index: -1,
             current_token: None,
-            contents,
+            contents: contents.to_owned(),
         };
         parser.advance();
 
         parser
+    }
+
+    pub fn contents(&self) -> &str {
+        &self.contents
+    }
+
+    pub fn parse(&mut self) -> ParseResult {
+        let mut parse_result = self.statements();
+
+        if parse_result.error.is_some() && self.current_token_copy().token_type != TokenType::TT_EOF
+        {
+            return parse_result.failure(Some(StandardError::new(
+                "expected keyword, object, function, expression",
+                self.current_span(),
+                None,
+            )));
+        }
+
+        parse_result
     }
 
     fn advance(&mut self) -> Option<Token> {
@@ -68,7 +87,7 @@ impl Parser {
         self.current_token.as_ref().unwrap().clone()
     }
 
-    pub fn current_token_ref(&mut self) -> &Token {
+    fn current_token_ref(&mut self) -> &Token {
         self.current_token.as_ref().unwrap()
     }
 
@@ -90,21 +109,6 @@ impl Parser {
 
     fn current_position_end(&self) -> Position {
         self.current_token.as_ref().unwrap().span.end.clone()
-    }
-
-    pub fn parse(&mut self) -> ParseResult {
-        let mut parse_result = self.statements();
-
-        if parse_result.error.is_some() && self.current_token_copy().token_type != TokenType::TT_EOF
-        {
-            return parse_result.failure(Some(StandardError::new(
-                "expected keyword, object, function, expression",
-                self.current_span(),
-                None,
-            )));
-        }
-
-        parse_result
     }
 
     fn comparison_expr(&mut self) -> ParseResult {
@@ -1447,12 +1451,12 @@ fn test_ast() {
     use glang_lexer::Lexer;
     use std::path::Path;
 
-    let code = "function(1 + 1);".to_owned();
+    let code = "function(1 + 1);";
 
-    let mut lexer = Lexer::new(Path::new("<test>"), code.clone());
+    let mut lexer = Lexer::new(Path::new("<test>"), code);
     let tokens = lexer.make_tokens().ok().unwrap();
 
-    let mut parser = Parser::new(&tokens, code.clone());
+    let mut parser = Parser::new(&tokens, lexer.contents());
     let ast = parser.parse();
 
     let node = match *ast.node.unwrap() {

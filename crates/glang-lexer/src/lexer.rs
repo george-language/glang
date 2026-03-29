@@ -11,21 +11,20 @@ use std::{
 
 pub struct Lexer {
     pub filename: PathBuf,
-    pub text: String,
     pub chars: Rc<[char]>,
     pub cursor: Position,
     pub current_char: Option<char>,
+    contents: String,
 }
 
 impl Lexer {
-    pub fn new(filename: &Path, text: String) -> Self {
+    pub fn new(filename: &Path, text: &str) -> Self {
         let contents = text.replace("\r\n", "\n"); // on windows, the duplicate \r can cause issues, so it's best to remove it
         let contents = contents.trim_end(); // we trim the end of the contents so that the lexer can't advance into an empty newline
         let chars: Rc<[char]> = contents.chars().collect::<Vec<_>>().into();
 
         let lexer = Self {
             filename: filename.to_path_buf(),
-            text: contents.to_string(),
             chars: chars.clone(),
             cursor: Position::new(0, 1, 1),
             current_char: if chars.len() > 0 {
@@ -33,9 +32,14 @@ impl Lexer {
             } else {
                 None
             },
+            contents: contents.to_owned(),
         };
 
         lexer
+    }
+
+    pub fn contents(&self) -> &str {
+        &self.contents
     }
 
     fn advance(&mut self) {
@@ -503,7 +507,7 @@ impl Lexer {
 // Test the output of tokens from a lexed string
 #[test]
 fn test_tokens() {
-    let mut lexer = Lexer::new(Path::new("<test>"), "function(1 + 1);".to_owned());
+    let mut lexer = Lexer::new(Path::new("<test>"), "function(1 + 1);");
     let tokens = lexer.make_tokens().ok().unwrap();
 
     assert_eq!(tokens.len(), 8); // including EOF token
