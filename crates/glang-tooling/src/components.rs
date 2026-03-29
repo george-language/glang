@@ -1,5 +1,5 @@
+use crate::{log_header, log_message};
 use dirs::{download_dir, home_dir};
-use glang_logging::{log_header, log_message};
 use reqwest::blocking::get;
 use std::{
     env,
@@ -77,6 +77,9 @@ pub fn update_self() {
             .expect("Unable to launch installer");
 
         exit(0);
+    } else {
+        log_header("No matching versions found for glang-latest");
+        log_message("The target operating system is likely not supported");
     }
 }
 

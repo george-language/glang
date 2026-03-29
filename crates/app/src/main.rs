@@ -2,8 +2,8 @@ use clap::{Parser as ClapParser, Subcommand};
 use glang_attributes::StandardError;
 use glang_interpreter::{Context, Interpreter};
 use glang_lexer::Lexer;
-use glang_logging::log_error;
 use glang_parser::Parser;
+use glang_tooling::log_error;
 use std::{
     cell::RefCell,
     collections::HashMap,
@@ -71,17 +71,17 @@ fn main() {
     set_env_variables();
 
     // we have to run this everytime the glang executable is ran to double check 'kennels/' always exists
-    glang_package_manager::create_package_dir();
+    glang_tooling::create_package_dir();
 
     let cli = Cli::parse();
 
     match (cli.command, cli.file) {
         (Some(Commands::GlangSelf { action }), _) => match action {
             SelfCommands::Update => {
-                glang_package_manager::update_self();
+                glang_tooling::update_self();
             }
             SelfCommands::Uninstall => {
-                glang_package_manager::uninstall_self();
+                glang_tooling::uninstall_self();
             }
         },
         (Some(Commands::Run { code }), _) => {
@@ -90,13 +90,13 @@ fn main() {
             }
         }
         (Some(Commands::Install { name }), _) => {
-            glang_package_manager::add_package(&name);
+            glang_tooling::add_package(&name);
         }
         (Some(Commands::Remove { name }), _) => {
-            glang_package_manager::remove_package(&name);
+            glang_tooling::remove_package(&name);
         }
         (Some(Commands::Update { name }), _) => {
-            glang_package_manager::update_package(&name);
+            glang_tooling::update_package(&name);
         }
         (None, Some(file)) => {
             if !file.ends_with(".glang") {

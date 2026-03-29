@@ -1,5 +1,5 @@
 use crate::package_path::get_package_path;
-use glang_logging::{log_header, log_message, log_package_status};
+use crate::{log_header, log_message, log_package_status};
 use reqwest::blocking::get;
 use serde::Deserialize;
 use std::{

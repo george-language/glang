@@ -574,9 +574,8 @@ dependencies = [
  "glang-attributes",
  "glang-interpreter",
  "glang-lexer",
- "glang-logging",
- "glang-package-manager",
  "glang-parser",
+ "glang-tooling",
 ]
 
 [[package]]
@@ -603,18 +602,18 @@ dependencies = [
 ]
 
 [[package]]
-name = "glang-logging"
+name = "glang-parser"
 version = "0.1.4"
 dependencies = [
- "simply_colored",
+ "glang-attributes",
+ "glang-lexer",
 ]
 
 [[package]]
-name = "glang-package-manager"
+name = "glang-tooling"
 version = "0.1.4"
 dependencies = [
  "dirs",
- "glang-logging",
  "reqwest",
  "serde",
  "serde_json",
@@ -622,14 +621,6 @@ dependencies = [
  "stringcase",
  "toml",
  "zip",
-]
-
-[[package]]
-name = "glang-parser"
-version = "0.1.4"
-dependencies = [
- "glang-attributes",
- "glang-lexer",
 ]
 
 [[package]]

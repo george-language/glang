@@ -4,9 +4,8 @@ members = [
     "crates/glang-lexer",
     "crates/glang-parser",
     "crates/glang-interpreter",
-    "crates/glang-package-manager",
     "crates/glang-attributes",
-    "crates/glang-logging",
+    "crates/glang-tooling",
 ]
 resolver = "3"
 
@@ -24,7 +23,7 @@ glang-attributes = { path = "crates/glang-attributes" }
 glang-lexer = { path = "crates/glang-lexer" }
 glang-parser = { path = "crates/glang-parser" }
 glang-interpreter = { path = "crates/glang-interpreter" }
-glang-package-manager = { path = "crates/glang-package-manager" }
+glang-tooling = { path = "crates/glang-tooling" }
 
 [workspace.features]
 default = []

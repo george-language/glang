@@ -9,9 +9,8 @@ license = { workspace = true }
 glang-lexer = { path = "../glang-lexer" }
 glang-parser = { path = "../glang-parser" }
 glang-interpreter = { path = "../glang-interpreter" }
-glang-package-manager = { path = "../glang-package-manager" }
 glang-attributes = { path = "../glang-attributes" }
-glang-logging = { path = "../glang-logging" }
+glang-tooling = { path = "../glang-tooling" }
 clap = { version = "4.5.60", features = ["derive"] }
 dirs = "6.0.0"
 
