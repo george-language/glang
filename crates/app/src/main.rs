@@ -119,10 +119,6 @@ fn main() {
 
 /// Creates and sets environment variables used internally by glang's source code.
 ///
-/// ```no_run
-/// set_env_variables();
-/// ```
-///
 /// The function sets the following environment variables:
 ///
 /// - `GLANG_STD` is the path to the standard library ('library/')
@@ -159,24 +155,6 @@ fn set_env_variables() {
 }
 
 /// Run a '.glang' file or raw glang source code
-///
-/// ```no_run
-/// let result = run("example.glang", None);
-///
-/// if let Some(err) = result {
-///     println!("{err}");
-/// }
-/// ```
-///
-/// Running raw glang code:
-///
-/// ```no_run
-/// let result = run("<stdin>", Some("bark(1 + 1);".to_string()));
-///
-/// if let Some(err) = result {
-///     println!("{err}");
-/// }
-/// ```
 ///
 /// If the binary is built with the `benchmark` feature enabled, e.g. `cargo build --features benchmark`,
 /// this function will automatically time the lexing -> parsing -> interpreting process and display the result
@@ -251,13 +229,7 @@ fn run(filename: &str, code: Option<String>) -> Option<StandardError> {
     }
 }
 
-/// Starts the glang REPL using stdio
-///
-/// ```rust
-/// launch_repl();
-/// ```
-///
-/// An infinite loop in the terminal running glang code and evaluating it
+/// Starts the glang read evaluate print loop (REPL) using stdio
 fn launch_repl() {
     println!("George Language {VERSION}\nType '/exit' to exit");
 
