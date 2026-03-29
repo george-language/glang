@@ -1610,9 +1610,9 @@ checksum = "d66dc143e6b11c1eddc06d5c423cfc97062865baf299914ab64caa38182078fe"
 
 [[package]]
 name = "simply_colored"
-version = "0.1.4"
+version = "0.1.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8b9a4cd76dce3448e21b46120655c4567c0ae8d51156cd764f7fa7048fb79ac1"
+checksum = "fcf6e9b9bc7cd39363ba9032692b5303940ab16f600fedf844de215c657ec508"
 
 [[package]]
 name = "slab"
