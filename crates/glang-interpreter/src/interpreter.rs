@@ -31,17 +31,20 @@ pub struct Interpreter {
     pub global_symbol_table: Rc<RefCell<SymbolTable>>,
     pub precached_std_lib: Option<Rc<RefCell<SymbolTable>>>,
     imported_modules: Rc<RefCell<HashMap<PathBuf, Rc<RefCell<SymbolTable>>>>>,
+    contents: String,
 }
 
 impl Interpreter {
     pub fn new(
         precached_std_lib: Option<Rc<RefCell<SymbolTable>>>,
         imported_modules: Rc<RefCell<HashMap<PathBuf, Rc<RefCell<SymbolTable>>>>>,
+        contents: String,
     ) -> Self {
         let interpreter = Self {
             global_symbol_table: Rc::new(RefCell::new(SymbolTable::new(None))),
             precached_std_lib,
             imported_modules,
+            contents,
         };
 
         let builtins = [
@@ -80,7 +83,7 @@ impl Interpreter {
             return token_result.err();
         }
 
-        let mut parser = Parser::new(&token_result.ok().unwrap());
+        let mut parser = Parser::new(&token_result.ok().unwrap(), src.to_string());
         let ast = parser.parse();
 
         if ast.error.is_some() {
@@ -664,14 +667,14 @@ impl Interpreter {
             }
         }
 
-        let mut lexer = Lexer::new(&file_to_import, contents);
+        let mut lexer = Lexer::new(&file_to_import, contents.clone());
         let token_result = lexer.make_tokens();
 
         if token_result.is_err() {
             return result.failure(token_result.err());
         }
 
-        let mut parser = Parser::new(&token_result.ok().unwrap());
+        let mut parser = Parser::new(&token_result.ok().unwrap(), contents.clone());
         let ast = parser.parse();
 
         if ast.error.is_some() {
@@ -685,6 +688,7 @@ impl Interpreter {
                 None
             },
             self.imported_modules.clone(),
+            contents.clone(),
         );
         let module_context = Rc::new(RefCell::new(Context::new(
             "<module>".to_string(),
@@ -856,6 +860,10 @@ impl Interpreter {
             if result.should_propagate() {
                 let err = result.error.as_mut().unwrap();
                 err.span = node.span.clone();
+
+                if !err.span.filename.exists() {
+                    err.contents = Some(self.contents.clone());
+                }
 
                 println!("{err}");
             }

@@ -485,14 +485,15 @@ impl BuiltInFunction {
             return result.failure(token_result.err());
         }
 
-        let mut parser = Parser::new(&token_result.ok().unwrap());
+        let mut parser = Parser::new(&token_result.ok().unwrap(), code.clone());
         let ast = parser.parse();
 
         if ast.error.is_some() {
             return result.failure(ast.error);
         }
 
-        let mut interpreter = Interpreter::new(None, Rc::new(RefCell::new(HashMap::new())));
+        let mut interpreter =
+            Interpreter::new(None, Rc::new(RefCell::new(HashMap::new())), code.clone());
         let external_context = Rc::new(RefCell::new(Context::new(
             "<exec>".to_string(),
             None,

@@ -28,14 +28,16 @@ pub struct Parser {
     pub tokens: Rc<[Token]>,
     pub token_index: isize,
     pub current_token: Option<Token>,
+    contents: String,
 }
 
 impl Parser {
-    pub fn new(tokens: &[Token]) -> Self {
+    pub fn new(tokens: &[Token], contents: String) -> Self {
         let mut parser = Self {
             tokens: Rc::from(tokens),
             token_index: -1,
             current_token: None,
+            contents,
         };
         parser.advance();
 
@@ -1445,10 +1447,12 @@ fn test_ast() {
     use glang_lexer::Lexer;
     use std::path::Path;
 
-    let mut lexer = Lexer::new(Path::new("<test>"), "function(1 + 1);".to_owned());
+    let code = "function(1 + 1);".to_owned();
+
+    let mut lexer = Lexer::new(Path::new("<test>"), code.clone());
     let tokens = lexer.make_tokens().ok().unwrap();
 
-    let mut parser = Parser::new(&tokens);
+    let mut parser = Parser::new(&tokens, code.clone());
     let ast = parser.parse();
 
     let node = match *ast.node.unwrap() {

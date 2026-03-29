@@ -52,6 +52,8 @@ impl Lexer {
         let mut tokens = Vec::new();
 
         while let Some(current_char) = self.current_char {
+            let pos_start = self.cursor.clone();
+
             let token = match current_char {
                 ' ' | '\t' | '\n' => {
                     self.advance();
@@ -64,169 +66,134 @@ impl Lexer {
                     continue;
                 }
                 ';' => {
-                    let token = Token::new(
+                    self.advance();
+
+                    Some(Token::new(
                         TokenType::TT_SEMICOLON,
                         None,
-                        Span::new(&self.filename, self.cursor.clone(), self.cursor.clone()),
-                    );
-
+                        Span::new(&self.filename, pos_start, self.cursor.clone()),
+                    ))
+                }
+                c if DIGITS.contains(c) => Some(self.make_number()?),
+                c if LETTERS.contains(c) => Some(self.make_identifier()),
+                '"' => Some(self.make_string()?),
+                '+' => {
                     self.advance();
 
-                    Some(token)
-                }
-                c if DIGITS.contains(c) => match self.make_number() {
-                    Ok(token) => Some(token),
-                    Err(error) => return Err(error),
-                },
-                c if LETTERS.contains(c) => Some(self.make_identifier()),
-                '"' => match self.make_string() {
-                    Ok(token) => Some(token),
-                    Err(error) => return Err(error),
-                },
-                '+' => {
-                    let token = Token::new(
+                    Some(Token::new(
                         TokenType::TT_PLUS,
                         None,
-                        Span::new(&self.filename, self.cursor.clone(), self.cursor.clone()),
-                    );
-
-                    self.advance();
-
-                    Some(token)
+                        Span::new(&self.filename, pos_start, self.cursor.clone()),
+                    ))
                 }
                 '-' => Some(self.make_minus_or_arrow()),
                 '*' => {
-                    let token = Token::new(
+                    self.advance();
+
+                    Some(Token::new(
                         TokenType::TT_MUL,
                         None,
-                        Span::new(&self.filename, self.cursor.clone(), self.cursor.clone()),
-                    );
-
-                    self.advance();
-
-                    Some(token)
+                        Span::new(&self.filename, pos_start, self.cursor.clone()),
+                    ))
                 }
                 '/' => {
-                    let token = Token::new(
+                    self.advance();
+
+                    Some(Token::new(
                         TokenType::TT_DIV,
                         None,
-                        Span::new(&self.filename, self.cursor.clone(), self.cursor.clone()),
-                    );
-
-                    self.advance();
-
-                    Some(token)
+                        Span::new(&self.filename, pos_start, self.cursor.clone()),
+                    ))
                 }
                 '^' => {
-                    let token = Token::new(
+                    self.advance();
+
+                    Some(Token::new(
                         TokenType::TT_POW,
                         None,
-                        Span::new(&self.filename, self.cursor.clone(), self.cursor.clone()),
-                    );
-
-                    self.advance();
-
-                    Some(token)
+                        Span::new(&self.filename, pos_start, self.cursor.clone()),
+                    ))
                 }
                 '%' => {
-                    let token = Token::new(
+                    self.advance();
+
+                    Some(Token::new(
                         TokenType::TT_MOD,
                         None,
-                        Span::new(&self.filename, self.cursor.clone(), self.cursor.clone()),
-                    );
-
-                    self.advance();
-
-                    Some(token)
+                        Span::new(&self.filename, pos_start, self.cursor.clone()),
+                    ))
                 }
                 '(' => {
-                    let token = Token::new(
+                    self.advance();
+
+                    Some(Token::new(
                         TokenType::TT_LPAREN,
                         None,
-                        Span::new(&self.filename, self.cursor.clone(), self.cursor.clone()),
-                    );
-
-                    self.advance();
-
-                    Some(token)
+                        Span::new(&self.filename, pos_start, self.cursor.clone()),
+                    ))
                 }
                 ')' => {
-                    let token = Token::new(
+                    self.advance();
+
+                    Some(Token::new(
                         TokenType::TT_RPAREN,
                         None,
-                        Span::new(&self.filename, self.cursor.clone(), self.cursor.clone()),
-                    );
-
-                    self.advance();
-
-                    Some(token)
+                        Span::new(&self.filename, pos_start, self.cursor.clone()),
+                    ))
                 }
                 '[' => {
-                    let token = Token::new(
+                    self.advance();
+
+                    Some(Token::new(
                         TokenType::TT_LSQUARE,
                         None,
-                        Span::new(&self.filename, self.cursor.clone(), self.cursor.clone()),
-                    );
-
-                    self.advance();
-
-                    Some(token)
+                        Span::new(&self.filename, pos_start, self.cursor.clone()),
+                    ))
                 }
                 ']' => {
-                    let token = Token::new(
+                    self.advance();
+
+                    Some(Token::new(
                         TokenType::TT_RSQUARE,
                         None,
-                        Span::new(&self.filename, self.cursor.clone(), self.cursor.clone()),
-                    );
-
-                    self.advance();
-
-                    Some(token)
+                        Span::new(&self.filename, pos_start, self.cursor.clone()),
+                    ))
                 }
                 '{' => {
-                    let token = Token::new(
+                    self.advance();
+
+                    Some(Token::new(
                         TokenType::TT_LBRACKET,
                         None,
-                        Span::new(&self.filename, self.cursor.clone(), self.cursor.clone()),
-                    );
-
-                    self.advance();
-
-                    Some(token)
+                        Span::new(&self.filename, pos_start, self.cursor.clone()),
+                    ))
                 }
                 '}' => {
-                    let token = Token::new(
+                    self.advance();
+                    Some(Token::new(
                         TokenType::TT_RBRACKET,
                         None,
-                        Span::new(&self.filename, self.cursor.clone(), self.cursor.clone()),
-                    );
-
-                    self.advance();
-
-                    Some(token)
+                        Span::new(&self.filename, pos_start, self.cursor.clone()),
+                    ))
                 }
-                '!' => match self.make_not_equals() {
-                    Ok(token) => Some(token),
-                    Err(error) => return Err(error),
-                },
+                '!' => Some(self.make_not_equals()?),
                 '=' => Some(self.make_equals()),
                 '<' => Some(self.make_less_than()),
                 '>' => Some(self.make_greater_than()),
                 ',' => {
-                    let token = Token::new(
-                        TokenType::TT_COMMA,
-                        None,
-                        Span::new(&self.filename, self.cursor.clone(), self.cursor.clone()),
-                    );
-
                     self.advance();
 
-                    Some(token)
+                    Some(Token::new(
+                        TokenType::TT_COMMA,
+                        None,
+                        Span::new(&self.filename, pos_start, self.cursor.clone()),
+                    ))
                 }
+
                 unknown_char => {
                     return Err(StandardError::new(
-                        format!("unkown character '{unknown_char}'").as_str(),
-                        Span::new(&self.filename, self.cursor.clone(), self.cursor.clone()),
+                        format!("unknown character '{unknown_char}'").as_str(),
+                        Span::new(&self.filename, pos_start, self.cursor.clone()),
                         None,
                     ));
                 }
@@ -237,10 +204,14 @@ impl Lexer {
             }
         }
 
+        let pos_start = self.cursor.clone();
+
+        self.advance();
+
         tokens.push(Token::new(
             TokenType::TT_EOF,
             None,
-            Span::new(&self.filename, self.cursor.clone(), self.cursor.clone()),
+            Span::new(&self.filename, pos_start, self.cursor.clone()),
         ));
 
         Ok(tokens)

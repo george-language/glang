@@ -119,7 +119,7 @@ fn main() {
 
 /// Creates and sets environment variables used internally by glang's source code.
 ///
-/// ```rust
+/// ```no_run
 /// set_env_variables();
 /// ```
 ///
@@ -160,7 +160,7 @@ fn set_env_variables() {
 
 /// Run a '.glang' file or raw glang source code
 ///
-/// ```rust
+/// ```no_run
 /// let result = run("example.glang", None);
 ///
 /// if let Some(err) = result {
@@ -170,7 +170,7 @@ fn set_env_variables() {
 ///
 /// Running raw glang code:
 ///
-/// ```rust
+/// ```no_run
 /// let result = run("<stdin>", Some("bark(1 + 1);".to_string()));
 ///
 /// if let Some(err) = result {
@@ -181,8 +181,8 @@ fn set_env_variables() {
 /// If the binary is built with the `benchmark` feature enabled, e.g. `cargo build --features benchmark`,
 /// this function will automatically time the lexing -> parsing -> interpreting process and display the result
 fn run(filename: &str, code: Option<String>) -> Option<StandardError> {
-    let contents = if filename == "<stdin>" {
-        code.unwrap_or_default()
+    let contents = if let Some(c) = code {
+        c
     } else {
         fs::read_to_string(filename).expect("Unable to read provided '.glang' file")
     };
@@ -202,7 +202,7 @@ fn run(filename: &str, code: Option<String>) -> Option<StandardError> {
     let lexing_time = lexing_time.elapsed();
 
     let parsing_time = Instant::now();
-    let mut parser = Parser::new(&token_result.ok().unwrap());
+    let mut parser = Parser::new(&token_result.ok().unwrap(), contents.clone());
     let ast = parser.parse();
 
     if ast.error.is_some() {
@@ -212,7 +212,11 @@ fn run(filename: &str, code: Option<String>) -> Option<StandardError> {
     let parsing_time = parsing_time.elapsed();
 
     let interpreting_time = Instant::now();
-    let mut interpreter = Interpreter::new(None, Rc::new(RefCell::new(HashMap::new())));
+    let mut interpreter = Interpreter::new(
+        None,
+        Rc::new(RefCell::new(HashMap::new())),
+        contents.clone(),
+    );
     let context = Rc::new(RefCell::new(Context::new(
         "<program>".to_string(),
         None,
