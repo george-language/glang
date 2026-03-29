@@ -1062,8 +1062,11 @@ impl Parser {
             self.advance();
 
             let mut arg_nodes: Vec<Box<AstNode>> = Vec::new();
+            let closing_call: Token;
 
             if self.current_token_ref().token_type == TokenType::TT_RPAREN {
+                closing_call = self.current_token_copy();
+
                 parse_result.register_advancement();
                 self.advance();
             } else {
@@ -1100,6 +1103,8 @@ impl Parser {
                     )));
                 }
 
+                closing_call = self.current_token_copy();
+
                 parse_result.register_advancement();
                 self.advance();
             }
@@ -1107,6 +1112,7 @@ impl Parser {
             return parse_result.success(Some(Box::new(AstNode::Call(CallNode::new(
                 atom.unwrap().clone(),
                 arg_nodes,
+                closing_call,
             )))));
         }
 

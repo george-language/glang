@@ -193,12 +193,16 @@ fn run(filename: &str, code: Option<String>) -> Option<StandardError> {
     let lexing_time = Instant::now();
 
     let mut lexer = Lexer::new(filename, &contents);
-    let token_result = lexer.make_tokens().ok()?;
+    let token_result = lexer.make_tokens();
+
+    if token_result.is_err() {
+        return token_result.err();
+    }
 
     let lexing_time = lexing_time.elapsed();
     let parsing_time = Instant::now();
 
-    let mut parser = Parser::new(&token_result, lexer.contents());
+    let mut parser = Parser::new(&token_result.ok().unwrap(), lexer.contents());
     let ast = parser.parse();
 
     if ast.error.is_some() {

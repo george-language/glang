@@ -208,14 +208,10 @@ impl Lexer {
             }
         }
 
-        let pos_start = self.cursor.clone();
-
-        self.advance();
-
         tokens.push(Token::new(
             TokenType::TT_EOF,
             None,
-            Span::new(&self.filename, pos_start, self.cursor.clone()),
+            Span::new(&self.filename, self.cursor.clone(), self.cursor.clone()),
         ));
 
         Ok(tokens)
