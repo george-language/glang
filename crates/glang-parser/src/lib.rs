@@ -1,8 +1,8 @@
-mod nodes;
+mod ast_node;
 mod parse_result;
 mod parser;
 
-pub use nodes::{
+pub use ast_node::{
     AstNode, BinaryOperatorNode, BreakNode, CallNode, ConstAssignNode, ContinueNode, ForNode,
     FunctionDefinitionNode, IfNode, ImportNode, ListNode, NumberNode, ReturnNode, StringNode,
     TryExceptNode, UnaryOperatorNode, VariableAccessNode, VariableAssignNode, VariableRessignNode,
