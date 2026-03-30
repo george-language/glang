@@ -1,17 +1,14 @@
 use clap::{Parser as ClapParser, Subcommand};
 use glang_attributes::StandardError;
-use glang_interpreter::{Context, Interpreter};
-use glang_lexer::Lexer;
-use glang_parser::Parser;
+use glang_interpreter::interpret;
+use glang_lexer::lexer::lex;
+use glang_parser::parser::parse;
 use glang_tooling::log_error;
 use std::{
-    cell::RefCell,
-    collections::HashMap,
     env, fs,
     io::{Write, stdin, stdout},
     panic,
     path::{Path, PathBuf},
-    rc::Rc,
     time::Instant,
 };
 
@@ -166,67 +163,27 @@ fn run(filename: &str, code: Option<String>) -> Option<StandardError> {
     };
 
     let filename = Path::new(filename);
-
     let total_time = Instant::now();
-    let lexing_time = Instant::now();
 
-    let mut lexer = Lexer::new(filename, &contents);
-    let token_result = lexer.make_tokens();
-
-    if token_result.is_err() {
-        return token_result.err();
-    }
-
-    let lexing_time = lexing_time.elapsed();
-    let parsing_time = Instant::now();
-
-    let mut parser = Parser::new(&token_result.ok().unwrap(), lexer.contents());
-    let ast = parser.parse();
-
-    if ast.error.is_some() {
-        return ast.error;
-    }
-
-    let parsing_time = parsing_time.elapsed();
-    let interpreting_time = Instant::now();
-
-    let mut interpreter = Interpreter::new(
-        None,
-        Rc::new(RefCell::new(HashMap::new())),
-        parser.contents(),
-    );
-    let context = Rc::new(RefCell::new(Context::new(
-        "<program>".to_string(),
-        None,
-        None,
-        Some(interpreter.global_symbol_table.clone()),
-    )));
-
-    if !cfg!(feature = "no-std") {
-        interpreter.preload_standard_library(context.clone());
-    }
-
-    let result = interpreter.visit(ast.node.unwrap().as_ref(), context.clone());
-
-    let interpreting_time = interpreting_time.elapsed();
+    let error = match lex(filename, &contents) {
+        Ok(tokens) => match parse(&tokens, &contents) {
+            Ok(ast_node) => match interpret(&ast_node, &contents, None, None) {
+                Some(e) => Some(e),
+                None => None,
+            },
+            Err(e) => Some(e),
+        },
+        Err(e) => Some(e),
+    };
 
     if cfg!(feature = "benchmark") {
-        // only display benchmarking if feature is enabled
         println!(
             "Total time elapsed: {:?}ms",
             total_time.elapsed().as_millis()
         );
-        println!("Time to lex: {:?}ms", lexing_time.as_millis());
-        println!("Time to parse: {:?}ms", parsing_time.as_millis());
-        println!("Time to interpret: {:?}ms", interpreting_time.as_millis());
     }
 
-    if result.should_propagate() {
-        // if the error is propagating, it is already displayed in the terminal
-        None
-    } else {
-        result.error
-    }
+    error
 }
 
 /// Starts the glang read evaluate print loop (REPL) using stdio

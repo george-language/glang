@@ -13,7 +13,24 @@ use crate::{
 };
 use glang_attributes::{Position, Span, StandardError};
 use glang_lexer::{Token, TokenType};
-use std::rc::Rc;
+use std::{rc::Rc, time::Instant};
+
+pub fn parse(tokens: &[Token], contents: &str) -> Result<Box<AstNode>, StandardError> {
+    let parsing_time = Instant::now();
+
+    let mut parser = Parser::new(tokens, contents);
+    let ast = parser.parse();
+
+    if let Some(e) = ast.error {
+        return Err(e);
+    }
+
+    if cfg!(feature = "benchmark") {
+        println!("Time to parse: {:?}ms", parsing_time.elapsed().as_millis())
+    }
+
+    Ok(ast.node)
+}
 
 #[derive(Debug, Clone)]
 enum Operator {
@@ -53,11 +70,11 @@ impl Parser {
 
         if parse_result.error.is_some() && self.current_token_copy().token_type != TokenType::TT_EOF
         {
-            return parse_result.failure(Some(StandardError::new(
+            return parse_result.failure(StandardError::new(
                 "expected keyword, object, function, expression",
                 self.current_span(),
                 None,
-            )));
+            ));
         }
 
         parse_result
@@ -122,17 +139,15 @@ impl Parser {
             parse_result.register_advancement();
             self.advance();
 
-            let node = parse_result
-                .register(self.comparison_expr())
-                .unwrap()
-                .clone();
+            let node = parse_result.register(self.comparison_expr()).clone();
 
             if parse_result.error.is_some() {
                 return parse_result;
             }
 
-            return parse_result.success(Some(Box::new(AstNode::UnaryOperator(
-                UnaryOperatorNode::new(op_token.clone(), node.clone()),
+            return parse_result.success(Box::new(AstNode::UnaryOperator(UnaryOperatorNode::new(
+                op_token.clone(),
+                node.clone(),
             ))));
         }
 
@@ -150,11 +165,11 @@ impl Parser {
         ));
 
         if parse_result.error.is_some() {
-            return parse_result.failure(Some(StandardError::new(
+            return parse_result.failure(StandardError::new(
                 "expected keyword, object, function, expression",
                 self.current_span(),
                 None,
-            )));
+            ));
         }
 
         parse_result.success(node)
@@ -174,11 +189,11 @@ impl Parser {
         let pos_start = self.current_position_start();
 
         if self.current_token_ref().token_type != TokenType::TT_LSQUARE {
-            return parse_result.failure(Some(StandardError::new(
+            return parse_result.failure(StandardError::new(
                 "expected list initializing bracket",
                 self.current_span(),
                 Some("add a '[' to start the list"),
-            )));
+            ));
         }
 
         parse_result.register_advancement();
@@ -191,14 +206,14 @@ impl Parser {
             let element = parse_result.register(self.expr());
 
             if parse_result.error.is_some() {
-                return parse_result.failure(Some(StandardError::new(
+                return parse_result.failure(StandardError::new(
                     "expected closing bracket or list element",
                     self.current_span(),
                     Some("add a ']' to close the list or add a list element followed by a comma"),
-                )));
+                ));
             }
 
-            element_nodes.push(element.unwrap());
+            element_nodes.push(element);
 
             while self.current_token_ref().token_type == TokenType::TT_COMMA {
                 parse_result.register_advancement();
@@ -214,29 +229,29 @@ impl Parser {
                     return parse_result;
                 }
 
-                element_nodes.push(element.unwrap());
+                element_nodes.push(element);
             }
 
             if self.current_token_ref().token_type != TokenType::TT_RSQUARE {
-                return parse_result.failure(Some(StandardError::new(
+                return parse_result.failure(StandardError::new(
                     "expected ']' or next list element",
                     self.current_span(),
                     Some("add a ']' to close the list or add a list element followed by a comma"),
-                )));
+                ));
             }
 
             parse_result.register_advancement();
             self.advance();
         }
 
-        parse_result.success(Some(Box::new(AstNode::List(ListNode::new(
+        parse_result.success(Box::new(AstNode::List(ListNode::new(
             &element_nodes,
             Span::new(
                 &self.current_span().filename,
                 pos_start.clone(),
                 self.current_position_end().clone(),
             ),
-        )))))
+        ))))
     }
 
     fn if_expr(&mut self) -> ParseResult {
@@ -247,7 +262,7 @@ impl Parser {
             return if_parse_result;
         }
 
-        parse_result.success(Some(Box::new(AstNode::If(IfNode::new(&cases, else_case)))))
+        parse_result.success(Box::new(AstNode::If(IfNode::new(&cases, else_case))))
     }
 
     fn if_expr_b(
@@ -273,11 +288,11 @@ impl Parser {
 
             if self.current_token_ref().token_type != TokenType::TT_LBRACKET {
                 return (
-                    parse_result.failure(Some(StandardError::new(
+                    parse_result.failure(StandardError::new(
                         "expected '{'",
                         self.current_span(),
                         Some("add a '{' to define the body"),
-                    ))),
+                    )),
                     None,
                 );
             }
@@ -291,17 +306,17 @@ impl Parser {
                 return (parse_result, None);
             }
 
-            let body = (statements.unwrap(), true);
+            let body = (statements, true);
 
             else_case = Some(body);
 
             if self.current_token_ref().token_type != TokenType::TT_RBRACKET {
                 return (
-                    parse_result.failure(Some(StandardError::new(
+                    parse_result.failure(StandardError::new(
                         "expected '}'",
                         self.current_span(),
                         Some("add a '}' to close the body"),
-                    ))),
+                    )),
                     None,
                 );
             }
@@ -378,11 +393,11 @@ impl Parser {
             .matches(TokenType::TT_KEYWORD, keyword)
         {
             return (
-                parse_result.failure(Some(StandardError::new(
+                parse_result.failure(StandardError::new(
                     "expected keyword",
                     self.current_span(),
                     Some(format!("add the '{keyword}' keyword").as_str()),
-                ))),
+                )),
                 Vec::new(),
                 None,
             );
@@ -399,11 +414,11 @@ impl Parser {
 
         if self.current_token_ref().token_type != TokenType::TT_LBRACKET {
             return (
-                parse_result.failure(Some(StandardError::new(
+                parse_result.failure(StandardError::new(
                     "expected '{'",
                     self.current_span(),
                     Some("add a '{' to define the body"),
-                ))),
+                )),
                 Vec::new(),
                 None,
             );
@@ -418,15 +433,15 @@ impl Parser {
             return (parse_result, Vec::new(), None);
         }
 
-        cases.push((condition.unwrap(), statements.unwrap(), true));
+        cases.push((condition, statements, true));
 
         if self.current_token_ref().token_type != TokenType::TT_RBRACKET {
             return (
-                parse_result.failure(Some(StandardError::new(
+                parse_result.failure(StandardError::new(
                     "expected '}'",
                     self.current_span(),
                     Some("add a '}' to close the body"),
-                ))),
+                )),
                 Vec::new(),
                 None,
             );
@@ -454,22 +469,22 @@ impl Parser {
             .current_token_ref()
             .matches(TokenType::TT_KEYWORD, "walk")
         {
-            return parse_result.failure(Some(StandardError::new(
+            return parse_result.failure(StandardError::new(
                 "expected keyword",
                 self.current_span(),
                 Some("add the 'walk' keyword to initialize a walk loop"),
-            )));
+            ));
         }
 
         parse_result.register_advancement();
         self.advance();
 
         if self.current_token_ref().token_type != TokenType::TT_IDENTIFIER {
-            return parse_result.failure(Some(StandardError::new(
+            return parse_result.failure(StandardError::new(
                 "expected identifier",
                 self.current_span(),
                 Some("add an object name like 'i' for the iterator name"),
-            )));
+            ));
         }
 
         let var_name = self.current_token_copy();
@@ -478,7 +493,7 @@ impl Parser {
         self.advance();
 
         if self.current_token_ref().token_type != TokenType::TT_EQ {
-            return parse_result.failure(Some(StandardError::new(
+            return parse_result.failure(StandardError::new(
                 "expected '='",
                 self.current_span(),
                 Some(
@@ -488,7 +503,7 @@ impl Parser {
                     )
                     .as_str(),
                 ),
-            )));
+            ));
         }
 
         parse_result.register_advancement();
@@ -504,11 +519,11 @@ impl Parser {
             .current_token_ref()
             .matches(TokenType::TT_KEYWORD, "through")
         {
-            return parse_result.failure(Some(StandardError::new(
+            return parse_result.failure(StandardError::new(
                 "expected 'through'",
                 self.current_span(),
                 Some("add the 'through' keyword to define a range 'n through n'"),
-            )));
+            ));
         }
 
         parse_result.register_advancement();
@@ -530,17 +545,17 @@ impl Parser {
             self.advance();
 
             if self.current_token_ref().token_type != TokenType::TT_EQ {
-                return parse_result.failure(Some(StandardError::new(
+                return parse_result.failure(StandardError::new(
                     "expected '='",
                     self.current_span(),
                     Some("add an '=' to set the step amount"),
-                )));
+                ));
             }
 
             parse_result.register_advancement();
             self.advance();
 
-            step_value = parse_result.register(self.expr());
+            step_value = Some(parse_result.register(self.expr()));
 
             if parse_result.error.is_some() {
                 return parse_result;
@@ -550,11 +565,11 @@ impl Parser {
         }
 
         if self.current_token_ref().token_type != TokenType::TT_LBRACKET {
-            return parse_result.failure(Some(StandardError::new(
+            return parse_result.failure(StandardError::new(
                 "expected '{'",
                 self.current_span(),
                 Some("add a '{' to define the body"),
-            )));
+            ));
         }
 
         parse_result.register_advancement();
@@ -567,23 +582,23 @@ impl Parser {
         }
 
         if self.current_token_ref().token_type != TokenType::TT_RBRACKET {
-            return parse_result.failure(Some(StandardError::new(
+            return parse_result.failure(StandardError::new(
                 "expected '}'",
                 self.current_span(),
                 Some("add a '}' to close the body"),
-            )));
+            ));
         }
 
         parse_result.register_advancement();
         self.advance();
 
-        parse_result.success(Some(Box::new(AstNode::For(ForNode::new(
+        parse_result.success(Box::new(AstNode::For(ForNode::new(
             var_name,
-            start_value.unwrap(),
-            end_value.unwrap(),
+            start_value,
+            end_value,
             step_value,
-            body.unwrap(),
-        )))))
+            body,
+        ))))
     }
 
     fn while_expr(&mut self) -> ParseResult {
@@ -593,11 +608,11 @@ impl Parser {
             .current_token_ref()
             .matches(TokenType::TT_KEYWORD, "while")
         {
-            return parse_result.failure(Some(StandardError::new(
+            return parse_result.failure(StandardError::new(
                 "expected keyword",
                 self.current_span(),
                 Some("add the 'while' keyword to initialize a while loop"),
-            )));
+            ));
         }
 
         parse_result.register_advancement();
@@ -610,11 +625,11 @@ impl Parser {
         }
 
         if self.current_token_ref().token_type != TokenType::TT_LBRACKET {
-            return parse_result.failure(Some(StandardError::new(
+            return parse_result.failure(StandardError::new(
                 "expected '{'",
                 self.current_span(),
                 Some("add a '{' to define the body"),
-            )));
+            ));
         }
 
         parse_result.register_advancement();
@@ -627,20 +642,17 @@ impl Parser {
         }
 
         if self.current_token_ref().token_type != TokenType::TT_RBRACKET {
-            return parse_result.failure(Some(StandardError::new(
+            return parse_result.failure(StandardError::new(
                 "expected '}'",
                 self.current_span(),
                 Some("add a '}' to close the body"),
-            )));
+            ));
         }
 
         parse_result.register_advancement();
         self.advance();
 
-        parse_result.success(Some(Box::new(AstNode::While(WhileNode::new(
-            condition.unwrap(),
-            body.unwrap(),
-        )))))
+        parse_result.success(Box::new(AstNode::While(WhileNode::new(condition, body))))
     }
 
     fn try_expr(&mut self) -> ParseResult {
@@ -650,22 +662,22 @@ impl Parser {
             .current_token_ref()
             .matches(TokenType::TT_KEYWORD, "try")
         {
-            return parse_result.failure(Some(StandardError::new(
+            return parse_result.failure(StandardError::new(
                 "expected keyword",
                 self.current_span(),
                 Some("add the 'try' keyword to isolate unsafe code"),
-            )));
+            ));
         }
 
         parse_result.register_advancement();
         self.advance();
 
         if self.current_token_ref().token_type != TokenType::TT_LBRACKET {
-            return parse_result.failure(Some(StandardError::new(
+            return parse_result.failure(StandardError::new(
                 "expected '{'",
                 self.current_span(),
                 Some("add a '{' to define the body"),
-            )));
+            ));
         }
 
         parse_result.register_advancement();
@@ -678,11 +690,11 @@ impl Parser {
         }
 
         if self.current_token_ref().token_type != TokenType::TT_RBRACKET {
-            return parse_result.failure(Some(StandardError::new(
+            return parse_result.failure(StandardError::new(
                 "expected '}'",
                 self.current_span(),
                 Some("add a '}' to close the body"),
-            )));
+            ));
         }
 
         parse_result.register_advancement();
@@ -692,22 +704,22 @@ impl Parser {
             .current_token_ref()
             .matches(TokenType::TT_KEYWORD, "catch")
         {
-            return parse_result.failure(Some(StandardError::new(
+            return parse_result.failure(StandardError::new(
                 "expected keyword",
                 self.current_span(),
                 Some("add the 'catch' keyword to isolate the safe code to execute if the 'try' block fails"),
-            )));
+            ));
         }
 
         parse_result.register_advancement();
         self.advance();
 
         if self.current_token_ref().token_type != TokenType::TT_IDENTIFIER {
-            return parse_result.failure(Some(StandardError::new(
+            return parse_result.failure(StandardError::new(
                 "expected identifier",
                 self.current_span(),
                 Some("add a name for caught error like 'error'"),
-            )));
+            ));
         }
 
         let error_name_token = self.current_token_copy();
@@ -716,11 +728,11 @@ impl Parser {
         self.advance();
 
         if self.current_token_ref().token_type != TokenType::TT_LBRACKET {
-            return parse_result.failure(Some(StandardError::new(
+            return parse_result.failure(StandardError::new(
                 "expected '{'",
                 self.current_span(),
                 Some("add a '{' to define the body"),
-            )));
+            ));
         }
 
         parse_result.register_advancement();
@@ -733,21 +745,21 @@ impl Parser {
         }
 
         if self.current_token_ref().token_type != TokenType::TT_RBRACKET {
-            return parse_result.failure(Some(StandardError::new(
+            return parse_result.failure(StandardError::new(
                 "expected '}'",
                 self.current_span(),
                 Some("add a '}' to close the body"),
-            )));
+            ));
         }
 
         parse_result.register_advancement();
         self.advance();
 
-        parse_result.success(Some(Box::new(AstNode::TryExcept(TryExceptNode::new(
-            try_body.unwrap(),
-            except_body.unwrap(),
+        parse_result.success(Box::new(AstNode::TryExcept(TryExceptNode::new(
+            try_body,
+            except_body,
             error_name_token,
-        )))))
+        ))))
     }
 
     fn import_expr(&mut self) -> ParseResult {
@@ -757,11 +769,11 @@ impl Parser {
             .current_token_ref()
             .matches(TokenType::TT_KEYWORD, "fetch")
         {
-            return parse_result.failure(Some(StandardError::new(
+            return parse_result.failure(StandardError::new(
                 "expected keyword",
                 self.current_span(),
                 Some("add the 'fetch' keyword to import other '.glang' files"),
-            )));
+            ));
         }
 
         parse_result.register_advancement();
@@ -776,9 +788,7 @@ impl Parser {
         parse_result.register_advancement();
         self.advance();
 
-        parse_result.success(Some(Box::new(AstNode::Import(ImportNode::new(
-            import.unwrap(),
-        )))))
+        parse_result.success(Box::new(AstNode::Import(ImportNode::new(import))))
     }
 
     fn expr(&mut self) -> ParseResult {
@@ -796,11 +806,11 @@ impl Parser {
             self.advance();
 
             if self.current_token_copy().token_type != TokenType::TT_IDENTIFIER {
-                return parse_result.failure(Some(StandardError::new(
+                return parse_result.failure(StandardError::new(
                     "expected identifier",
                     self.current_span(),
                     Some("add a name for this object like 'hotdog'"),
-                )));
+                ));
             }
 
             let var_name = self.current_token_copy();
@@ -809,7 +819,7 @@ impl Parser {
             self.advance();
 
             if self.current_token_copy().token_type != TokenType::TT_EQ {
-                return parse_result.failure(Some(StandardError::new(
+                return parse_result.failure(StandardError::new(
                     "expected '='",
                     self.current_span(),
                     Some(
@@ -819,7 +829,7 @@ impl Parser {
                         )
                         .as_str(),
                     ),
-                )));
+                ));
             }
 
             parse_result.register_advancement();
@@ -831,9 +841,9 @@ impl Parser {
                 return parse_result;
             }
 
-            return parse_result.success(Some(Box::new(AstNode::VariableAssign(
-                VariableAssignNode::new(var_name, expr.unwrap()),
-            ))));
+            return parse_result.success(Box::new(AstNode::VariableAssign(
+                VariableAssignNode::new(var_name, expr),
+            )));
         } else if self.current_token_copy().token_type == TokenType::TT_IDENTIFIER
             && next_tok.token_type == TokenType::TT_EQ
         {
@@ -852,9 +862,9 @@ impl Parser {
                 return parse_result;
             }
 
-            return parse_result.success(Some(Box::new(AstNode::VariableReassign(
-                VariableRessignNode::new(var_name, expr.unwrap()),
-            ))));
+            return parse_result.success(Box::new(AstNode::VariableReassign(
+                VariableRessignNode::new(var_name, expr),
+            )));
         } else if self
             .current_token_ref()
             .matches(TokenType::TT_KEYWORD, "stay")
@@ -863,11 +873,11 @@ impl Parser {
             self.advance();
 
             if self.current_token_copy().token_type != TokenType::TT_IDENTIFIER {
-                return parse_result.failure(Some(StandardError::new(
+                return parse_result.failure(StandardError::new(
                     "expected identifier",
                     self.current_span(),
                     Some("add a name for this constant like 'HOT_DOG'"),
-                )));
+                ));
             }
 
             let const_name = self.current_token_copy();
@@ -876,7 +886,7 @@ impl Parser {
             self.advance();
 
             if self.current_token_copy().token_type != TokenType::TT_EQ {
-                return parse_result.failure(Some(StandardError::new(
+                return parse_result.failure(StandardError::new(
                     "expected '='",
                     self.current_span(),
                     Some(
@@ -886,7 +896,7 @@ impl Parser {
                         )
                         .as_str(),
                     ),
-                )));
+                ));
             }
 
             parse_result.register_advancement();
@@ -898,8 +908,8 @@ impl Parser {
                 return parse_result;
             }
 
-            return parse_result.success(Some(Box::new(AstNode::ConstAssign(
-                ConstAssignNode::new(const_name, expr.unwrap()),
+            return parse_result.success(Box::new(AstNode::ConstAssign(ConstAssignNode::new(
+                const_name, expr,
             ))));
         }
 
@@ -913,11 +923,11 @@ impl Parser {
         ));
 
         if parse_result.error.is_some() {
-            return parse_result.failure(Some(StandardError::new(
+            return parse_result.failure(StandardError::new(
                 "expected keyword, object, function, expression",
                 self.current_span(),
                 None,
-            )));
+            ));
         }
 
         parse_result.success(node)
@@ -940,14 +950,14 @@ impl Parser {
                 self.reverse(parse_result.to_reverse_count);
             }
 
-            return parse_result.success(Some(Box::new(AstNode::Return(ReturnNode::new(
+            return parse_result.success(Box::new(AstNode::Return(ReturnNode::new(
                 expr,
                 Span::new(
                     &self.current_span().filename,
                     pos_start,
                     self.current_position_end(),
                 ),
-            )))));
+            ))));
         } else if self
             .current_token_ref()
             .matches(TokenType::TT_KEYWORD, "next")
@@ -955,13 +965,13 @@ impl Parser {
             parse_result.register_advancement();
             self.advance();
 
-            return parse_result.success(Some(Box::new(AstNode::Continue(ContinueNode::new(
+            return parse_result.success(Box::new(AstNode::Continue(ContinueNode::new(
                 Span::new(
                     &self.current_span().filename,
                     pos_start,
                     self.current_position_end(),
                 ),
-            )))));
+            ))));
         } else if self
             .current_token_ref()
             .matches(TokenType::TT_KEYWORD, "leave")
@@ -969,19 +979,17 @@ impl Parser {
             parse_result.register_advancement();
             self.advance();
 
-            return parse_result.success(Some(Box::new(AstNode::Break(BreakNode::new(
-                Span::new(
-                    &self.current_span().filename,
-                    pos_start,
-                    self.current_position_end(),
-                ),
+            return parse_result.success(Box::new(AstNode::Break(BreakNode::new(Span::new(
+                &self.current_span().filename,
+                pos_start,
+                self.current_position_end(),
             )))));
         }
 
         let expr = parse_result.register(self.expr());
 
         if parse_result.error.is_some() {
-            return parse_result.failure(Some(StandardError::new(
+            return parse_result.failure(StandardError::new(
                 "expected keyword, object, function, expression",
                 Span::new(
                     &self.current_span().filename,
@@ -989,7 +997,7 @@ impl Parser {
                     self.current_position_end(),
                 ),
                 None,
-            )));
+            ));
         }
 
         parse_result.success(expr)
@@ -1001,14 +1009,14 @@ impl Parser {
         let pos_start = self.current_position_start();
 
         if self.current_token_ref().token_type == TokenType::TT_EOF {
-            return parse_result.success(Some(Box::new(AstNode::List(ListNode::new(
+            return parse_result.success(Box::new(AstNode::List(ListNode::new(
                 &[],
                 Span::new(
                     &self.current_span().filename,
                     pos_start,
                     self.current_position_end(),
                 ),
-            )))));
+            ))));
         }
 
         let statement = parse_result.register(self.statement());
@@ -1017,7 +1025,7 @@ impl Parser {
             return parse_result;
         }
 
-        statements.push(statement.unwrap());
+        statements.push(statement);
 
         loop {
             if self.current_token_ref().token_type == TokenType::TT_SEMICOLON {
@@ -1036,17 +1044,17 @@ impl Parser {
                 return parse_result;
             }
 
-            statements.push(statement.unwrap());
+            statements.push(statement);
         }
 
-        parse_result.success(Some(Box::new(AstNode::List(ListNode::new(
+        parse_result.success(Box::new(AstNode::List(ListNode::new(
             &statements,
             Span::new(
                 &self.current_span().filename,
                 pos_start,
                 self.current_position_end(),
             ),
-        )))))
+        ))))
     }
 
     fn call(&mut self) -> ParseResult {
@@ -1073,14 +1081,14 @@ impl Parser {
                 let expr = parse_result.register(self.expr());
 
                 if parse_result.error.is_some() {
-                    return parse_result.failure(Some(StandardError::new(
+                    return parse_result.failure(StandardError::new(
                         "expected keyword, object, function, expression",
                         self.current_span(),
                         None,
-                    )));
+                    ));
                 }
 
-                arg_nodes.push(expr.unwrap());
+                arg_nodes.push(expr);
 
                 while self.current_token_ref().token_type == TokenType::TT_COMMA {
                     parse_result.register_advancement();
@@ -1092,15 +1100,15 @@ impl Parser {
                         return parse_result;
                     }
 
-                    arg_nodes.push(expr.unwrap());
+                    arg_nodes.push(expr);
                 }
 
                 if self.current_token_ref().token_type != TokenType::TT_RPAREN {
-                    return parse_result.failure(Some(StandardError::new(
+                    return parse_result.failure(StandardError::new(
                         "expected ',' or ')'",
                         self.current_span(),
                         Some("add a ',' to input all the function arguments or close with a ')' to call the function"),
-                    )));
+                    ));
                 }
 
                 closing_call = self.current_token_copy();
@@ -1109,11 +1117,11 @@ impl Parser {
                 self.advance();
             }
 
-            return parse_result.success(Some(Box::new(AstNode::Call(CallNode::new(
-                atom.unwrap().clone(),
+            return parse_result.success(Box::new(AstNode::Call(CallNode::new(
+                atom,
                 arg_nodes,
                 closing_call,
-            )))));
+            ))));
         }
 
         parse_result.success(atom)
@@ -1127,22 +1135,23 @@ impl Parser {
             parse_result.register_advancement();
             self.advance();
 
-            return parse_result.success(Some(Box::new(AstNode::Number(NumberNode::new(token)))));
+            return parse_result.success(Box::new(AstNode::Number(NumberNode::new(token))));
         } else if token.token_type == TokenType::TT_STR {
             parse_result.register_advancement();
             self.advance();
 
-            return parse_result.success(Some(Box::new(AstNode::Strings(StringNode::new(token)))));
+            return parse_result.success(Box::new(AstNode::Strings(StringNode::new(token))));
         } else if token.token_type == TokenType::TT_IDENTIFIER {
             parse_result.register_advancement();
             self.advance();
 
-            return parse_result.success(Some(Box::new(AstNode::VariableAccess(
+            return parse_result.success(Box::new(AstNode::VariableAccess(
                 VariableAccessNode::new(token),
-            ))));
+            )));
         } else if token.token_type == TokenType::TT_LPAREN {
             parse_result.register_advancement();
             self.advance();
+
             let expr = parse_result.register(self.expr());
 
             if parse_result.error.is_some() {
@@ -1155,11 +1164,11 @@ impl Parser {
 
                 return parse_result.success(expr);
             } else {
-                return parse_result.failure(Some(StandardError::new(
+                return parse_result.failure(StandardError::new(
                     "expected closing parenthesis",
                     self.current_span(),
                     Some("add a ')' to close the original '('"),
-                )));
+                ));
             }
         } else if token.token_type == TokenType::TT_LSQUARE {
             let expr = parse_result.register(self.list_expr());
@@ -1219,11 +1228,11 @@ impl Parser {
             return parse_result.success(import_expr);
         }
 
-        parse_result.failure(Some(StandardError::new(
+        parse_result.failure(StandardError::new(
             "expected object, keyword, function, or expression",
             token.span,
             None,
-        )))
+        ))
     }
 
     fn power(&mut self) -> ParseResult {
@@ -1247,8 +1256,8 @@ impl Parser {
                 return parse_result;
             }
 
-            return parse_result.success(Some(Box::new(AstNode::UnaryOperator(
-                UnaryOperatorNode::new(token, factor.unwrap()),
+            return parse_result.success(Box::new(AstNode::UnaryOperator(UnaryOperatorNode::new(
+                token, factor,
             ))));
         }
 
@@ -1274,11 +1283,11 @@ impl Parser {
             .current_token_ref()
             .matches(TokenType::TT_KEYWORD, "func")
         {
-            return parse_result.failure(Some(StandardError::new(
+            return parse_result.failure(StandardError::new(
                 "expected keyword",
                 self.current_span(),
                 Some("add the 'func' keyword to define a function"),
-            )));
+            ));
         }
 
         parse_result.register_advancement();
@@ -1292,21 +1301,21 @@ impl Parser {
             self.advance();
 
             if self.current_token_ref().token_type != TokenType::TT_LPAREN {
-                return parse_result.failure(Some(StandardError::new(
+                return parse_result.failure(StandardError::new(
                     "expected '('",
                     self.current_span(),
                     Some("add a '(' to define the function arguments"),
-                )));
+                ));
             }
         } else {
             var_name_token = None;
 
             if self.current_token_ref().token_type != TokenType::TT_LPAREN {
-                return parse_result.failure(Some(StandardError::new(
+                return parse_result.failure(StandardError::new(
                     "expected identifier or '('",
                     self.current_span(),
                     Some("add a name for this function like 'greet' or use '(' to define an anonymous function"),
-                )));
+                ));
             }
         }
 
@@ -1330,11 +1339,11 @@ impl Parser {
                 }
 
                 if self.current_token_ref().token_type != TokenType::TT_IDENTIFIER {
-                    return parse_result.failure(Some(StandardError::new(
+                    return parse_result.failure(StandardError::new(
                         "expected identifier",
                         self.current_span(),
                         Some("add a name for the function arguments like 'name'"),
-                    )));
+                    ));
                 }
 
                 arg_name_tokens.push(self.current_token_copy());
@@ -1344,29 +1353,29 @@ impl Parser {
             }
 
             if self.current_token_ref().token_type != TokenType::TT_RPAREN {
-                return parse_result.failure(Some(StandardError::new(
+                return parse_result.failure(StandardError::new(
                     "expected ')'",
                     self.current_span(),
                     Some("add another function argument or complete the function with ')'"),
-                )));
+                ));
             }
         } else if self.current_token_ref().token_type != TokenType::TT_RPAREN {
-            return parse_result.failure(Some(StandardError::new(
+            return parse_result.failure(StandardError::new(
                 "expected indentifier or ')'",
                 self.current_span(),
                 Some("add a name for the function arguments like 'name' or complete the function with ')'"),
-            )));
+            ));
         }
 
         parse_result.register_advancement();
         self.advance();
 
         if self.current_token_ref().token_type != TokenType::TT_LBRACKET {
-            return parse_result.failure(Some(StandardError::new(
+            return parse_result.failure(StandardError::new(
                 "expected '{'",
                 self.current_span(),
                 Some("add a '{' to define the body of the function"),
-            )));
+            ));
         }
 
         parse_result.register_advancement();
@@ -1379,19 +1388,19 @@ impl Parser {
         }
 
         if self.current_token_ref().token_type != TokenType::TT_RBRACKET {
-            return parse_result.failure(Some(StandardError::new(
+            return parse_result.failure(StandardError::new(
                 "expected '}'",
                 self.current_span(),
                 Some("add a '}' to close the body"),
-            )));
+            ));
         }
 
         parse_result.register_advancement();
         self.advance();
 
-        parse_result.success(Some(Box::new(AstNode::FunctionDefinition(
-            FunctionDefinitionNode::new(var_name_token, &arg_name_tokens, body.unwrap(), false),
-        ))))
+        parse_result.success(Box::new(AstNode::FunctionDefinition(
+            FunctionDefinitionNode::new(var_name_token, &arg_name_tokens, body, false),
+        )))
     }
 
     fn binary_operator(
@@ -1440,11 +1449,9 @@ impl Parser {
                 return parse_result;
             }
 
-            left = Some(Box::new(AstNode::BinaryOperator(BinaryOperatorNode::new(
-                left.unwrap().clone(),
-                op_token,
-                right.unwrap(),
-            ))));
+            left = Box::new(AstNode::BinaryOperator(BinaryOperatorNode::new(
+                left, op_token, right,
+            )));
         }
 
         parse_result.success(left)
@@ -1465,7 +1472,7 @@ fn test_ast() {
     let mut parser = Parser::new(&tokens, lexer.contents());
     let ast = parser.parse();
 
-    let node = match *ast.node.unwrap() {
+    let node = match *ast.node {
         AstNode::List(l) => l,
         _ => panic!("Expected a list node"),
     };

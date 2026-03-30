@@ -3,11 +3,25 @@ use glang_attributes::Position;
 use glang_attributes::Span;
 use glang_attributes::StandardError;
 use glang_attributes::keywords::*;
+use std::time::Instant;
 use std::{
     collections::HashMap,
     path::{Path, PathBuf},
     rc::Rc,
 };
+
+pub fn lex(filename: &Path, contents: &str) -> Result<Vec<Token>, StandardError> {
+    let lexing_time = Instant::now();
+
+    let mut lexer = Lexer::new(filename, contents);
+    let result = lexer.make_tokens();
+
+    if cfg!(feature = "benchmark") {
+        println!("Time to lex: {:?}ms", lexing_time.elapsed().as_millis());
+    }
+
+    result
+}
 
 pub struct Lexer {
     pub filename: PathBuf,

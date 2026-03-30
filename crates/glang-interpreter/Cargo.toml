@@ -11,4 +11,5 @@ glang-lexer = { path = "../glang-lexer" }
 glang-parser = { path = "../glang-parser" }
 
 [features]
+benchmark = []
 no-std = []

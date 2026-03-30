@@ -3,7 +3,7 @@ use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 #[derive(Debug, Clone)]
 pub struct SymbolTable {
-    pub symbols: HashMap<String, Option<Rc<RefCell<Value>>>>,
+    pub symbols: HashMap<String, Rc<RefCell<Value>>>,
     pub parent: Option<Rc<RefCell<SymbolTable>>>,
 }
 
@@ -17,7 +17,7 @@ impl SymbolTable {
 
     pub fn get(&self, name: &str) -> Option<Rc<RefCell<Value>>> {
         if let Some(value) = self.symbols.get(name) {
-            return value.clone();
+            return Some(value.clone());
         }
 
         if let Some(parent) = &self.parent {
@@ -27,7 +27,7 @@ impl SymbolTable {
         None
     }
 
-    pub fn set(&mut self, name: String, value: Option<Rc<RefCell<Value>>>) {
+    pub fn set(&mut self, name: String, value: Rc<RefCell<Value>>) {
         if name == "_" {
             return;
         }
@@ -50,8 +50,8 @@ impl SymbolTable {
 
     pub fn combined(
         &self,
-        table: HashMap<String, Option<Rc<RefCell<Value>>>>,
-    ) -> HashMap<String, Option<Rc<RefCell<Value>>>> {
+        table: HashMap<String, Rc<RefCell<Value>>>,
+    ) -> HashMap<String, Rc<RefCell<Value>>> {
         let mut new_map = self.symbols.clone();
         new_map.extend(table);
 

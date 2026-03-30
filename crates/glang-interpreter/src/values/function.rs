@@ -39,22 +39,12 @@ impl Function {
     }
 
     pub fn generate_new_context(&self) -> Rc<RefCell<Context>> {
-        let mut new_context = Context::new(
-            self.name.clone(),
+        let parent_st = self.context.as_ref().unwrap().borrow().symbol_table.clone();
+        let new_context = Context::new(
             self.context.clone(),
             Some(self.span.clone()),
-            None,
+            Rc::new(RefCell::new(SymbolTable::new(Some(parent_st)))),
         );
-        let parent_st = self
-            .context
-            .as_ref()
-            .unwrap()
-            .borrow()
-            .symbol_table
-            .as_ref()
-            .unwrap()
-            .clone();
-        new_context.symbol_table = Some(Rc::new(RefCell::new(SymbolTable::new(Some(parent_st)))));
 
         Rc::new(RefCell::new(new_context))
     }
@@ -63,7 +53,7 @@ impl Function {
         let mut result = RuntimeResult::new();
 
         if args.len() > arg_names.len() || args.len() < arg_names.len() {
-            return result.failure(Some(StandardError::new(
+            return result.failure(StandardError::new(
                 "invalid function call",
                 self.span.clone(),
                 Some(
@@ -76,10 +66,10 @@ impl Function {
                     )
                     .as_str(),
                 ),
-            )));
+            ));
         }
 
-        result.success(None)
+        result.success(Number::null_value())
     }
 
     pub fn populate_args(
@@ -96,10 +86,8 @@ impl Function {
             expr_ctx
                 .borrow_mut()
                 .symbol_table
-                .as_mut()
-                .unwrap()
                 .borrow_mut()
-                .set(arg_name.to_string(), Some(arg_value));
+                .set(arg_name.to_string(), arg_value);
         }
     }
 
@@ -118,7 +106,7 @@ impl Function {
 
         self.populate_args(arg_names, args, expr_ctx);
 
-        result.success(None)
+        result.success(Number::null_value())
     }
 
     pub fn execute(
@@ -142,11 +130,15 @@ impl Function {
             return result;
         }
 
-        let return_value = if self.should_auto_return { value } else { None }
-            .or(result.func_return_value.clone())
-            .or(Some(Number::null_value()));
+        let return_value: Option<Rc<RefCell<Value>>> = if self.should_auto_return {
+            Some(value)
+        } else {
+            None
+        }
+        .or(result.func_return_value.clone())
+        .or(Some(Number::null_value()));
 
-        result.success(return_value)
+        result.success(return_value.unwrap())
     }
 
     pub fn as_string(&self) -> String {

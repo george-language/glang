@@ -1,16 +1,15 @@
 use crate::{
     context::Context,
-    interpreter::Interpreter,
+    interpreter::interpret,
     runtime_result::RuntimeResult,
     symbol_table::SymbolTable,
     values::{number::Number, string::Str, value::Value},
 };
 use glang_attributes::{Span, StandardError};
-use glang_lexer::Lexer;
-use glang_parser::Parser;
+use glang_lexer::lex;
+use glang_parser::parse;
 use std::{
     cell::RefCell,
-    collections::HashMap,
     env, fs,
     io::{Write, stdin, stdout},
     rc::Rc,
@@ -41,22 +40,12 @@ impl BuiltInFunction {
     }
 
     pub fn generate_new_context(&self) -> Rc<RefCell<Context>> {
-        let mut new_context = Context::new(
-            self.name.clone(),
+        let parent_st = self.context.as_ref().unwrap().borrow().symbol_table.clone();
+        let new_context = Context::new(
             Some(self.context.as_ref().unwrap().clone()),
             Some(self.span.clone()),
-            None,
+            Rc::new(RefCell::new(SymbolTable::new(Some(parent_st)))),
         );
-        let parent_st = self
-            .context
-            .as_ref()
-            .unwrap()
-            .borrow()
-            .symbol_table
-            .as_ref()
-            .unwrap()
-            .clone();
-        new_context.symbol_table = Some(Rc::new(RefCell::new(SymbolTable::new(Some(parent_st)))));
 
         Rc::new(RefCell::new(new_context))
     }
@@ -65,7 +54,7 @@ impl BuiltInFunction {
         let mut result = RuntimeResult::new();
 
         if args.len() > arg_names.len() || args.len() < arg_names.len() {
-            return result.failure(Some(StandardError::new(
+            return result.failure(StandardError::new(
                 "invalid function call",
                 self.span.clone(),
                 Some(
@@ -78,10 +67,10 @@ impl BuiltInFunction {
                     )
                     .as_str(),
                 ),
-            )));
+            ));
         }
 
-        result.success(None)
+        result.success(Number::null_value())
     }
 
     pub fn populate_args(
@@ -98,10 +87,8 @@ impl BuiltInFunction {
             exec_ctx
                 .borrow_mut()
                 .symbol_table
-                .as_mut()
-                .unwrap()
                 .borrow_mut()
-                .set(arg_name, Some(arg_value));
+                .set(arg_name, arg_value);
         }
     }
 
@@ -120,7 +107,7 @@ impl BuiltInFunction {
 
         self.populate_args(arg_names, args, exec_ctx);
 
-        result.success(None)
+        result.success(Number::null_value())
     }
 
     pub fn execute(&self, args: &[Rc<RefCell<Value>>]) -> RuntimeResult {
@@ -157,7 +144,7 @@ impl BuiltInFunction {
 
         println!("{}", args[0].borrow().as_string());
 
-        result.success(Some(Number::null_value()))
+        result.success(Number::null_value())
     }
 
     pub fn execute_input(
@@ -177,11 +164,11 @@ impl BuiltInFunction {
         let message = match *message_arg.borrow() {
             Value::StringValue(ref string) => string.as_string(),
             _ => {
-                return result.failure(Some(StandardError::new(
+                return result.failure(StandardError::new(
                     "expected type string",
                     message_arg.borrow().span(),
                     Some("add a message like 'Enter a number:' to get user input"),
-                )));
+                ));
             }
         };
 
@@ -195,7 +182,7 @@ impl BuiltInFunction {
             .read_line(&mut input)
             .expect("did not enter a valid string");
 
-        result.success(Some(Str::from(input.trim())))
+        result.success(Number::null_value())
     }
 
     pub fn execute_read(
@@ -215,20 +202,20 @@ impl BuiltInFunction {
         let filename = match *file_arg.borrow() {
             Value::StringValue(ref string) => string.as_string(),
             _ => {
-                return result.failure(Some(StandardError::new(
+                return result.failure(StandardError::new(
                     "expected type string",
                     file_arg.borrow().span(),
                     Some("add a filename to read like 'test.txt'"),
-                )));
+                ));
             }
         };
 
         if fs::exists(&filename).is_err() {
-            return result.failure(Some(StandardError::new(
+            return result.failure(StandardError::new(
                 "file doesn't exist",
                 file_arg.borrow().span(),
                 Some("add a filename to read like 'test.txt'"),
-            )));
+            ));
         }
 
         let mut contents = String::new();
@@ -236,15 +223,15 @@ impl BuiltInFunction {
         match fs::read_to_string(&filename) {
             Ok(extra) => contents.push_str(&extra),
             Err(_) => {
-                return result.failure(Some(StandardError::new(
+                return result.failure(StandardError::new(
                     "file contents couldn't be read properly",
                     file_arg.borrow().span(),
                     Some("add a UTF-8 encoded file to read"),
-                )));
+                ));
             }
         }
 
-        result.success(Some(Str::from(contents.as_str())))
+        result.success(Number::null_value())
     }
 
     pub fn execute_write(
@@ -269,37 +256,37 @@ impl BuiltInFunction {
         let filename = match *file_arg.borrow() {
             Value::StringValue(ref string) => string.as_string(),
             _ => {
-                return result.failure(Some(StandardError::new(
+                return result.failure(StandardError::new(
                     "expected type string",
                     file_arg.borrow().span(),
                     Some("add a filename to write to like 'test.txt'"),
-                )));
+                ));
             }
         };
 
         let contents = match *contents_arg.borrow() {
             Value::StringValue(ref string) => string.as_string(),
             _ => {
-                return result.failure(Some(StandardError::new(
+                return result.failure(StandardError::new(
                     "expected type string",
                     file_arg.borrow().span(),
                     Some("add the file contents to write into the file"),
-                )));
+                ));
             }
         };
 
         match fs::write(&filename, &contents) {
             Ok(_) => {}
             Err(_) => {
-                return result.failure(Some(StandardError::new(
+                return result.failure(StandardError::new(
                     "file contents couldn't be written properly",
                     file_arg.borrow().span(),
                     None,
-                )));
+                ));
             }
         }
 
-        result.success(Some(Number::null_value()))
+        result.success(Number::null_value())
     }
 
     pub fn execute_copy(
@@ -316,7 +303,7 @@ impl BuiltInFunction {
 
         let object_arg = args[0].clone();
 
-        result.success(Some(Rc::new(RefCell::new(object_arg.borrow().clone())))) // we need to make a deep copy of the object
+        result.success(Rc::new(RefCell::new(object_arg.borrow().clone()))) // we need to make a deep copy of the object
     }
 
     pub fn execute_tostring(
@@ -331,7 +318,7 @@ impl BuiltInFunction {
             return result;
         }
 
-        result.success(Some(Str::from(args[0].borrow().as_string().as_str())))
+        result.success(Str::from(&args[0].borrow().as_string()))
     }
 
     pub fn execute_tonumber(
@@ -352,23 +339,23 @@ impl BuiltInFunction {
             Value::StringValue(ref string) => match string.as_string().parse() {
                 Ok(number) => number,
                 Err(e) => {
-                    return result.failure(Some(StandardError::new(
+                    return result.failure(StandardError::new(
                         format!("string couldn't be converted to number {e}").as_str(),
                         string_to_convert.borrow().span(),
                         Some("ensure the string is represented as a valid number like '1.0'"),
-                    )));
+                    ));
                 }
             },
             _ => {
-                return result.failure(Some(StandardError::new(
+                return result.failure(StandardError::new(
                     "expected type string",
                     string_to_convert.borrow().span(),
                     Some("add a string like '1.0' to convert to a number object"),
-                )));
+                ));
             }
         };
 
-        result.success(Some(Number::from(value)))
+        result.success(Number::from(value))
     }
 
     pub fn execute_length(
@@ -389,15 +376,15 @@ impl BuiltInFunction {
             Value::StringValue(ref value) => value.value.len() as f64,
             Value::ListValue(ref value) => value.elements.len() as f64,
             _ => {
-                return result.failure(Some(StandardError::new(
+                return result.failure(StandardError::new(
                     "expected type string or list",
                     object_arg.borrow().span(),
                     None,
-                )));
+                ));
             }
         };
 
-        result.success(Some(Number::from(length)))
+        result.success(Number::from(length))
     }
 
     pub fn execute_error(
@@ -417,11 +404,11 @@ impl BuiltInFunction {
         let message = match *error.borrow() {
             Value::StringValue(_) => error.clone(),
             _ => {
-                return result.failure(Some(StandardError::new(
+                return result.failure(StandardError::new(
                     "expected type string",
                     error.borrow().span(),
                     Some("add an error message"),
-                )));
+                ));
             }
         };
 
@@ -432,7 +419,7 @@ impl BuiltInFunction {
         );
         error.error_propagates = true;
 
-        result.failure(Some(error))
+        result.failure(error)
     }
 
     pub fn execute_type(
@@ -447,9 +434,7 @@ impl BuiltInFunction {
             return result;
         }
 
-        result.success(Some(Str::from(
-            args[0].borrow().object_type().to_string().as_str(),
-        )))
+        result.success(Str::from(&args[0].borrow().object_type().to_string()))
     }
 
     pub fn execute_exec(
@@ -469,54 +454,31 @@ impl BuiltInFunction {
         let code = match *code_arg.borrow() {
             Value::StringValue(ref glang) => glang.as_string(),
             _ => {
-                return result.failure(Some(StandardError::new(
+                return result.failure(StandardError::new(
                     "expected type string",
                     code_arg.borrow().span(),
                     Some("add the glang code to execute"),
-                )));
+                ));
             }
         };
         let filename = code_arg.borrow().span().filename;
 
-        let mut lexer = Lexer::new(&filename, &code);
-        let token_result = lexer.make_tokens();
+        let error = match lex(&filename, &code) {
+            Ok(tokens) => match parse(&tokens, &code) {
+                Ok(ast_node) => match interpret(&ast_node, &code, None, None) {
+                    Some(e) => Some(e),
+                    None => None,
+                },
+                Err(e) => Some(e),
+            },
+            Err(e) => Some(e),
+        };
 
-        if token_result.is_err() {
-            return result.failure(token_result.err());
+        if let Some(e) = error {
+            return result.failure(e);
         }
 
-        let mut parser = Parser::new(&token_result.ok().unwrap(), lexer.contents());
-        let ast = parser.parse();
-
-        if ast.error.is_some() {
-            return result.failure(ast.error);
-        }
-
-        let mut interpreter = Interpreter::new(
-            None,
-            Rc::new(RefCell::new(HashMap::new())),
-            parser.contents(),
-        );
-        let external_context = Rc::new(RefCell::new(Context::new(
-            "<exec>".to_string(),
-            None,
-            None,
-            None,
-        )));
-        external_context.borrow_mut().symbol_table = Some(interpreter.global_symbol_table.clone());
-
-        if !cfg!(feature = "no-std") {
-            interpreter.preload_standard_library(external_context.clone());
-        }
-
-        let external_result =
-            interpreter.visit(ast.node.unwrap().as_ref(), external_context.clone());
-
-        if external_result.error.is_some() {
-            return result.failure(external_result.error);
-        }
-
-        result.success(Some(Number::null_value()))
+        result.success(Number::null_value())
     }
 
     pub fn execute_env(
@@ -536,21 +498,21 @@ impl BuiltInFunction {
         let variable = match *env_arg.borrow() {
             Value::StringValue(ref var) => var.as_string(),
             _ => {
-                return result.failure(Some(StandardError::new(
+                return result.failure(StandardError::new(
                     "expected type string",
                     env_arg.borrow().span(),
                     Some("add the glang code to execute"),
-                )));
+                ));
             }
         };
 
         match env::var(&variable) {
-            Ok(var) => result.success(Some(Str::from(&var))),
-            Err(_) => result.failure(Some(StandardError::new(
+            Ok(var) => result.success(Str::from(&var)),
+            Err(_) => result.failure(StandardError::new(
                 "unable to access environment variable",
                 env_arg.borrow().span(),
                 None,
-            ))),
+            )),
         }
     }
 

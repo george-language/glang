@@ -8,42 +8,94 @@ use crate::{
     },
 };
 use glang_attributes::StandardError;
-use glang_lexer::{Lexer, TokenType};
-use glang_parser::nodes::{
-    ast_node::AstNode, binary_operator_node::BinaryOperatorNode, break_node::BreakNode,
-    call_node::CallNode, const_assign_node::ConstAssignNode, continue_node::ContinueNode,
-    for_node::ForNode, function_definition_node::FunctionDefinitionNode, if_node::IfNode,
-    import_node::ImportNode, list_node::ListNode, number_node::NumberNode, return_node::ReturnNode,
-    string_node::StringNode, try_except_node::TryExceptNode,
-    unary_operator_node::UnaryOperatorNode, variable_access_node::VariableAccessNode,
-    variable_assign_node::VariableAssignNode, while_node::WhileNode,
-};
+use glang_lexer::{Lexer, TokenType, lexer::lex};
 use glang_parser::{Parser, nodes::variable_reassign_node::VariableRessignNode};
+use glang_parser::{
+    nodes::{
+        ast_node::AstNode, binary_operator_node::BinaryOperatorNode, break_node::BreakNode,
+        call_node::CallNode, const_assign_node::ConstAssignNode, continue_node::ContinueNode,
+        for_node::ForNode, function_definition_node::FunctionDefinitionNode, if_node::IfNode,
+        import_node::ImportNode, list_node::ListNode, number_node::NumberNode,
+        return_node::ReturnNode, string_node::StringNode, try_except_node::TryExceptNode,
+        unary_operator_node::UnaryOperatorNode, variable_access_node::VariableAccessNode,
+        variable_assign_node::VariableAssignNode, while_node::WhileNode,
+    },
+    parser::parse,
+};
 use std::{
     cell::RefCell,
     collections::{HashMap, HashSet},
     fs,
     path::{Path, PathBuf},
     rc::Rc,
+    time::Instant,
 };
+
+pub fn interpret(
+    ast: &AstNode,
+    contents: &str,
+    cached_standard_library: Option<Rc<RefCell<SymbolTable>>>,
+    cached_modules: Option<Rc<RefCell<HashMap<PathBuf, Rc<RefCell<SymbolTable>>>>>>,
+) -> Option<StandardError> {
+    let interpreting_time = Instant::now();
+
+    let mut interpreter = Interpreter::new(
+        None,
+        if let Some(m) = cached_modules {
+            m
+        } else {
+            Rc::new(RefCell::new(HashMap::new()))
+        },
+        contents,
+    );
+    let context = Rc::new(RefCell::new(Context::new(
+        None,
+        None,
+        interpreter.global_symbol_table.clone(),
+    )));
+
+    if !cfg!(feature = "no-std") {
+        if cached_standard_library.is_some() {
+            interpreter.cached_standard_library = cached_standard_library.clone();
+        } else {
+            interpreter.preload_standard_library(context.clone());
+        }
+    }
+
+    let result = interpreter.visit(&ast, context.clone());
+
+    if cfg!(feature = "benchmark") {
+        println!(
+            "Time to interpret: {:?}ms",
+            interpreting_time.elapsed().as_millis()
+        );
+    }
+
+    if result.should_propagate() {
+        // if the error is propagating, it is already displayed in the terminal
+        None
+    } else {
+        result.error
+    }
+}
 
 pub struct Interpreter {
     pub global_symbol_table: Rc<RefCell<SymbolTable>>,
-    pub precached_std_lib: Option<Rc<RefCell<SymbolTable>>>,
-    imported_modules: Rc<RefCell<HashMap<PathBuf, Rc<RefCell<SymbolTable>>>>>,
+    pub cached_standard_library: Option<Rc<RefCell<SymbolTable>>>,
+    cached_modules: Rc<RefCell<HashMap<PathBuf, Rc<RefCell<SymbolTable>>>>>,
     contents: String,
 }
 
 impl Interpreter {
     pub fn new(
-        precached_std_lib: Option<Rc<RefCell<SymbolTable>>>,
-        imported_modules: Rc<RefCell<HashMap<PathBuf, Rc<RefCell<SymbolTable>>>>>,
+        cached_standard_library: Option<Rc<RefCell<SymbolTable>>>,
+        cached_modules: Rc<RefCell<HashMap<PathBuf, Rc<RefCell<SymbolTable>>>>>,
         contents: &str,
     ) -> Self {
         let interpreter = Self {
             global_symbol_table: Rc::new(RefCell::new(SymbolTable::new(None))),
-            precached_std_lib,
-            imported_modules,
+            cached_standard_library,
+            cached_modules,
             contents: contents.to_owned(),
         };
 
@@ -56,7 +108,7 @@ impl Interpreter {
             interpreter
                 .global_symbol_table
                 .borrow_mut()
-                .set(builtin.to_string(), Some(BuiltInFunction::from(builtin)));
+                .set(builtin.to_string(), BuiltInFunction::from(builtin));
         }
 
         interpreter
@@ -72,7 +124,7 @@ impl Interpreter {
             return;
         }
 
-        self.precached_std_lib = Some(context.borrow().symbol_table.as_ref().unwrap().clone());
+        self.cached_standard_library = Some(context.borrow().symbol_table.clone());
     }
 
     pub fn evaluate(&mut self, src: &str, context: Rc<RefCell<Context>>) -> Option<StandardError> {
@@ -90,7 +142,7 @@ impl Interpreter {
             return ast.error;
         }
 
-        let result = self.visit(ast.node.unwrap().as_ref(), context);
+        let result = self.visit(&ast.node, context);
         result.error
     }
 
@@ -123,7 +175,7 @@ impl Interpreter {
         value.borrow_mut().set_context(Some(context.clone()));
         value.borrow_mut().set_span(node.span.clone());
 
-        RuntimeResult::new().success(Some(value))
+        RuntimeResult::new().success(value)
     }
 
     fn visit_list_node(&mut self, node: &ListNode, context: Rc<RefCell<Context>>) -> RuntimeResult {
@@ -137,14 +189,14 @@ impl Interpreter {
                 return result;
             }
 
-            elements.push(element_result.unwrap());
+            elements.push(element_result);
         }
 
         let list = List::from(elements);
         list.borrow_mut().set_context(Some(context.clone()));
         list.borrow_mut().set_span(node.span.clone());
 
-        result.success(Some(list))
+        result.success(list)
     }
 
     fn visit_string_node(
@@ -156,7 +208,7 @@ impl Interpreter {
         string.borrow_mut().set_context(Some(context.clone()));
         string.borrow_mut().set_span(node.span.clone());
 
-        RuntimeResult::new().success(Some(string))
+        RuntimeResult::new().success(string)
     }
 
     fn visit_variable_assign_node(
@@ -167,20 +219,12 @@ impl Interpreter {
         let mut result = RuntimeResult::new();
         let var_name = node.var_name_token.value.as_ref().unwrap().clone();
 
-        let constant = context
-            .borrow()
-            .symbol_table
-            .as_ref()
-            .unwrap()
-            .borrow()
-            .get(&var_name);
-
-        if constant.is_some() && constant.unwrap().borrow().is_const() {
-            return result.failure(Some(StandardError::new(
+        if self.is_constant(&var_name, context.clone()) {
+            return result.failure(StandardError::new(
                 "cannot reassign the value of a constant",
                 node.span.clone(),
                 None,
-            )));
+            ));
         }
 
         let value = result.register(self.visit(node.value_node.as_ref(), context.clone()));
@@ -192,8 +236,6 @@ impl Interpreter {
         context
             .borrow_mut()
             .symbol_table
-            .as_mut()
-            .unwrap()
             .borrow_mut()
             .set(var_name, value.clone());
 
@@ -208,36 +250,26 @@ impl Interpreter {
         let mut result = RuntimeResult::new();
         let var_name = node.var_name_token.value.as_ref().unwrap().clone();
 
-        let constant = context
-            .borrow()
-            .symbol_table
-            .as_ref()
-            .unwrap()
-            .borrow()
-            .get(&var_name);
-
-        if constant.is_some() && constant.unwrap().borrow().is_const() {
-            return result.failure(Some(StandardError::new(
+        if self.is_constant(&var_name, context.clone()) {
+            return result.failure(StandardError::new(
                 "cannot reassign the value of a constant",
                 node.span.clone(),
                 None,
-            )));
+            ));
         }
 
         if context
             .borrow()
             .symbol_table
-            .as_ref()
-            .unwrap()
             .borrow()
             .get(&var_name)
             .is_none()
         {
-            return result.failure(Some(StandardError::new(
+            return result.failure(StandardError::new(
                 format!("variable name '{var_name}' is undefined").as_str(),
                 node.span.clone(),
                 Some("define a variable with the syntax 'obj <variable name> = <value>;'"),
-            )));
+            ));
         }
 
         let value = result.register(self.visit(node.value_node.as_ref(), context.clone()));
@@ -249,8 +281,6 @@ impl Interpreter {
         context
             .borrow_mut()
             .symbol_table
-            .as_mut()
-            .unwrap()
             .borrow_mut()
             .set(var_name, value.clone());
 
@@ -265,41 +295,35 @@ impl Interpreter {
         let mut result = RuntimeResult::new();
         let const_name = node.const_name_token.value.as_ref().unwrap().clone();
 
-        let constant = context
-            .borrow()
-            .symbol_table
-            .as_ref()
-            .unwrap()
-            .borrow()
-            .get(&const_name);
-
-        if constant.is_some() && constant.unwrap().borrow().is_const() {
-            return result.failure(Some(StandardError::new(
+        if self.is_constant(&const_name, context.clone()) {
+            return result.failure(StandardError::new(
                 "cannot reassign the value of a constant",
                 node.span.clone(),
                 None,
-            )));
+            ));
         }
 
-        let mut value = result.register(self.visit(node.value_node.as_ref(), context.clone()));
+        let value = result.register(self.visit(node.value_node.as_ref(), context.clone()));
+        let mut copied_value: Option<Rc<RefCell<Value>>> = None;
 
         if result.should_return() {
             return result;
         }
 
         // if the value we are accessing is not a constant, we copy that value in place
-        if !value.as_ref().unwrap().borrow().is_const() {
-            value = Some(Rc::new(RefCell::new(value.unwrap().borrow().clone())));
-            value.as_ref().unwrap().borrow_mut().set_const(true); // now a constant, cause we cloned
+        if !value.borrow().is_const() {
+            copied_value = Some(Rc::new(RefCell::new(value.borrow().clone())));
+            copied_value.as_mut().unwrap().borrow_mut().set_const(true); // now a constant, cause we cloned
         }
 
-        context
-            .borrow_mut()
-            .symbol_table
-            .as_mut()
-            .unwrap()
-            .borrow_mut()
-            .set(const_name, value.clone());
+        context.borrow_mut().symbol_table.borrow_mut().set(
+            const_name,
+            if let Some(cp) = copied_value {
+                cp.clone()
+            } else {
+                value.clone()
+            },
+        );
 
         result.success(value)
     }
@@ -314,33 +338,39 @@ impl Interpreter {
         let mut value = context
             .borrow()
             .symbol_table
-            .as_ref()
-            .unwrap()
             .borrow()
             .get(var_name.as_str())
             .clone();
 
         if value.is_none() {
-            return result.failure(Some(StandardError::new(
+            return result.failure(StandardError::new(
                 format!("variable name '{var_name}' is undefined").as_str(),
                 node.span.clone(),
                 Some("define a variable with the syntax 'obj <variable name> = <value>;'"),
-            )));
+            ));
         }
 
-        // if the value we are accessing is a constant, we copy the constant
-        if value.as_ref().unwrap().borrow().is_const() {
-            value = Some(Rc::new(RefCell::new(value.unwrap().borrow().clone())));
-            value.as_ref().unwrap().borrow_mut().set_const(false); // no longer a constant, cause we cloned
-        }
+        if let Some(mut v) = value.clone() {
+            // if the value we are accessing is a constant, we copy the constant
+            if v.borrow().is_const() {
+                v = Rc::new(RefCell::new(value.as_ref().unwrap().borrow().clone()));
+                v.borrow_mut().set_const(false); // no longer a constant, cause we cloned
+            }
 
-        // prevent recursion issues by borrowing already borrowed objects
-        if let Some(v) = &mut value.as_mut().unwrap().try_borrow_mut().ok() {
-            v.set_context(Some(context.clone()));
-            v.set_span(node.span.clone());
-        }
+            // prevent recursion issues by borrowing already borrowed objects
+            if let Some(v) = &mut value.as_mut().unwrap().try_borrow_mut().ok() {
+                v.set_context(Some(context.clone()));
+                v.set_span(node.span.clone());
+            }
 
-        result.success(value)
+            return result.success(v);
+        } else {
+            return result.failure(StandardError::new(
+                format!("variable name '{var_name}' is undefined").as_str(),
+                node.span.clone(),
+                Some("define a variable with the syntax 'obj <variable name> = <value>;'"),
+            ));
+        }
     }
 
     fn visit_if_node(&mut self, node: &IfNode, context: Rc<RefCell<Context>>) -> RuntimeResult {
@@ -353,8 +383,6 @@ impl Interpreter {
                 return result;
             }
 
-            let condition_value = condition_value.unwrap();
-
             if condition_value.borrow().is_true() {
                 let expr_value = result.register(self.visit(expr.as_ref(), context.clone()));
 
@@ -363,7 +391,7 @@ impl Interpreter {
                 }
 
                 return result.success(if *should_return_null {
-                    Some(Number::null_value())
+                    Number::null_value()
                 } else {
                     expr_value
                 });
@@ -379,30 +407,29 @@ impl Interpreter {
             }
 
             return result.success(if should_return_null {
-                Some(Number::null_value())
+                Number::null_value()
             } else {
                 else_value
             });
         }
 
-        result.success(Some(Number::null_value()))
+        result.success(Number::null_value())
     }
 
     fn visit_for_node(&mut self, node: &ForNode, context: Rc<RefCell<Context>>) -> RuntimeResult {
         let mut result = RuntimeResult::new();
 
         let start_value = match *result
-            .register(self.visit(node.start_value_node.as_ref(), context.clone()))
-            .unwrap()
+            .register(self.visit(&node.start_value_node, context.clone()))
             .borrow()
         {
             Value::NumberValue(ref value) => Number::new(value.value),
             _ => {
-                return result.failure(Some(StandardError::new(
+                return result.failure(StandardError::new(
                     "expected start value as number",
                     node.span.clone(),
                     None,
-                )));
+                ));
             }
         };
 
@@ -411,17 +438,16 @@ impl Interpreter {
         }
 
         let end_value = match *result
-            .register(self.visit(node.end_value_node.as_ref(), context.clone()))
-            .unwrap()
+            .register(self.visit(&node.end_value_node, context.clone()))
             .borrow()
         {
             Value::NumberValue(ref value) => Number::new(value.value),
             _ => {
-                return result.failure(Some(StandardError::new(
+                return result.failure(StandardError::new(
                     "expected end value as number",
                     node.span.clone(),
                     None,
-                )));
+                ));
             }
         };
 
@@ -431,19 +457,18 @@ impl Interpreter {
 
         let step_value: Number;
 
-        if let Some(step_value_node) = node.step_value_node.as_ref() {
+        if let Some(step_value_node) = &node.step_value_node {
             step_value = match *result
                 .register(self.visit(step_value_node, context.clone()))
-                .unwrap()
                 .borrow()
             {
                 Value::NumberValue(ref value) => Number::new(value.value),
                 _ => {
-                    return result.failure(Some(StandardError::new(
+                    return result.failure(StandardError::new(
                         "expected step value as number",
                         node.span.clone(),
                         None,
-                    )));
+                    ));
                 }
             };
 
@@ -455,15 +480,15 @@ impl Interpreter {
         }
 
         if step_value.value == 0.0 {
-            return result.failure(Some(StandardError::new(
+            return result.failure(StandardError::new(
                 "step value of a 'walk' loop cannot be 0",
                 node.step_value_node.as_ref().unwrap().span(),
                 Some("use a step value like 'step = 1' to control how many iteration steps occur"),
-            )));
+            ));
         }
 
         let iterator_name = node.var_name_token.value.as_ref().unwrap().to_owned();
-        let symbol_table = context.borrow().symbol_table.as_ref().unwrap().clone();
+        let symbol_table = context.borrow().symbol_table.clone();
 
         let range: Vec<f64> = if step_value.value > 0.0 {
             (start_value.value as i64..end_value.value as i64)
@@ -481,9 +506,9 @@ impl Interpreter {
         for i in range {
             symbol_table
                 .borrow_mut()
-                .set(iterator_name.clone(), Some(Number::from(i)));
+                .set(iterator_name.clone(), Number::from(i));
 
-            let _ = result.register(self.visit(node.body_node.as_ref(), context.clone()));
+            let _ = result.register(self.visit(&node.body_node, context.clone()));
 
             if result.should_return() && !result.loop_should_continue && !result.loop_should_break {
                 return result;
@@ -498,7 +523,7 @@ impl Interpreter {
             }
         }
 
-        result.success(Some(Number::null_value()))
+        result.success(Number::null_value())
     }
 
     fn visit_while_node(
@@ -509,20 +534,17 @@ impl Interpreter {
         let mut result = RuntimeResult::new();
 
         loop {
-            let condition =
-                result.register(self.visit(node.condition_node.as_ref(), context.clone()));
+            let condition = result.register(self.visit(&node.condition_node, context.clone()));
 
             if result.should_return() {
                 return result;
             }
 
-            let condition = condition.unwrap();
-
             if !condition.borrow().is_true() {
                 break;
             }
 
-            let _ = result.register(self.visit(node.body_node.as_ref(), context.clone()));
+            let _ = result.register(self.visit(&node.body_node, context.clone()));
 
             if result.should_return() && !result.loop_should_continue && !result.loop_should_break {
                 return result;
@@ -537,7 +559,7 @@ impl Interpreter {
             }
         }
 
-        result.success(Some(Number::null_value()))
+        result.success(Number::null_value())
     }
 
     fn visit_try_except_node(
@@ -547,25 +569,19 @@ impl Interpreter {
     ) -> RuntimeResult {
         let mut result = RuntimeResult::new();
 
-        let _ = result.register(self.visit(node.try_body_node.as_ref(), context.clone()));
+        let _ = result.register(self.visit(&node.try_body_node, context.clone()));
         let try_error = result.error.clone();
 
         if try_error.is_some() {
             let output_error = Str::from(&try_error.unwrap().text);
             output_error.borrow_mut().set_const(true);
 
-            context
-                .borrow_mut()
-                .symbol_table
-                .as_mut()
-                .unwrap()
-                .borrow_mut()
-                .set(
-                    node.error_name_token.value.to_owned().unwrap(),
-                    Some(output_error),
-                );
+            context.borrow_mut().symbol_table.borrow_mut().set(
+                node.error_name_token.value.to_owned().unwrap(),
+                output_error,
+            );
 
-            let _ = result.register(self.visit(node.except_body_node.as_ref(), context));
+            let _ = result.register(self.visit(&node.except_body_node, context));
 
             if result.error.is_some() {
                 return result;
@@ -578,7 +594,7 @@ impl Interpreter {
             return result;
         }
 
-        result.success(Some(Number::null_value()))
+        result.success(Number::null_value())
     }
 
     fn visit_import_node(
@@ -587,14 +603,13 @@ impl Interpreter {
         context: Rc<RefCell<Context>>,
     ) -> RuntimeResult {
         let mut result = RuntimeResult::new();
-        let import_value =
-            result.register(self.visit(node.node_to_import.as_ref(), context.clone()));
+
+        let import_value = result.register(self.visit(&node.node_to_import, context.clone()));
 
         if result.should_return() {
             return result;
         }
 
-        let import_value = import_value.unwrap();
         let importing_path = import_value.borrow().span().filename.clone();
 
         let importing_dir = Path::new(&importing_path)
@@ -605,50 +620,41 @@ impl Interpreter {
         let file_to_import = importing_dir.join(PathBuf::from(match *import_value.borrow() {
             Value::StringValue(ref string) => string.as_string(),
             _ => {
-                return result.failure(Some(StandardError::new(
+                return result.failure(StandardError::new(
                     "expected type string",
                     import_value.borrow().span(),
                     Some("add the '.glang' file to import"),
-                )));
+                ));
             }
         }));
 
         if !(file_to_import.exists() || !file_to_import.ends_with(".glang")) {
-            return result.failure(Some(StandardError::new(
+            return result.failure(StandardError::new(
                 "invalid import",
                 import_value.borrow().span(),
                 Some("add the '.glang' file to import"),
-            )));
+            ));
         }
 
         if file_to_import == importing_path {
-            return result.failure(Some(StandardError::new(
+            return result.failure(StandardError::new(
                 "circular import",
                 import_value.borrow().span(),
                 None,
-            )));
+            ));
         }
 
-        // if we already have imported modules stored in memory, then use cached ones
-        if let Some(cached_symtab) = self.imported_modules.borrow().get(&file_to_import) {
-            let symbols: Vec<(String, Option<Rc<RefCell<Value>>>)> = cached_symtab
-                .borrow()
-                .symbols
-                .iter()
-                .map(|(k, v)| (k.clone(), v.clone()))
-                .collect();
-
-            for (name, value) in symbols {
+        // if we already have imported modules stored, then use cached ones
+        if let Some(cached_symtab) = self.cached_modules.borrow().get(&file_to_import) {
+            for (name, value) in cached_symtab.borrow().symbols.clone() {
                 context
                     .borrow_mut()
                     .symbol_table
-                    .as_ref()
-                    .unwrap()
                     .borrow_mut()
                     .set(name, value);
             }
 
-            return result.success(Some(Number::null_value()));
+            return result.success(Number::null_value());
         }
 
         let mut contents = String::new();
@@ -656,104 +662,81 @@ impl Interpreter {
         match fs::read_to_string(&file_to_import) {
             Ok(extra) => contents.push_str(&extra),
             Err(_) => {
-                return result.failure(Some(StandardError::new(
+                return result.failure(StandardError::new(
                     &format!(
                         "file contents couldn't be read properly on {}",
                         file_to_import.to_string_lossy()
                     ),
                     import_value.borrow().span(),
                     Some("add a UTF-8 encoded '.glang' file to import"),
-                )));
+                ));
             }
         }
 
-        let mut lexer = Lexer::new(&file_to_import, &contents);
-        let token_result = lexer.make_tokens();
+        let ast_result = match lex(&file_to_import, &contents) {
+            Ok(tokens) => match parse(&tokens, &contents) {
+                Ok(ast) => Ok(ast),
+                Err(e) => Err(e),
+            },
+            Err(e) => Err(e),
+        };
 
-        if token_result.is_err() {
-            return result.failure(token_result.err());
-        }
-
-        let mut parser = Parser::new(&token_result.ok().unwrap(), lexer.contents());
-        let ast = parser.parse();
-
-        if ast.error.is_some() {
-            return result.failure(ast.error);
-        }
+        let ast_node = match ast_result {
+            Ok(ast_node) => ast_node,
+            Err(e) => return result.failure(e),
+        };
 
         let mut interpreter = Interpreter::new(
-            if self.precached_std_lib.is_some() {
-                self.precached_std_lib.clone()
+            if self.cached_standard_library.is_some() {
+                self.cached_standard_library.clone()
             } else {
                 None
             },
-            self.imported_modules.clone(),
-            parser.contents(),
+            self.cached_modules.clone(),
+            &contents,
         );
         let module_context = Rc::new(RefCell::new(Context::new(
-            "<module>".to_string(),
             None,
             None,
-            Some(interpreter.global_symbol_table.clone()),
+            interpreter.global_symbol_table.clone(),
         )));
 
-        if let Some(std_lib) = self.precached_std_lib.clone() {
-            let symbols: Vec<(String, Option<Rc<RefCell<Value>>>)> = std_lib
-                .borrow()
-                .symbols
-                .iter()
-                .map(|(k, v)| (k.clone(), v.clone()))
-                .collect();
-
-            for (name, value) in symbols {
+        if let Some(std_lib) = self.cached_standard_library.clone() {
+            for (name, value) in std_lib.borrow().symbols.clone() {
                 module_context
                     .borrow_mut()
                     .symbol_table
-                    .as_ref()
-                    .unwrap()
                     .borrow_mut()
                     .set(name, value);
             }
         }
 
-        let module_result = interpreter.visit(ast.node.unwrap().as_ref(), module_context.clone());
+        let module_result = interpreter.visit(&ast_node, module_context.clone());
 
-        if module_result.error.is_some() {
-            return result.failure(module_result.error);
+        if let Some(e) = module_result.error {
+            return result.failure(e);
         }
 
-        self.imported_modules.borrow_mut().insert(
+        self.cached_modules.borrow_mut().insert(
             file_to_import.clone(),
-            module_context
-                .borrow()
-                .symbol_table
-                .as_ref()
-                .unwrap()
-                .clone(),
+            module_context.borrow().symbol_table.clone(),
         );
 
-        let symbols: Vec<(String, Option<Rc<RefCell<Value>>>)> = module_context
+        for (name, value) in module_context
             .borrow()
             .symbol_table
-            .as_ref()
-            .unwrap()
             .borrow()
             .symbols
-            .iter()
-            .map(|(k, v)| (k.clone(), v.clone()))
-            .collect();
-
-        for (name, value) in symbols {
+            .clone()
+        {
             context
                 .borrow_mut()
                 .symbol_table
-                .as_ref()
-                .unwrap()
                 .borrow_mut()
                 .set(name, value);
         }
 
-        result.success(Some(Number::null_value()))
+        result.success(Number::null_value())
     }
 
     fn visit_function_definition_node(
@@ -785,11 +768,11 @@ impl Interpreter {
 
         for (i, name) in arg_names.iter().enumerate() {
             if !seen.insert(name) {
-                return result.failure(Some(StandardError::new(
+                return result.failure(StandardError::new(
                     "duplicate argument",
                     node.arg_name_tokens[i].span.clone(),
                     Some(format!("remove the duplicate argument '{}'", name).as_str()),
-                )));
+                ));
             }
         }
 
@@ -806,20 +789,18 @@ impl Interpreter {
             context
                 .borrow_mut()
                 .symbol_table
-                .as_mut()
-                .unwrap()
                 .borrow_mut()
-                .set(func_name, Some(func_value.clone()));
+                .set(func_name, func_value.clone());
         }
 
-        result.success(Some(func_value))
+        result.success(func_value)
     }
 
     fn visit_call_node(&mut self, node: &CallNode, context: Rc<RefCell<Context>>) -> RuntimeResult {
         let mut result = RuntimeResult::new();
         let mut args: Vec<Rc<RefCell<Value>>> = Vec::new();
 
-        let mut value_to_call =
+        let value_to_call =
             result.register(self.visit(node.node_to_call.as_ref(), context.clone()));
 
         if result.should_return() {
@@ -827,7 +808,7 @@ impl Interpreter {
         }
 
         // prevent recursion issues by borrowing already borrowed objects
-        if let Some(v) = &mut value_to_call.as_mut().unwrap().try_borrow_mut().ok() {
+        if let Some(v) = &mut value_to_call.try_borrow_mut().ok() {
             v.set_span(node.span.clone());
         }
 
@@ -838,20 +819,18 @@ impl Interpreter {
                 return result;
             }
 
-            let arg = arg.unwrap();
-
             args.push(arg);
         }
 
-        let mut return_value = result.register(match *value_to_call.unwrap().borrow() {
+        let return_value = result.register(match *value_to_call.borrow() {
             Value::FunctionValue(ref value) => value.execute(&args, self),
             Value::BuiltInFunction(ref value) => value.execute(&args),
             _ => {
-                return result.failure(Some(StandardError::new(
+                return result.failure(StandardError::new(
                     "expected function as call",
                     node.span.clone(),
                     None,
-                )));
+                ));
             }
         });
 
@@ -871,18 +850,10 @@ impl Interpreter {
             return result;
         }
 
-        return_value
-            .as_mut()
-            .unwrap()
-            .borrow_mut()
-            .set_span(node.span.clone());
-        return_value
-            .as_mut()
-            .unwrap()
-            .borrow_mut()
-            .set_context(Some(context.clone()));
+        return_value.borrow_mut().set_span(node.span.clone());
+        return_value.borrow_mut().set_context(Some(context.clone()));
 
-        result.success(Some(return_value.unwrap()))
+        result.success(return_value)
     }
 
     fn visit_binary_operator_node(
@@ -898,15 +869,11 @@ impl Interpreter {
             return result;
         }
 
-        let left = left.unwrap();
-
         let right = result.register(self.visit(node.right_node.as_ref(), context.clone()));
 
         if result.should_return() {
             return result;
         }
-
-        let right = right.unwrap();
 
         let op = match node.op_token.token_type {
             TokenType::TT_PLUS => Some("+"),
@@ -943,9 +910,9 @@ impl Interpreter {
         match operation_result {
             Ok(val) => {
                 val.borrow_mut().set_span(node.span.clone());
-                result.success(Some(val))
+                result.success(val)
             }
-            Err(err) => result.failure(Some(err)),
+            Err(err) => result.failure(err),
         }
     }
 
@@ -961,9 +928,7 @@ impl Interpreter {
             return result;
         }
 
-        let value = value.unwrap();
-
-        let mut operation_result: Result<Rc<RefCell<Value>>, StandardError>;
+        let operation_result: Result<Rc<RefCell<Value>>, StandardError>;
 
         if node.op_token.token_type == TokenType::TT_MINUS {
             operation_result = value
@@ -981,19 +946,13 @@ impl Interpreter {
             ))
         }
 
-        if operation_result.is_err() {
-            result.failure(operation_result.err())
-        } else if operation_result.is_ok() {
-            operation_result
-                .as_mut()
-                .ok()
-                .unwrap()
-                .borrow_mut()
-                .set_span(node.span.clone());
+        match operation_result {
+            Ok(res) => {
+                res.borrow_mut().set_span(node.span.clone());
 
-            result.success(Some(operation_result.ok().unwrap()))
-        } else {
-            result.success(Some(Number::null_value()))
+                return result.success(res);
+            }
+            Err(e) => return result.failure(e),
         }
     }
 
@@ -1003,7 +962,7 @@ impl Interpreter {
         context: Rc<RefCell<Context>>,
     ) -> RuntimeResult {
         let mut result = RuntimeResult::new();
-        let value: Option<Rc<RefCell<Value>>>;
+        let value: Rc<RefCell<Value>>;
 
         if node.node_to_return.is_some() {
             value = result
@@ -1013,12 +972,10 @@ impl Interpreter {
                 return result;
             }
         } else {
-            value = Some(Number::null_value())
+            value = Number::null_value()
         }
 
-        let value = value.unwrap();
-
-        result.success_return(Some(value))
+        result.success_return(value)
     }
 
     fn visit_continue_node(
@@ -1035,5 +992,15 @@ impl Interpreter {
         _context: Rc<RefCell<Context>>,
     ) -> RuntimeResult {
         RuntimeResult::new().success_break()
+    }
+
+    fn is_constant(&self, name: &str, context: Rc<RefCell<Context>>) -> bool {
+        let constant = context.borrow().symbol_table.borrow().get(&name);
+
+        if let Some(c) = constant {
+            return c.borrow().is_const();
+        }
+
+        false
     }
 }
