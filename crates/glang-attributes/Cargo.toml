@@ -1,9 +1,11 @@
 [package]
 name = "glang-attributes"
-version = { workspace = true }
-edition = { workspace = true }
-authors = { workspace = true }
-license = { workspace = true }
+version.workspace = true
+edition.workspace = true
+repository.workspace = true
+description.workspace = true
+authors.workspace = true
+license.workspace = true
 
 [dependencies]
 simply_colored = "0.1.4"

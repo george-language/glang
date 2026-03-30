@@ -595,6 +595,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "glang-ir"
+version = "0.1.4"
+
+[[package]]
 name = "glang-lexer"
 version = "0.1.4"
 dependencies = [

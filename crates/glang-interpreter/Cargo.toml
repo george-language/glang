@@ -1,9 +1,11 @@
 [package]
 name = "glang-interpreter"
-version = { workspace = true }
-edition = { workspace = true }
-authors = { workspace = true }
-license = { workspace = true }
+version.workspace = true
+edition.workspace = true
+repository.workspace = true
+description.workspace = true
+authors.workspace = true
+license.workspace = true
 
 [dependencies]
 glang-attributes = { path = "../glang-attributes" }
