@@ -1,5 +1,4 @@
-use crate::package_path::get_package_path;
-use crate::{log_header, log_message, log_package_status};
+use crate::{get_package_path, log_header, log_message, log_package_status};
 use reqwest::blocking::get;
 use serde::Deserialize;
 use std::{

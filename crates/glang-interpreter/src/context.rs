@@ -1,4 +1,4 @@
-use crate::symbol_table::SymbolTable;
+use crate::SymbolTable;
 use glang_attributes::Span;
 use std::{cell::RefCell, rc::Rc};
 

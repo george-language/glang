@@ -1,4 +1,4 @@
-use crate::nodes::{ast_node::AstNode, list_node::ListNode};
+use crate::{AstNode, ListNode};
 use glang_attributes::{Span, StandardError};
 
 #[derive(Clone)]

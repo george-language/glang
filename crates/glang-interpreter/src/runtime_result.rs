@@ -1,4 +1,4 @@
-use crate::values::{number::Number, value::Value};
+use crate::{Number, Value};
 use glang_attributes::StandardError;
 use std::{cell::RefCell, rc::Rc};
 

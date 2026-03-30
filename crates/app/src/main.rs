@@ -1,8 +1,8 @@
 use clap::{Parser as ClapParser, Subcommand};
 use glang_attributes::StandardError;
 use glang_interpreter::interpret;
-use glang_lexer::lexer::lex;
-use glang_parser::parser::parse;
+use glang_lexer::lex;
+use glang_parser::parse;
 use glang_tooling::log_error;
 use std::{
     env, fs,

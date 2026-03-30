@@ -2,7 +2,7 @@ use crate::token::{Token, TokenType};
 use glang_attributes::Position;
 use glang_attributes::Span;
 use glang_attributes::StandardError;
-use glang_attributes::keywords::*;
+use glang_attributes::{DIGITS, KEYWORDS, LETTERS, LETTERS_DIGITS};
 use std::time::Instant;
 use std::{
     collections::HashMap,

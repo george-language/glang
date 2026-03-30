@@ -1,6 +1,11 @@
-pub mod built_in_function;
-pub mod function;
-pub mod list;
-pub mod number;
-pub mod string;
-pub mod value;
+mod built_in_function;
+mod function;
+mod list;
+mod number;
+mod string;
+mod value;
+
+pub use {
+    built_in_function::BuiltInFunction, function::Function, list::List, number::Number,
+    string::Str, value::Value,
+};

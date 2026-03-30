@@ -1,6 +1,6 @@
-pub mod nodes;
-pub mod parse_result;
-pub mod parser;
+mod nodes;
+mod parse_result;
+mod parser;
 
 pub use nodes::{
     AstNode, BinaryOperatorNode, BreakNode, CallNode, ConstAssignNode, ContinueNode, ForNode,

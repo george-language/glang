@@ -1,23 +1,23 @@
-pub mod ast_node;
-pub mod binary_operator_node;
-pub mod break_node;
-pub mod call_node;
-pub mod const_assign_node;
-pub mod continue_node;
-pub mod for_node;
-pub mod function_definition_node;
-pub mod if_node;
-pub mod import_node;
-pub mod list_node;
-pub mod number_node;
-pub mod return_node;
-pub mod string_node;
-pub mod try_except_node;
-pub mod unary_operator_node;
-pub mod variable_access_node;
-pub mod variable_assign_node;
-pub mod variable_reassign_node;
-pub mod while_node;
+mod ast_node;
+mod binary_operator_node;
+mod break_node;
+mod call_node;
+mod const_assign_node;
+mod continue_node;
+mod for_node;
+mod function_definition_node;
+mod if_node;
+mod import_node;
+mod list_node;
+mod number_node;
+mod return_node;
+mod string_node;
+mod try_except_node;
+mod unary_operator_node;
+mod variable_access_node;
+mod variable_assign_node;
+mod variable_reassign_node;
+mod while_node;
 
 pub use {
     ast_node::AstNode, binary_operator_node::BinaryOperatorNode, break_node::BreakNode,
