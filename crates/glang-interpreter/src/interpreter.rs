@@ -191,7 +191,7 @@ impl Interpreter {
         node: &StringNode,
         context: Rc<RefCell<Context>>,
     ) -> RuntimeResult {
-        let string = Str::from(node.token.value.as_ref().unwrap());
+        let string = Str::from(&node.inner);
         string.borrow_mut().set_context(Some(context.clone()));
         string.borrow_mut().set_span(node.span.clone());
 
@@ -204,7 +204,7 @@ impl Interpreter {
         context: Rc<RefCell<Context>>,
     ) -> RuntimeResult {
         let mut result = RuntimeResult::new();
-        let var_name = node.var_name_token.value.as_ref().unwrap().clone();
+        let var_name = node.name.clone();
 
         if self.is_constant(&var_name, context.clone()) {
             return result.failure(StandardError::new(
@@ -235,7 +235,7 @@ impl Interpreter {
         context: Rc<RefCell<Context>>,
     ) -> RuntimeResult {
         let mut result = RuntimeResult::new();
-        let var_name = node.var_name_token.value.as_ref().unwrap().clone();
+        let var_name = node.name.clone();
 
         if self.is_constant(&var_name, context.clone()) {
             return result.failure(StandardError::new(
@@ -280,7 +280,7 @@ impl Interpreter {
         context: Rc<RefCell<Context>>,
     ) -> RuntimeResult {
         let mut result = RuntimeResult::new();
-        let const_name = node.const_name_token.value.as_ref().unwrap().clone();
+        let const_name = node.name.clone();
 
         if self.is_constant(&const_name, context.clone()) {
             return result.failure(StandardError::new(
@@ -321,7 +321,7 @@ impl Interpreter {
         context: Rc<RefCell<Context>>,
     ) -> RuntimeResult {
         let mut result = RuntimeResult::new();
-        let var_name = node.var_name_token.value.as_ref().unwrap();
+        let var_name = node.name.clone();
         let mut value = context
             .borrow()
             .symbol_table
@@ -474,7 +474,7 @@ impl Interpreter {
             ));
         }
 
-        let iterator_name = node.var_name_token.value.as_ref().unwrap().to_owned();
+        let iterator_name = node.iterator_name.clone();
         let symbol_table = context.borrow().symbol_table.clone();
 
         let range: Vec<f64> = if step_value.value > 0.0 {
@@ -563,10 +563,11 @@ impl Interpreter {
             let output_error = Str::from(&try_error.unwrap().text);
             output_error.borrow_mut().set_const(true);
 
-            context.borrow_mut().symbol_table.borrow_mut().set(
-                node.error_name_token.value.to_owned().unwrap(),
-                output_error,
-            );
+            context
+                .borrow_mut()
+                .symbol_table
+                .borrow_mut()
+                .set(node.passed_error.clone(), output_error);
 
             let _ = result.register(self.visit(&node.except_body_node, context));
 
@@ -733,22 +734,16 @@ impl Interpreter {
     ) -> RuntimeResult {
         let mut result = RuntimeResult::new();
 
-        let func_name = if node.var_name_token.is_some() {
-            node.var_name_token
-                .as_ref()
-                .unwrap()
-                .value
-                .as_ref()
-                .unwrap()
-                .clone()
+        let func_name = if let Some(ref name) = node.name {
+            name.clone()
         } else {
             "".to_string()
         };
         let body_node = node.body_node.clone();
         let mut arg_names: Vec<String> = Vec::new();
 
-        for arg_name in node.arg_name_tokens.iter() {
-            arg_names.push(arg_name.value.as_ref().unwrap().clone());
+        for arg_name_tok in node.argument_names.iter() {
+            arg_names.push(arg_name_tok.value.clone().unwrap());
         }
 
         let mut seen = HashSet::new();
@@ -757,7 +752,7 @@ impl Interpreter {
             if !seen.insert(name) {
                 return result.failure(StandardError::new(
                     "duplicate argument",
-                    node.arg_name_tokens[i].span.clone(),
+                    node.argument_names[i].span.clone(),
                     Some(format!("remove the duplicate argument '{}'", name).as_str()),
                 ));
             }
@@ -862,35 +857,15 @@ impl Interpreter {
             return result;
         }
 
-        let op = match node.op_token.token_type {
-            TokenType::TT_PLUS => Some("+"),
-            TokenType::TT_MINUS => Some("-"),
-            TokenType::TT_MUL => Some("*"),
-            TokenType::TT_DIV => Some("/"),
-            TokenType::TT_POW => Some("^"),
-            TokenType::TT_MOD => Some("%"),
-            TokenType::TT_GT => Some(">"),
-            TokenType::TT_LT => Some("<"),
-            TokenType::TT_EE => Some("=="),
-            TokenType::TT_NE => Some("!="),
-            TokenType::TT_LTE => Some("<="),
-            TokenType::TT_GTE => Some(">="),
-            _ if node.op_token.matches(TokenType::TT_KEYWORD, "and") => Some("and"),
-            _ if node.op_token.matches(TokenType::TT_KEYWORD, "or") => Some("or"),
-            _ => None,
-        };
-
         let operation_result = {
             let left_copy = left.borrow().clone();
             let mut left_borrow = left.borrow_mut();
 
             if Rc::ptr_eq(&left, &right) {
                 // if we are comparing two of the same values, perform operation on a clone of itself
-                left_borrow.perform_operation(op.unwrap_or(""), Rc::new(RefCell::new(left_copy)))
-            } else if let Some(op) = op {
-                left_borrow.perform_operation(op, right)
+                left_borrow.perform_operation(&node.operator, Rc::new(RefCell::new(left_copy)))
             } else {
-                left_borrow.perform_operation("", right)
+                left_borrow.perform_operation(&node.operator, right)
             }
         };
 
@@ -917,20 +892,24 @@ impl Interpreter {
 
         let operation_result: Result<Rc<RefCell<Value>>, StandardError>;
 
-        if node.op_token.token_type == TokenType::TT_MINUS {
-            operation_result = value
-                .borrow_mut()
-                .perform_operation("*", Number::from(-1.0));
-        } else if node.op_token.matches(TokenType::TT_KEYWORD, "not") {
-            operation_result = value
-                .borrow_mut()
-                .perform_operation("not", Number::false_value());
-        } else {
-            operation_result = Err(StandardError::new(
-                "unsupported unary operation",
-                value.borrow().span(),
-                None,
-            ))
+        match node.operator.as_str() {
+            "-1" => {
+                operation_result = value
+                    .borrow_mut()
+                    .perform_operation("*", Number::from(-1.0));
+            }
+            "not" => {
+                operation_result = value
+                    .borrow_mut()
+                    .perform_operation("not", Number::false_value());
+            }
+            _ => {
+                operation_result = Err(StandardError::new(
+                    "unsupported unary operation",
+                    value.borrow().span(),
+                    None,
+                ))
+            }
         }
 
         match operation_result {

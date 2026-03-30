@@ -1,5 +1,5 @@
 use glang_attributes::{Position, Span};
-use glang_lexer::Token;
+use glang_lexer::{Token, TokenType};
 use std::rc::Rc;
 
 #[derive(Debug, Clone)]
@@ -102,7 +102,7 @@ impl AstNode {
 #[derive(Debug, Clone)]
 pub struct BinaryOperatorNode {
     pub left_node: Box<AstNode>,
-    pub op_token: Token,
+    pub operator: String,
     pub right_node: Box<AstNode>,
     pub span: Span,
 }
@@ -115,7 +115,24 @@ impl BinaryOperatorNode {
 
         Self {
             left_node,
-            op_token,
+            operator: (match op_token.token_type {
+                TokenType::TT_PLUS => "+",
+                TokenType::TT_MINUS => "-",
+                TokenType::TT_MUL => "*",
+                TokenType::TT_DIV => "/",
+                TokenType::TT_POW => "^",
+                TokenType::TT_MOD => "%",
+                TokenType::TT_GT => ">",
+                TokenType::TT_LT => "<",
+                TokenType::TT_EE => "==",
+                TokenType::TT_NE => "!=",
+                TokenType::TT_LTE => "<=",
+                TokenType::TT_GTE => ">=",
+                _ if op_token.matches(TokenType::TT_KEYWORD, "and") => "and",
+                _ if op_token.matches(TokenType::TT_KEYWORD, "or") => "or",
+                _ => "None",
+            })
+            .to_owned(),
             right_node,
             span: Span::new(&filename, pos_start, pos_end),
         }
@@ -160,7 +177,7 @@ impl CallNode {
 
 #[derive(Debug, Clone)]
 pub struct ConstAssignNode {
-    pub const_name_token: Token,
+    pub name: String,
     pub value_node: Box<AstNode>,
     pub span: Span,
 }
@@ -168,7 +185,7 @@ pub struct ConstAssignNode {
 impl ConstAssignNode {
     pub fn new(var_name_token: Token, value_node: Box<AstNode>) -> Self {
         Self {
-            const_name_token: var_name_token.to_owned(),
+            name: var_name_token.value.unwrap(),
             value_node,
             span: var_name_token.span,
         }
@@ -188,7 +205,7 @@ impl ContinueNode {
 
 #[derive(Debug, Clone)]
 pub struct ForNode {
-    pub var_name_token: Token,
+    pub iterator_name: String,
     pub start_value_node: Box<AstNode>,
     pub end_value_node: Box<AstNode>,
     pub step_value_node: Option<Box<AstNode>>,
@@ -205,7 +222,7 @@ impl ForNode {
         body_node: Box<AstNode>,
     ) -> Self {
         Self {
-            var_name_token: var_name_token.to_owned(),
+            iterator_name: var_name_token.value.unwrap(),
             start_value_node,
             end_value_node,
             step_value_node,
@@ -217,8 +234,8 @@ impl ForNode {
 
 #[derive(Debug, Clone)]
 pub struct FunctionDefinitionNode {
-    pub var_name_token: Option<Token>,
-    pub arg_name_tokens: Rc<[Token]>,
+    pub name: Option<String>,
+    pub argument_names: Vec<Token>,
     pub body_node: Box<AstNode>,
     pub should_auto_return: bool,
     pub span: Span,
@@ -232,8 +249,12 @@ impl FunctionDefinitionNode {
         should_auto_return: bool,
     ) -> Self {
         Self {
-            var_name_token: var_name_token.to_owned(),
-            arg_name_tokens: Rc::from(arg_name_tokens),
+            name: if let Some(ref tok) = var_name_token {
+                tok.value.clone()
+            } else {
+                None
+            },
+            argument_names: arg_name_tokens.to_vec(),
             body_node: body_node.to_owned(),
             should_auto_return,
             span: Span::new(
@@ -340,14 +361,14 @@ impl ReturnNode {
 
 #[derive(Debug, Clone)]
 pub struct StringNode {
-    pub token: Token,
+    pub inner: String,
     pub span: Span,
 }
 
 impl StringNode {
     pub fn new(token: Token) -> Self {
         Self {
-            token: token.to_owned(),
+            inner: token.value.unwrap(),
             span: token.span,
         }
     }
@@ -357,7 +378,7 @@ impl StringNode {
 pub struct TryExceptNode {
     pub try_body_node: Box<AstNode>,
     pub except_body_node: Box<AstNode>,
-    pub error_name_token: Token,
+    pub passed_error: String,
     pub span: Span,
 }
 
@@ -370,7 +391,7 @@ impl TryExceptNode {
         Self {
             try_body_node: try_body_node.to_owned(),
             except_body_node: except_body_node.to_owned(),
-            error_name_token,
+            passed_error: error_name_token.value.unwrap(),
             span: Span::new(
                 &try_body_node.span().filename,
                 try_body_node.position_start(),
@@ -382,7 +403,7 @@ impl TryExceptNode {
 
 #[derive(Debug, Clone)]
 pub struct UnaryOperatorNode {
-    pub op_token: Token,
+    pub operator: String,
     pub node: Box<AstNode>,
     pub span: Span,
 }
@@ -393,7 +414,18 @@ impl UnaryOperatorNode {
         let filename = node.span().filename;
 
         Self {
-            op_token: op_token.to_owned(),
+            operator: (match op_token.token_type {
+                TokenType::TT_MINUS => "-1",
+                TokenType::TT_KEYWORD => {
+                    if op_token.matches(TokenType::TT_KEYWORD, "not") {
+                        "not"
+                    } else {
+                        ""
+                    }
+                }
+                _ => "",
+            })
+            .to_owned(),
             node,
             span: Span::new(&filename, op_token.span.start, pos_end),
         }
@@ -402,14 +434,14 @@ impl UnaryOperatorNode {
 
 #[derive(Debug, Clone)]
 pub struct VariableAccessNode {
-    pub var_name_token: Token,
+    pub name: String,
     pub span: Span,
 }
 
 impl VariableAccessNode {
     pub fn new(var_name_token: Token) -> Self {
         Self {
-            var_name_token: var_name_token.to_owned(),
+            name: var_name_token.value.unwrap(),
             span: var_name_token.span,
         }
     }
@@ -417,7 +449,7 @@ impl VariableAccessNode {
 
 #[derive(Debug, Clone)]
 pub struct VariableAssignNode {
-    pub var_name_token: Token,
+    pub name: String,
     pub value_node: Box<AstNode>,
     pub span: Span,
 }
@@ -425,7 +457,7 @@ pub struct VariableAssignNode {
 impl VariableAssignNode {
     pub fn new(var_name_token: Token, value_node: Box<AstNode>) -> Self {
         Self {
-            var_name_token: var_name_token.to_owned(),
+            name: var_name_token.value.unwrap(),
             value_node,
             span: var_name_token.span,
         }
@@ -434,7 +466,7 @@ impl VariableAssignNode {
 
 #[derive(Debug, Clone)]
 pub struct VariableRessignNode {
-    pub var_name_token: Token,
+    pub name: String,
     pub value_node: Box<AstNode>,
     pub span: Span,
 }
@@ -442,7 +474,7 @@ pub struct VariableRessignNode {
 impl VariableRessignNode {
     pub fn new(var_name_token: Token, value_node: Box<AstNode>) -> Self {
         Self {
-            var_name_token: var_name_token.to_owned(),
+            name: var_name_token.value.unwrap(),
             value_node,
             span: var_name_token.span,
         }
