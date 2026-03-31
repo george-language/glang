@@ -361,14 +361,14 @@ impl ReturnNode {
 
 #[derive(Debug, Clone)]
 pub struct StringNode {
-    pub inner: String,
+    pub value: String,
     pub span: Span,
 }
 
 impl StringNode {
     pub fn new(token: Token) -> Self {
         Self {
-            inner: token.value.unwrap(),
+            value: token.value.unwrap(),
             span: token.span,
         }
     }

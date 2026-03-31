@@ -191,7 +191,7 @@ impl Interpreter {
         node: &StringNode,
         context: Rc<RefCell<Context>>,
     ) -> RuntimeResult {
-        let string = Str::from(&node.inner);
+        let string = Str::from(&node.value);
         string.borrow_mut().set_context(Some(context.clone()));
         string.borrow_mut().set_span(node.span.clone());
 
