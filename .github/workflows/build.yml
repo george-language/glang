@@ -15,9 +15,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
 
-      - name: Install GitHub CLI
-        uses: cli/cli@v3
-
       - name: Set up Rust
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -75,9 +72,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
-
-      - name: Install GitHub CLI
-        uses: cli/cli@v3
 
       - name: Set up Rust
         uses: dtolnay/rust-toolchain@stable
