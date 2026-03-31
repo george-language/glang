@@ -15,6 +15,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
 
+      - name: Get latest release tag
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          echo "VERSION=$(gh release list --limit 1 --json tagName --jq '.[0].tagName')" >> $GITHUB_ENV
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Set up Rust
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -72,6 +79,13 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
+
+      - name: Get latest release tag
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          echo "VERSION=$(gh release list --limit 1 --json tagName --jq '.[0].tagName')" >> $GITHUB_ENV
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Rust
         uses: dtolnay/rust-toolchain@stable
