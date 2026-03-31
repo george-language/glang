@@ -170,7 +170,7 @@ impl Interpreter {
         let mut elements: Vec<Rc<RefCell<Value>>> = Vec::new();
 
         for element in node.element_nodes.iter() {
-            let element_result = result.register(self.visit(element.as_ref(), context.clone()));
+            let element_result = result.register(self.visit(element, context.clone()));
 
             if result.should_return() {
                 return result;
@@ -364,14 +364,14 @@ impl Interpreter {
         let mut result = RuntimeResult::new();
 
         for (condition, expr, should_return_null) in node.cases.iter() {
-            let condition_value = result.register(self.visit(condition.as_ref(), context.clone()));
+            let condition_value = result.register(self.visit(condition, context.clone()));
 
             if result.should_return() {
                 return result;
             }
 
             if condition_value.borrow().is_true() {
-                let expr_value = result.register(self.visit(expr.as_ref(), context.clone()));
+                let expr_value = result.register(self.visit(expr, context.clone()));
 
                 if result.should_return() {
                     return result;
@@ -795,7 +795,7 @@ impl Interpreter {
         }
 
         for arg_node in &node.arg_nodes {
-            let arg = result.register(self.visit(arg_node.as_ref(), context.clone()));
+            let arg = result.register(self.visit(arg_node, context.clone()));
 
             if result.should_return() {
                 return result;

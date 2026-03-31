@@ -1,6 +1,5 @@
 use glang_attributes::{Position, Span};
 use glang_lexer::{Token, TokenType};
-use std::rc::Rc;
 
 #[derive(Debug, Clone)]
 pub enum AstNode {
@@ -153,19 +152,19 @@ impl BreakNode {
 #[derive(Debug, Clone)]
 pub struct CallNode {
     pub node_to_call: Box<AstNode>,
-    pub arg_nodes: Vec<Box<AstNode>>,
+    pub arg_nodes: Vec<AstNode>,
     pub span: Span,
 }
 
 impl CallNode {
     pub fn new(
         node_to_call: Box<AstNode>,
-        arg_nodes: Vec<Box<AstNode>>,
+        arg_nodes: Vec<AstNode>,
         closing_bracket: Token,
     ) -> Self {
         Self {
             node_to_call: node_to_call.to_owned(),
-            arg_nodes: arg_nodes.to_owned(),
+            arg_nodes: arg_nodes,
             span: Span::new(
                 &node_to_call.span().filename,
                 node_to_call.position_start(),
@@ -274,18 +273,18 @@ impl FunctionDefinitionNode {
 
 #[derive(Debug, Clone)]
 pub struct IfNode {
-    pub cases: Rc<[(Box<AstNode>, Box<AstNode>, bool)]>,
+    pub cases: Vec<(AstNode, AstNode, bool)>,
     pub else_case: Option<(Box<AstNode>, bool)>,
     pub span: Span,
 }
 
 impl IfNode {
     pub fn new(
-        cases: &[(Box<AstNode>, Box<AstNode>, bool)],
+        cases: &[(AstNode, AstNode, bool)],
         else_case: Option<(Box<AstNode>, bool)>,
     ) -> Self {
         Self {
-            cases: Rc::from(cases),
+            cases: cases.to_vec(),
             else_case: else_case.to_owned(),
             span: Span::new(
                 &cases[0].0.span().filename,
@@ -317,14 +316,14 @@ impl ImportNode {
 
 #[derive(Debug, Clone)]
 pub struct ListNode {
-    pub element_nodes: Rc<[Box<AstNode>]>,
+    pub element_nodes: Vec<AstNode>,
     pub span: Span,
 }
 
 impl ListNode {
-    pub fn new(element_nodes: &[Box<AstNode>], span: Span) -> Self {
+    pub fn new(element_nodes: &[AstNode], span: Span) -> Self {
         Self {
-            element_nodes: Rc::from(element_nodes),
+            element_nodes: element_nodes.to_vec(),
             span,
         }
     }

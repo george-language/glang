@@ -178,7 +178,7 @@ impl Parser {
 
     fn list_expr(&mut self) -> ParseResult {
         let mut parse_result = ParseResult::new();
-        let mut element_nodes: Vec<Box<AstNode>> = Vec::new();
+        let mut element_nodes: Vec<AstNode> = Vec::new();
         let pos_start = self.current_position_start();
 
         if self.current_token_ref().token_type != TokenType::TT_LSQUARE {
@@ -206,7 +206,7 @@ impl Parser {
                 ));
             }
 
-            element_nodes.push(element);
+            element_nodes.push(*element);
 
             while self.current_token_ref().token_type == TokenType::TT_COMMA {
                 parse_result.register_advancement();
@@ -222,7 +222,7 @@ impl Parser {
                     return parse_result;
                 }
 
-                element_nodes.push(element);
+                element_nodes.push(*element);
             }
 
             if self.current_token_ref().token_type != TokenType::TT_RSQUARE {
@@ -262,7 +262,7 @@ impl Parser {
         &mut self,
     ) -> (
         ParseResult,
-        Vec<(Box<AstNode>, Box<AstNode>, bool)>,
+        Vec<(AstNode, AstNode, bool)>,
         Option<(Box<AstNode>, bool)>,
     ) {
         self.if_expr_cases("alsoif")
@@ -325,11 +325,11 @@ impl Parser {
         &mut self,
     ) -> (
         ParseResult,
-        Vec<(Box<AstNode>, Box<AstNode>, bool)>,
+        Vec<(AstNode, AstNode, bool)>,
         Option<(Box<AstNode>, bool)>,
     ) {
         let mut parse_result = ParseResult::new();
-        let mut cases: Vec<(Box<AstNode>, Box<AstNode>, bool)> = Vec::new();
+        let mut cases: Vec<(AstNode, AstNode, bool)> = Vec::new();
         let mut else_case: Option<(Box<AstNode>, bool)> = None;
 
         while self
@@ -374,11 +374,11 @@ impl Parser {
         keyword: &str,
     ) -> (
         ParseResult,
-        Vec<(Box<AstNode>, Box<AstNode>, bool)>,
+        Vec<(AstNode, AstNode, bool)>,
         Option<(Box<AstNode>, bool)>,
     ) {
         let mut parse_result = ParseResult::new();
-        let mut cases: Vec<(Box<AstNode>, Box<AstNode>, bool)> = Vec::new();
+        let mut cases: Vec<(AstNode, AstNode, bool)> = Vec::new();
         let else_case: Option<(Box<AstNode>, bool)>;
 
         if !self
@@ -426,7 +426,7 @@ impl Parser {
             return (parse_result, Vec::new(), None);
         }
 
-        cases.push((condition, statements, true));
+        cases.push((*condition, *statements, true));
 
         if self.current_token_ref().token_type != TokenType::TT_RBRACKET {
             return (
@@ -998,7 +998,7 @@ impl Parser {
 
     fn statements(&mut self) -> ParseResult {
         let mut parse_result = ParseResult::new();
-        let mut statements: Vec<Box<AstNode>> = Vec::new();
+        let mut statements: Vec<AstNode> = Vec::new();
         let pos_start = self.current_position_start();
 
         if self.current_token_ref().token_type == TokenType::TT_EOF {
@@ -1018,7 +1018,7 @@ impl Parser {
             return parse_result;
         }
 
-        statements.push(statement);
+        statements.push(*statement);
 
         loop {
             if self.current_token_ref().token_type == TokenType::TT_SEMICOLON {
@@ -1037,7 +1037,7 @@ impl Parser {
                 return parse_result;
             }
 
-            statements.push(statement);
+            statements.push(*statement);
         }
 
         parse_result.success(Box::new(AstNode::List(ListNode::new(
@@ -1062,7 +1062,7 @@ impl Parser {
             parse_result.register_advancement();
             self.advance();
 
-            let mut arg_nodes: Vec<Box<AstNode>> = Vec::new();
+            let mut arg_nodes: Vec<AstNode> = Vec::new();
             let closing_call: Token;
 
             if self.current_token_ref().token_type == TokenType::TT_RPAREN {
@@ -1081,7 +1081,7 @@ impl Parser {
                     ));
                 }
 
-                arg_nodes.push(expr);
+                arg_nodes.push(*expr);
 
                 while self.current_token_ref().token_type == TokenType::TT_COMMA {
                     parse_result.register_advancement();
@@ -1093,7 +1093,7 @@ impl Parser {
                         return parse_result;
                     }
 
-                    arg_nodes.push(expr);
+                    arg_nodes.push(*expr);
                 }
 
                 if self.current_token_ref().token_type != TokenType::TT_RPAREN {
@@ -1471,5 +1471,5 @@ fn test_ast() {
     };
 
     assert_eq!(node.element_nodes.len(), 1); // only one call node
-    assert!(matches!(*node.element_nodes[0], AstNode::Call { .. }));
+    assert!(matches!(node.element_nodes[0], AstNode::Call { .. }));
 }
