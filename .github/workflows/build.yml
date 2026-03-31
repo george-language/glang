@@ -1,11 +1,13 @@
 name: GLang Windows & MacOS Build
-env:
-  VERSION: ${{ github.event.release.tag_name || github.ref_name || 'latest' }}
 
 on:
   release:
     types: [published]
   workflow_dispatch:
+    inputs:
+      version:
+        description: "Release tag"
+        required: true
 
 jobs:
   build-macos:
@@ -15,12 +17,16 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
 
-      - name: Get latest release tag
-        if: github.event_name == 'workflow_dispatch'
+      - name: Set VERSION
+        shell: bash
         run: |
-          echo "VERSION=$(gh release list --limit 1 --json tagName --jq '.[0].tagName')" >> $GITHUB_ENV
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          if [ "${{ github.event_name }}" = "release" ]; then
+            echo "VERSION=${{ github.event.release.tag_name }}" >> $GITHUB_ENV
+          elif [ -n "${{ github.event.inputs.version }}" ]; then
+            echo "VERSION=${{ github.event.inputs.version }}" >> $GITHUB_ENV
+          else
+            echo "VERSION=${GITHUB_REF_NAME}" >> $GITHUB_ENV
+          fi
 
       - name: Set up Rust
         uses: dtolnay/rust-toolchain@stable
@@ -80,12 +86,20 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
 
-      - name: Get latest release tag
-        if: github.event_name == 'workflow_dispatch'
+      - name: Set VERSION
+        shell: pwsh
         run: |
-          echo "VERSION=$(gh release list --limit 1 --json tagName --jq '.[0].tagName')" >> $GITHUB_ENV
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          if ("${{ github.event_name }}" -eq "release") {
+            $version = "${{ github.event.release.tag_name }}"
+          }
+          elseif ("${{ github.event.inputs.version }}" -and "${{ github.event.inputs.version }}" -ne "") {
+            $version = "${{ github.event.inputs.version }}"
+          }
+          else {
+            $version = $env:GITHUB_REF_NAME
+          }
+
+          echo "VERSION=$version" | Out-File -FilePath $env:GITHUB_ENV -Append
 
       - name: Set up Rust
         uses: dtolnay/rust-toolchain@stable
