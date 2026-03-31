@@ -1,4 +1,6 @@
 name: GLang Windows & MacOS Build
+env:
+  VERSION: ${{ github.event.release.tag_name || github.ref_name || 'dev' }}
 
 on:
   release:
@@ -15,6 +17,9 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
+
+      - name: Install GitHub CLI
+        uses: cli/cli@v3
 
       - name: Set up Rust
         uses: dtolnay/rust-toolchain@stable
@@ -48,21 +53,21 @@ jobs:
           pkgbuild \
             --root dist/payload \
             --identifier com.george-language.glang \
-            --version ${{ github.ref_name }} \
+            --version $VERSION \
             --install-location / \
-            dist/GeorgeLanguage-${{ github.ref_name }}-macos_setup.pkg
+            dist/GeorgeLanguage-$VERSION-macos_setup.pkg
 
       - name: Upload pkg artifact
         uses: actions/upload-artifact@v7
         with:
-          name: GeorgeLanguage-${{ github.ref_name }}-macos_setup
-          path: dist/GeorgeLanguage-${{ github.ref_name }}-macos_setup.pkg
+          name: GeorgeLanguage-$VERSION-macos_setup
+          path: dist/GeorgeLanguage-$VERSION-macos_setup.pkg
 
       - name: Upload to GitHub Release
         if: github.event_name == 'release'
         run: |
-          gh release upload ${{ github.ref_name }} \
-            dist/GeorgeLanguage-${{ github.ref_name }}-macos_setup.pkg \
+          gh release upload ${{ github.event.release.tag_name }} \
+            dist/GeorgeLanguage-$VERSION-macos_setup.pkg \
             --clobber
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -73,6 +78,9 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
+
+      - name: Install GitHub CLI
+        uses: cli/cli@v3
 
       - name: Set up Rust
         uses: dtolnay/rust-toolchain@stable
@@ -86,22 +94,22 @@ jobs:
         run: choco install innosetup -y
 
       - name: Build installer with Inno Setup
-        run: iscc installer.iss
+        run: iscc /DMyAppVersion=${{ env.VERSION }} installer.iss
 
       - name: Rename exe
-        run: ren "dist/GeorgeLanguage.exe" "GeorgeLanguage-${{ github.ref_name }}-windows_setup.exe"
+        run: ren "dist/GeorgeLanguage.exe" "GeorgeLanguage-${{ env.VERSION }}-windows_setup.exe"
 
       - name: Upload exe artifact
         uses: actions/upload-artifact@v7
         with:
-          name: GeorgeLanguage-${{ github.ref_name }}-windows_setup
-          path: dist/GeorgeLanguage-${{ github.ref_name }}-windows_setup.exe
+          name: GeorgeLanguage-${{ env.VERSION }}-windows_setup
+          path: dist/GeorgeLanguage-${{ env.VERSION }}-windows_setup.exe
 
       - name: Upload to GitHub Release
         if: github.event_name == 'release'
         run: |
-          gh release upload ${{ github.ref_name }} \
-            dist/GeorgeLanguage-${{ github.ref_name }}-windows_setup.exe \
+          gh release upload ${{ env.VERSION }} \
+            dist/GeorgeLanguage-${{ env.VERSION }}-windows_setup.exe \
             --clobber
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
