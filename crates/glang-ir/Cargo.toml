@@ -10,5 +10,5 @@ license.workspace = true
 [dependencies]
 glang-parser = { path = "../glang-parser" }
 glang-attributes = { path = "../glang-attributes" }
-bincode = "1.3"
+bincode = "3.0"
 serde = "1.0.228"
