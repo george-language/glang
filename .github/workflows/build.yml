@@ -87,19 +87,15 @@ jobs:
         uses: actions/checkout@v6
 
       - name: Set VERSION
-        shell: pwsh
+        shell: bash
         run: |
-          if ("${{ github.event_name }}" -eq "release") {
-            $version = "${{ github.event.release.tag_name }}"
-          }
-          elseif ("${{ github.event.inputs.version }}" -and "${{ github.event.inputs.version }}" -ne "") {
-            $version = "${{ github.event.inputs.version }}"
-          }
-          else {
-            $version = $env:GITHUB_REF_NAME
-          }
-
-          echo "VERSION=$version" | Out-File -FilePath $env:GITHUB_ENV -Append
+          if [ "${{ github.event_name }}" = "release" ]; then
+            echo "VERSION=${{ github.event.release.tag_name }}" >> $GITHUB_ENV
+          elif [ -n "${{ github.event.inputs.version }}" ]; then
+            echo "VERSION=${{ github.event.inputs.version }}" >> $GITHUB_ENV
+          else
+            echo "VERSION=${GITHUB_REF_NAME}" >> $GITHUB_ENV
+          fi
 
       - name: Set up Rust
         uses: dtolnay/rust-toolchain@stable
