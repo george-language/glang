@@ -1,13 +1,10 @@
 name: GLang Windows & MacOS Build
 env:
-  VERSION: ${{ github.event.release.tag_name || github.ref_name || 'dev' }}
+  VERSION: ${{ github.event.release.tag_name || github.ref_name || 'latest' }}
 
 on:
   release:
     types: [published]
-  push:
-    branches:
-      - experimental
   workflow_dispatch:
 
 jobs:
@@ -108,7 +105,7 @@ jobs:
       - name: Upload to GitHub Release
         if: github.event_name == 'release'
         run: |
-          gh release upload ${{ env.VERSION }} \
+          gh release upload ${{ github.event.release.tag_name }} \
             dist/GeorgeLanguage-${{ env.VERSION }}-windows_setup.exe \
             --clobber
         env:
