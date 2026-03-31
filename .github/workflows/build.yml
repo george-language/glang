@@ -54,21 +54,21 @@ jobs:
           pkgbuild \
             --root dist/payload \
             --identifier com.george-language.glang \
-            --version $VERSION \
+            --version ${{ VERSION }} \
             --install-location / \
-            dist/GeorgeLanguage-$VERSION-macos_setup.pkg
+            dist/GeorgeLanguage-${{ VERSION }}-macos_setup.pkg
 
       - name: Upload pkg artifact
         uses: actions/upload-artifact@v7
         with:
-          name: GeorgeLanguage-$VERSION-macos_setup
-          path: dist/GeorgeLanguage-$VERSION-macos_setup.pkg
+          name: GeorgeLanguage-${{ VERSION }}-macos_setup
+          path: dist/GeorgeLanguage-${{ VERSION }}-macos_setup.pkg
 
       - name: Upload to GitHub Release
         if: github.event_name == 'release'
         run: |
           gh release upload ${{ github.event.release.tag_name }} \
-            dist/GeorgeLanguage-$VERSION-macos_setup.pkg \
+            dist/GeorgeLanguage-${{ VERSION }}-macos_setup.pkg \
             --clobber
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
