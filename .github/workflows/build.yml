@@ -19,14 +19,7 @@ jobs:
 
       - name: Set VERSION
         shell: bash
-        run: |
-          if [ "${{ github.event_name }}" = "release" ]; then
-            echo "VERSION=${{ github.event.release.tag_name }}" >> $GITHUB_ENV
-          elif [ -n "${{ github.event.inputs.version }}" ]; then
-            echo "VERSION=${{ github.event.inputs.version }}" >> $GITHUB_ENV
-          else
-            echo "VERSION=${GITHUB_REF_NAME}" >> $GITHUB_ENV
-          fi
+        run: echo "VERSION=${{ github.event.release.tag_name || inputs.version || github.ref_name }}" >> $GITHUB_ENV
 
       - name: Set up Rust
         uses: dtolnay/rust-toolchain@stable
@@ -60,21 +53,21 @@ jobs:
           pkgbuild \
             --root dist/payload \
             --identifier com.george-language.glang \
-            --version ${{ VERSION }} \
+            --version ${{ env.VERSION }} \
             --install-location / \
-            dist/GeorgeLanguage-${{ VERSION }}-macos_setup.pkg
+            dist/GeorgeLanguage-${{ env.VERSION }}-macos_setup.pkg
 
       - name: Upload pkg artifact
         uses: actions/upload-artifact@v7
         with:
-          name: GeorgeLanguage-${{ VERSION }}-macos_setup
-          path: dist/GeorgeLanguage-${{ VERSION }}-macos_setup.pkg
+          name: GeorgeLanguage-${{ env.VERSION }}-macos_setup
+          path: dist/GeorgeLanguage-${{ env.VERSION }}-macos_setup.pkg
 
       - name: Upload to GitHub Release
         if: github.event_name == 'release'
         run: |
           gh release upload ${{ github.event.release.tag_name }} \
-            dist/GeorgeLanguage-${{ VERSION }}-macos_setup.pkg \
+            dist/GeorgeLanguage-${{ env.VERSION }}-macos_setup.pkg \
             --clobber
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -88,14 +81,7 @@ jobs:
 
       - name: Set VERSION
         shell: bash
-        run: |
-          if [ "${{ github.event_name }}" = "release" ]; then
-            echo "VERSION=${{ github.event.release.tag_name }}" >> $GITHUB_ENV
-          elif [ -n "${{ github.event.inputs.version }}" ]; then
-            echo "VERSION=${{ github.event.inputs.version }}" >> $GITHUB_ENV
-          else
-            echo "VERSION=${GITHUB_REF_NAME}" >> $GITHUB_ENV
-          fi
+        run: echo "VERSION=${{ github.event.release.tag_name || inputs.version || github.ref_name }}" >> $GITHUB_ENV
 
       - name: Set up Rust
         uses: dtolnay/rust-toolchain@stable
