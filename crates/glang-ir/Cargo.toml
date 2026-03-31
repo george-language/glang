@@ -1,5 +1,5 @@
 [package]
-name = "glang-attributes"
+name = "glang-ir"
 version.workspace = true
 edition.workspace = true
 repository.workspace = true
@@ -8,8 +8,7 @@ authors.workspace = true
 license.workspace = true
 
 [dependencies]
-simply_colored = "0.1.4"
+glang-parser = { path = "../glang-parser" }
+glang-attributes = { path = "../glang-attributes" }
+bincode = "1.3"
 serde = "1.0.228"
-
-[features]
-features = []

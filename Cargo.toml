@@ -22,6 +22,7 @@ glang = { path = "crates/app" }
 glang-attributes = { path = "crates/glang-attributes" }
 glang-lexer = { path = "crates/glang-lexer" }
 glang-parser = { path = "crates/glang-parser" }
+glang-ir = { path = "crates/glang-ir" }
 glang-interpreter = { path = "crates/glang-interpreter" }
 glang-tooling = { path = "crates/glang-tooling" }
 
