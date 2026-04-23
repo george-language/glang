@@ -13,7 +13,7 @@ glang-parser = { path = "../glang-parser" }
 glang-interpreter = { path = "../glang-interpreter" }
 glang-attributes = { path = "../glang-attributes" }
 glang-tooling = { path = "../glang-tooling" }
-clap = { version = "4.5.60", features = ["derive"] }
+clap = { version = "4.6.1", features = ["derive"] }
 dirs = "6.0.0"
 
 [features]
