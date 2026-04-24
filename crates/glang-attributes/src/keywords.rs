@@ -8,7 +8,7 @@ pub const KEYWORDS: &[&str] = &[
     "or",
     "not",
     "if",
-    "alsoif",
+    "also",
     "otherwise",
     "walk",
     "through",

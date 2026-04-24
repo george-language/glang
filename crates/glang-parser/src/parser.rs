@@ -265,7 +265,7 @@ impl Parser {
         Vec<(NodeID, NodeID, bool)>,
         Option<(NodeID, bool)>,
     ) {
-        self.if_expr_cases("alsoif")
+        self.if_expr_cases("also")
     }
 
     fn if_expr_c(&mut self) -> (ParseResult, Option<(NodeID, bool)>) {
@@ -334,7 +334,7 @@ impl Parser {
 
         while self
             .current_token_ref()
-            .matches(TokenType::TT_KEYWORD, "alsoif")
+            .matches(TokenType::TT_KEYWORD, "also")
         {
             let (if_parse_result, mut new_cases, new_else_case) = self.if_expr_b();
 
@@ -398,6 +398,26 @@ impl Parser {
 
         parse_result.register_advancement();
         self.advance();
+
+        if keyword == "also" {
+            if !self
+                .current_token_ref()
+                .matches(TokenType::TT_KEYWORD, "if")
+            {
+                return (
+                    parse_result.failure(StandardError::new(
+                        "expected 'if' after 'also'",
+                        self.current_span(),
+                        Some(format!("add the 'if' keyword").as_str()),
+                    )),
+                    Vec::new(),
+                    None,
+                );
+            }
+
+            parse_result.register_advancement();
+            self.advance();
+        }
 
         let condition = parse_result.register(self.statement());
 

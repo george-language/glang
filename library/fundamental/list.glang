@@ -69,7 +69,7 @@ func reverse(value) {
 func clear(value) {
     if type(value) == "list" {
         give [];
-    } alsoif type(value) == "string" {
+    } also if type(value) == "string" {
         give "";
     } otherwise {
         uhoh("expected type list or string");
@@ -87,7 +87,7 @@ func contains(value, object) {
         }
 
         give false;
-    } alsoif type(value) == "string" {
+    } also if type(value) == "string" {
         if type(object) != "string" {
             uhoh("argument 'object' must be type string");
         }
