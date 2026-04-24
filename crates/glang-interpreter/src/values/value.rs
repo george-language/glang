@@ -1,7 +1,9 @@
 use crate::{
     context::Context,
     values::{
-        built_in_function::BuiltInFunction, function::Function, list::List, number::Number,
+        function::{BuiltInFunction, Function},
+        list::List,
+        number::Number,
         string::Str,
     },
 };
