@@ -4,10 +4,10 @@ use crate::{
 use glang_attributes::StandardError;
 use glang_lexer::{Lexer, lex};
 use glang_parser::{
-    AstArena, AstNode, BinaryOperatorNode, BreakNode, CallNode, ConstAssignNode, ContinueNode,
-    ForNode, FunctionDefinitionNode, IfNode, ImportNode, ListNode, NodeID, NumberNode, Parser,
-    ReturnNode, StringNode, TryExceptNode, UnaryOperatorNode, VariableAccessNode,
-    VariableAssignNode, VariableRessignNode, WhileNode, parse,
+    AstArena, AstNode, BinaryOperatorNode, CallNode, ConstAssignNode, ForNode,
+    FunctionDefinitionNode, IfNode, ImportNode, ListNode, NodeID, NumberNode, Parser, ReturnNode,
+    StringNode, TryExceptNode, UnaryOperatorNode, VariableAccessNode, VariableAssignNode,
+    VariableRessignNode, WhileNode, parse,
 };
 use std::{
     cell::RefCell,
@@ -73,7 +73,7 @@ impl Interpreter {
 
         let builtins = [
             "bark", "chew", "dig", "bury", "copy", "tostring", "tonumber", "length", "uhoh",
-            "type", "run", "_env",
+            "type", "_env",
         ];
 
         for builtin in &builtins {

@@ -124,7 +124,6 @@ impl BuiltInFunction {
             "length" => self.execute_length(args, exec_context),
             "uhoh" => self.execute_error(args, exec_context),
             "type" => self.execute_type(args, exec_context),
-            "run" => self.execute_exec(args, exec_context),
             "_env" => self.execute_env(args, exec_context),
             _ => panic!("CRITICAL ERROR: BUILT IN NAME IS NOT DEFINED"),
         }
@@ -435,50 +434,6 @@ impl BuiltInFunction {
         }
 
         result.success(Str::from(&args[0].borrow().object_type().to_string()))
-    }
-
-    pub fn execute_exec(
-        &self,
-        args: &[Rc<RefCell<Value>>],
-        exec_ctx: Rc<RefCell<Context>>,
-    ) -> RuntimeResult {
-        let mut result = RuntimeResult::new();
-        result.register(self.check_and_populate_args(&["code".to_string()], args, exec_ctx));
-
-        if result.should_return() {
-            return result;
-        }
-
-        let code_arg = args[0].clone();
-
-        let code = match *code_arg.borrow() {
-            Value::StringValue(ref glang) => glang.as_string(),
-            _ => {
-                return result.failure(StandardError::new(
-                    "expected type string",
-                    code_arg.borrow().span(),
-                    Some("add the glang code to execute"),
-                ));
-            }
-        };
-        let filename = code_arg.borrow().span().filename;
-
-        let error = match lex(&filename, &code) {
-            Ok(tokens) => match parse(&tokens, &code) {
-                Ok(ast_node) => match interpret(ast_node, &code) {
-                    Some(e) => Some(e),
-                    None => None,
-                },
-                Err(e) => Some(e),
-            },
-            Err(e) => Some(e),
-        };
-
-        if let Some(e) = error {
-            return result.failure(e);
-        }
-
-        result.success(Number::null_value())
     }
 
     pub fn execute_env(
