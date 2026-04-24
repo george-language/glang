@@ -1,10 +1,10 @@
-use crate::{AstNode, ListNode};
-use glang_attributes::{Span, StandardError};
+use crate::ast_node::NodeID;
+use glang_attributes::StandardError;
 
 #[derive(Clone)]
 pub struct ParseResult {
     pub error: Option<StandardError>,
-    pub node: Box<AstNode>,
+    pub node: NodeID,
     pub last_registered_advance_count: usize,
     pub advance_count: usize,
     pub to_reverse_count: usize,
@@ -14,7 +14,7 @@ impl ParseResult {
     pub fn new() -> Self {
         Self {
             error: None,
-            node: Box::new(AstNode::List(ListNode::new(&[], Span::empty()))),
+            node: NodeID(0),
             last_registered_advance_count: 0,
             advance_count: 0,
             to_reverse_count: 0,
@@ -26,7 +26,7 @@ impl ParseResult {
         self.advance_count += 1;
     }
 
-    pub fn register(&mut self, parse_result: ParseResult) -> Box<AstNode> {
+    pub fn register(&mut self, parse_result: ParseResult) -> NodeID {
         self.last_registered_advance_count = parse_result.advance_count;
         self.advance_count += parse_result.advance_count;
 
@@ -37,7 +37,7 @@ impl ParseResult {
         parse_result.node
     }
 
-    pub fn try_register(&mut self, parse_result: ParseResult) -> Option<Box<AstNode>> {
+    pub fn try_register(&mut self, parse_result: ParseResult) -> Option<NodeID> {
         if parse_result.error.is_some() {
             self.to_reverse_count = parse_result.advance_count;
 
@@ -47,7 +47,7 @@ impl ParseResult {
         Some(self.register(parse_result))
     }
 
-    pub fn success(&mut self, node: Box<AstNode>) -> ParseResult {
+    pub fn success(&mut self, node: NodeID) -> ParseResult {
         self.node = node;
 
         self.clone()

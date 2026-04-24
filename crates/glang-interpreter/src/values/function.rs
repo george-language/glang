@@ -6,13 +6,14 @@ use crate::{
     values::{number::Number, value::Value},
 };
 use glang_attributes::{Span, StandardError};
-use glang_parser::AstNode;
+use glang_parser::{AstArena, NodeID};
 use std::{cell::RefCell, rc::Rc};
 
 #[derive(Debug, Clone)]
 pub struct Function {
     pub name: String,
-    pub body_node: Box<AstNode>,
+    pub body_node: NodeID,
+    pub arena: AstArena, // functions must own their own arena
     pub arg_names: Rc<[String]>,
     pub should_auto_return: bool,
     pub context: Option<Rc<RefCell<Context>>>,
@@ -23,13 +24,15 @@ pub struct Function {
 impl Function {
     pub fn new(
         name: String,
-        body_node: Box<AstNode>,
+        body_node: NodeID,
+        arena: AstArena,
         arg_names: &[String],
         should_auto_return: bool,
     ) -> Self {
         Self {
             name,
             body_node,
+            arena,
             arg_names: Rc::from(arg_names),
             should_auto_return,
             context: None,
@@ -124,7 +127,7 @@ impl Function {
         }
 
         let value =
-            result.register(interpreter.visit(self.body_node.as_ref(), exec_context.clone()));
+            result.register(interpreter.visit(self.body_node, &self.arena, exec_context.clone()));
 
         if result.should_return() && result.func_return_value.is_none() {
             return result;

@@ -465,7 +465,7 @@ impl BuiltInFunction {
 
         let error = match lex(&filename, &code) {
             Ok(tokens) => match parse(&tokens, &code) {
-                Ok(ast_node) => match interpret(&ast_node, &code, None, None) {
+                Ok(ast_node) => match interpret(ast_node, &code) {
                     Some(e) => Some(e),
                     None => None,
                 },

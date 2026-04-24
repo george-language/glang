@@ -1,6 +1,287 @@
 use glang_attributes::{Position, Span};
 use glang_lexer::{Token, TokenType};
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct NodeID(pub usize);
+
+#[derive(Debug, Clone)]
+pub struct AstArena {
+    pub nodes: Vec<AstNode>,
+}
+
+impl AstArena {
+    pub fn new() -> Self {
+        Self { nodes: Vec::new() }
+    }
+
+    pub fn get(&self, id: NodeID) -> &AstNode {
+        let node = &self.nodes[id.0];
+
+        &node
+    }
+
+    pub fn binary_operator_node(&mut self, left: NodeID, op_token: Token, right: NodeID) -> NodeID {
+        self.add(AstNode::BinaryOperator(BinaryOperatorNode {
+            left_node: left,
+            right_node: right,
+            operator: (match op_token.token_type {
+                TokenType::TT_PLUS => "+",
+                TokenType::TT_MINUS => "-",
+                TokenType::TT_MUL => "*",
+                TokenType::TT_DIV => "/",
+                TokenType::TT_POW => "^",
+                TokenType::TT_MOD => "%",
+                TokenType::TT_GT => ">",
+                TokenType::TT_LT => "<",
+                TokenType::TT_EE => "==",
+                TokenType::TT_NE => "!=",
+                TokenType::TT_LTE => "<=",
+                TokenType::TT_GTE => ">=",
+                _ if op_token.matches(TokenType::TT_KEYWORD, "and") => "and",
+                _ if op_token.matches(TokenType::TT_KEYWORD, "or") => "or",
+                _ => "None",
+            })
+            .to_owned(),
+            span: Span::new(
+                &self.span(left).filename,
+                self.position_start(left),
+                self.position_end(right),
+            ),
+        }))
+    }
+
+    pub fn break_node(&mut self, span: Span) -> NodeID {
+        self.add(AstNode::Break(BreakNode { span }))
+    }
+
+    pub fn call_node(
+        &mut self,
+        node_to_call: NodeID,
+        arg_nodes: Vec<NodeID>,
+        closing_bracket: Token,
+    ) -> NodeID {
+        self.add(AstNode::Call(CallNode {
+            node_to_call,
+            arg_nodes,
+            span: Span::new(
+                &self.span(node_to_call).filename,
+                self.position_start(node_to_call),
+                closing_bracket.span.end,
+            ),
+        }))
+    }
+
+    pub fn const_assign_node(&mut self, var_name_token: Token, value_node: NodeID) -> NodeID {
+        self.add(AstNode::ConstAssign(ConstAssignNode {
+            name: var_name_token.value.unwrap(),
+            value_node,
+            span: var_name_token.span,
+        }))
+    }
+
+    pub fn continue_node(&mut self, span: Span) -> NodeID {
+        self.add(AstNode::Continue(ContinueNode { span }))
+    }
+
+    pub fn for_node(
+        &mut self,
+        var_name_token: Token,
+        start_value_node: NodeID,
+        end_value_node: NodeID,
+        step_value_node: Option<NodeID>,
+        body_node: NodeID,
+    ) -> NodeID {
+        self.add(AstNode::For(ForNode {
+            iterator_name: var_name_token.value.unwrap(),
+            start_value_node,
+            end_value_node,
+            step_value_node,
+            body_node,
+            span: var_name_token.span,
+        }))
+    }
+
+    pub fn function_definition_node(
+        &mut self,
+        var_name_token: Option<Token>,
+        arg_name_tokens: &[Token],
+        body_node: NodeID,
+        should_auto_return: bool,
+    ) -> NodeID {
+        self.add(AstNode::FunctionDefinition(FunctionDefinitionNode {
+            name: if let Some(ref tok) = var_name_token {
+                tok.value.clone()
+            } else {
+                None
+            },
+            argument_names: arg_name_tokens.to_vec(),
+            body_node: body_node,
+            should_auto_return,
+            span: Span::new(
+                &self.span(body_node).filename,
+                if let Some(var_name) = var_name_token {
+                    var_name.span.end
+                } else if !arg_name_tokens.is_empty() {
+                    arg_name_tokens[0].span.start.clone()
+                } else {
+                    self.position_end(body_node)
+                },
+                self.position_end(body_node),
+            ),
+        }))
+    }
+
+    pub fn if_node(
+        &mut self,
+        cases: Vec<(NodeID, NodeID, bool)>,
+        else_case: Option<(NodeID, bool)>,
+    ) -> NodeID {
+        self.add(AstNode::If(IfNode {
+            cases: cases.to_owned(),
+            else_case,
+            span: Span::new(
+                &self.span(cases[0].0).filename,
+                self.position_start(cases[0].0),
+                if else_case.is_none() {
+                    self.position_start(cases[cases.len() - 1].0)
+                } else {
+                    self.position_end(else_case.unwrap().0)
+                },
+            ),
+        }))
+    }
+
+    pub fn import_node(&mut self, node_to_import: NodeID) -> NodeID {
+        self.add(AstNode::Import(ImportNode {
+            node_to_import,
+            span: self.span(node_to_import),
+        }))
+    }
+
+    pub fn list_node(&mut self, element_nodes: Vec<NodeID>, span: Span) -> NodeID {
+        self.add(AstNode::List(ListNode {
+            element_nodes,
+            span,
+        }))
+    }
+
+    pub fn number_node(&mut self, token: Token) -> NodeID {
+        self.add(AstNode::Number(NumberNode {
+            value: token.value.as_ref().unwrap().parse::<f64>().unwrap(),
+            span: token.span,
+        }))
+    }
+
+    pub fn return_node(&mut self, node_to_return: Option<NodeID>, span: Span) -> NodeID {
+        self.add(AstNode::Return(ReturnNode {
+            node_to_return,
+            span,
+        }))
+    }
+
+    pub fn string_node(&mut self, token: Token) -> NodeID {
+        self.add(AstNode::Strings(StringNode {
+            value: token.value.unwrap(),
+            span: token.span,
+        }))
+    }
+
+    pub fn try_except_node(
+        &mut self,
+        try_body_node: NodeID,
+        except_body_node: NodeID,
+        error_name_token: Token,
+    ) -> NodeID {
+        self.add(AstNode::TryExcept(TryExceptNode {
+            try_body_node: try_body_node,
+            except_body_node: except_body_node,
+            passed_error: error_name_token.value.unwrap(),
+            span: Span::new(
+                &self.span(try_body_node).filename,
+                self.position_start(try_body_node),
+                self.position_end(except_body_node),
+            ),
+        }))
+    }
+
+    pub fn unary_operator_node(&mut self, op_token: Token, node: NodeID) -> NodeID {
+        self.add(AstNode::UnaryOperator(UnaryOperatorNode {
+            operator: (match op_token.token_type {
+                TokenType::TT_MINUS => "-1",
+                TokenType::TT_KEYWORD => {
+                    if op_token.matches(TokenType::TT_KEYWORD, "not") {
+                        "not"
+                    } else {
+                        ""
+                    }
+                }
+                _ => "",
+            })
+            .to_owned(),
+            node,
+            span: Span::new(
+                &self.span(node).filename,
+                op_token.span.start,
+                self.position_end(node),
+            ),
+        }))
+    }
+
+    pub fn variable_access_node(&mut self, var_name_token: Token) -> NodeID {
+        self.add(AstNode::VariableAccess(VariableAccessNode {
+            name: var_name_token.value.unwrap(),
+            span: var_name_token.span,
+        }))
+    }
+
+    pub fn variable_assign_node(&mut self, var_name_token: Token, value_node: NodeID) -> NodeID {
+        self.add(AstNode::VariableAssign(VariableAssignNode {
+            name: var_name_token.value.unwrap(),
+            value_node,
+            span: var_name_token.span,
+        }))
+    }
+
+    pub fn variable_reassign_node(&mut self, var_name_token: Token, value_node: NodeID) -> NodeID {
+        self.add(AstNode::VariableReassign(VariableRessignNode {
+            name: var_name_token.value.unwrap(),
+            value_node,
+            span: var_name_token.span,
+        }))
+    }
+
+    pub fn while_node(&mut self, condition_node: NodeID, body_node: NodeID) -> NodeID {
+        self.add(AstNode::While(WhileNode {
+            condition_node: condition_node.clone(),
+            body_node: body_node.clone(),
+            span: Span::new(
+                &self.span(condition_node).filename,
+                self.position_start(condition_node),
+                self.position_end(body_node),
+            ),
+        }))
+    }
+
+    pub fn add(&mut self, node: AstNode) -> NodeID {
+        let id = NodeID(self.nodes.len());
+        self.nodes.push(node);
+
+        id
+    }
+
+    pub fn span(&self, id: NodeID) -> Span {
+        self.get(id).span()
+    }
+
+    fn position_start(&self, id: NodeID) -> Position {
+        self.get(id).position_start()
+    }
+
+    fn position_end(&self, id: NodeID) -> Position {
+        self.get(id).position_end()
+    }
+}
+
 #[derive(Debug, Clone)]
 pub enum AstNode {
     BinaryOperator(BinaryOperatorNode),
@@ -100,42 +381,10 @@ impl AstNode {
 
 #[derive(Debug, Clone)]
 pub struct BinaryOperatorNode {
-    pub left_node: Box<AstNode>,
+    pub left_node: NodeID,
     pub operator: String,
-    pub right_node: Box<AstNode>,
+    pub right_node: NodeID,
     pub span: Span,
-}
-
-impl BinaryOperatorNode {
-    pub fn new(left_node: Box<AstNode>, op_token: Token, right_node: Box<AstNode>) -> Self {
-        let pos_start = left_node.position_start();
-        let pos_end = right_node.position_end();
-        let filename = left_node.span().filename;
-
-        Self {
-            left_node,
-            operator: (match op_token.token_type {
-                TokenType::TT_PLUS => "+",
-                TokenType::TT_MINUS => "-",
-                TokenType::TT_MUL => "*",
-                TokenType::TT_DIV => "/",
-                TokenType::TT_POW => "^",
-                TokenType::TT_MOD => "%",
-                TokenType::TT_GT => ">",
-                TokenType::TT_LT => "<",
-                TokenType::TT_EE => "==",
-                TokenType::TT_NE => "!=",
-                TokenType::TT_LTE => "<=",
-                TokenType::TT_GTE => ">=",
-                _ if op_token.matches(TokenType::TT_KEYWORD, "and") => "and",
-                _ if op_token.matches(TokenType::TT_KEYWORD, "or") => "or",
-                _ => "None",
-            })
-            .to_owned(),
-            right_node,
-            span: Span::new(&filename, pos_start, pos_end),
-        }
-    }
 }
 
 #[derive(Debug, Clone)]
@@ -143,52 +392,18 @@ pub struct BreakNode {
     pub span: Span,
 }
 
-impl BreakNode {
-    pub fn new(span: Span) -> Self {
-        Self { span }
-    }
-}
-
 #[derive(Debug, Clone)]
 pub struct CallNode {
-    pub node_to_call: Box<AstNode>,
-    pub arg_nodes: Vec<AstNode>,
+    pub node_to_call: NodeID,
+    pub arg_nodes: Vec<NodeID>,
     pub span: Span,
-}
-
-impl CallNode {
-    pub fn new(
-        node_to_call: Box<AstNode>,
-        arg_nodes: Vec<AstNode>,
-        closing_bracket: Token,
-    ) -> Self {
-        Self {
-            node_to_call: node_to_call.to_owned(),
-            arg_nodes: arg_nodes,
-            span: Span::new(
-                &node_to_call.span().filename,
-                node_to_call.position_start(),
-                closing_bracket.span.end,
-            ),
-        }
-    }
 }
 
 #[derive(Debug, Clone)]
 pub struct ConstAssignNode {
     pub name: String,
-    pub value_node: Box<AstNode>,
+    pub value_node: NodeID,
     pub span: Span,
-}
-
-impl ConstAssignNode {
-    pub fn new(var_name_token: Token, value_node: Box<AstNode>) -> Self {
-        Self {
-            name: var_name_token.value.unwrap(),
-            value_node,
-            span: var_name_token.span,
-        }
-    }
 }
 
 #[derive(Debug, Clone)]
@@ -196,166 +411,54 @@ pub struct ContinueNode {
     pub span: Span,
 }
 
-impl ContinueNode {
-    pub fn new(span: Span) -> Self {
-        Self { span }
-    }
-}
-
 #[derive(Debug, Clone)]
 pub struct ForNode {
     pub iterator_name: String,
-    pub start_value_node: Box<AstNode>,
-    pub end_value_node: Box<AstNode>,
-    pub step_value_node: Option<Box<AstNode>>,
-    pub body_node: Box<AstNode>,
+    pub start_value_node: NodeID,
+    pub end_value_node: NodeID,
+    pub step_value_node: Option<NodeID>,
+    pub body_node: NodeID,
     pub span: Span,
-}
-
-impl ForNode {
-    pub fn new(
-        var_name_token: Token,
-        start_value_node: Box<AstNode>,
-        end_value_node: Box<AstNode>,
-        step_value_node: Option<Box<AstNode>>,
-        body_node: Box<AstNode>,
-    ) -> Self {
-        Self {
-            iterator_name: var_name_token.value.unwrap(),
-            start_value_node,
-            end_value_node,
-            step_value_node,
-            body_node,
-            span: var_name_token.span,
-        }
-    }
 }
 
 #[derive(Debug, Clone)]
 pub struct FunctionDefinitionNode {
     pub name: Option<String>,
     pub argument_names: Vec<Token>,
-    pub body_node: Box<AstNode>,
+    pub body_node: NodeID,
     pub should_auto_return: bool,
     pub span: Span,
 }
 
-impl FunctionDefinitionNode {
-    pub fn new(
-        var_name_token: Option<Token>,
-        arg_name_tokens: &[Token],
-        body_node: Box<AstNode>,
-        should_auto_return: bool,
-    ) -> Self {
-        Self {
-            name: if let Some(ref tok) = var_name_token {
-                tok.value.clone()
-            } else {
-                None
-            },
-            argument_names: arg_name_tokens.to_vec(),
-            body_node: body_node.to_owned(),
-            should_auto_return,
-            span: Span::new(
-                &body_node.span().filename,
-                if let Some(var_name) = var_name_token {
-                    var_name.span.end
-                } else if !arg_name_tokens.is_empty() {
-                    arg_name_tokens[0].span.start.clone()
-                } else {
-                    body_node.position_start()
-                },
-                body_node.position_end(),
-            ),
-        }
-    }
-}
-
 #[derive(Debug, Clone)]
 pub struct IfNode {
-    pub cases: Vec<(AstNode, AstNode, bool)>,
-    pub else_case: Option<(Box<AstNode>, bool)>,
+    pub cases: Vec<(NodeID, NodeID, bool)>,
+    pub else_case: Option<(NodeID, bool)>,
     pub span: Span,
-}
-
-impl IfNode {
-    pub fn new(
-        cases: &[(AstNode, AstNode, bool)],
-        else_case: Option<(Box<AstNode>, bool)>,
-    ) -> Self {
-        Self {
-            cases: cases.to_vec(),
-            else_case: else_case.to_owned(),
-            span: Span::new(
-                &cases[0].0.span().filename,
-                cases[0].0.position_start(),
-                if else_case.is_none() {
-                    cases[cases.len() - 1].0.position_start()
-                } else {
-                    else_case.unwrap().0.position_end()
-                },
-            ),
-        }
-    }
 }
 
 #[derive(Debug, Clone)]
 pub struct ImportNode {
-    pub node_to_import: Box<AstNode>,
+    pub node_to_import: NodeID,
     pub span: Span,
-}
-
-impl ImportNode {
-    pub fn new(node_to_import: Box<AstNode>) -> Self {
-        Self {
-            node_to_import: node_to_import.to_owned(),
-            span: node_to_import.span(),
-        }
-    }
 }
 
 #[derive(Debug, Clone)]
 pub struct ListNode {
-    pub element_nodes: Vec<AstNode>,
+    pub element_nodes: Vec<NodeID>,
     pub span: Span,
 }
 
-impl ListNode {
-    pub fn new(element_nodes: &[AstNode], span: Span) -> Self {
-        Self {
-            element_nodes: element_nodes.to_vec(),
-            span,
-        }
-    }
-}
 #[derive(Debug, Clone)]
 pub struct NumberNode {
     pub value: f64,
     pub span: Span,
 }
 
-impl NumberNode {
-    pub fn new(token: Token) -> Self {
-        Self {
-            value: token.value.as_ref().unwrap().parse::<f64>().unwrap(),
-            span: token.span,
-        }
-    }
-}
-
 #[derive(Debug, Clone)]
 pub struct ReturnNode {
-    pub node_to_return: Option<Box<AstNode>>,
+    pub node_to_return: Option<NodeID>,
     pub span: Span,
-}
-
-impl ReturnNode {
-    pub fn new(node: Option<Box<AstNode>>, span: Span) -> Self {
-        Self {
-            node_to_return: node,
-            span,
-        }
-    }
 }
 
 #[derive(Debug, Clone)]
@@ -364,71 +467,19 @@ pub struct StringNode {
     pub span: Span,
 }
 
-impl StringNode {
-    pub fn new(token: Token) -> Self {
-        Self {
-            value: token.value.unwrap(),
-            span: token.span,
-        }
-    }
-}
-
 #[derive(Debug, Clone)]
 pub struct TryExceptNode {
-    pub try_body_node: Box<AstNode>,
-    pub except_body_node: Box<AstNode>,
+    pub try_body_node: NodeID,
+    pub except_body_node: NodeID,
     pub passed_error: String,
     pub span: Span,
-}
-
-impl TryExceptNode {
-    pub fn new(
-        try_body_node: Box<AstNode>,
-        except_body_node: Box<AstNode>,
-        error_name_token: Token,
-    ) -> Self {
-        Self {
-            try_body_node: try_body_node.to_owned(),
-            except_body_node: except_body_node.to_owned(),
-            passed_error: error_name_token.value.unwrap(),
-            span: Span::new(
-                &try_body_node.span().filename,
-                try_body_node.position_start(),
-                except_body_node.position_end(),
-            ),
-        }
-    }
 }
 
 #[derive(Debug, Clone)]
 pub struct UnaryOperatorNode {
     pub operator: String,
-    pub node: Box<AstNode>,
+    pub node: NodeID,
     pub span: Span,
-}
-
-impl UnaryOperatorNode {
-    pub fn new(op_token: Token, node: Box<AstNode>) -> Self {
-        let pos_end = node.position_end();
-        let filename = node.span().filename;
-
-        Self {
-            operator: (match op_token.token_type {
-                TokenType::TT_MINUS => "-1",
-                TokenType::TT_KEYWORD => {
-                    if op_token.matches(TokenType::TT_KEYWORD, "not") {
-                        "not"
-                    } else {
-                        ""
-                    }
-                }
-                _ => "",
-            })
-            .to_owned(),
-            node,
-            span: Span::new(&filename, op_token.span.start, pos_end),
-        }
-    }
 }
 
 #[derive(Debug, Clone)]
@@ -437,66 +488,23 @@ pub struct VariableAccessNode {
     pub span: Span,
 }
 
-impl VariableAccessNode {
-    pub fn new(var_name_token: Token) -> Self {
-        Self {
-            name: var_name_token.value.unwrap(),
-            span: var_name_token.span,
-        }
-    }
-}
-
 #[derive(Debug, Clone)]
 pub struct VariableAssignNode {
     pub name: String,
-    pub value_node: Box<AstNode>,
+    pub value_node: NodeID,
     pub span: Span,
-}
-
-impl VariableAssignNode {
-    pub fn new(var_name_token: Token, value_node: Box<AstNode>) -> Self {
-        Self {
-            name: var_name_token.value.unwrap(),
-            value_node,
-            span: var_name_token.span,
-        }
-    }
 }
 
 #[derive(Debug, Clone)]
 pub struct VariableRessignNode {
     pub name: String,
-    pub value_node: Box<AstNode>,
+    pub value_node: NodeID,
     pub span: Span,
-}
-
-impl VariableRessignNode {
-    pub fn new(var_name_token: Token, value_node: Box<AstNode>) -> Self {
-        Self {
-            name: var_name_token.value.unwrap(),
-            value_node,
-            span: var_name_token.span,
-        }
-    }
 }
 
 #[derive(Debug, Clone)]
 pub struct WhileNode {
-    pub condition_node: Box<AstNode>,
-    pub body_node: Box<AstNode>,
+    pub condition_node: NodeID,
+    pub body_node: NodeID,
     pub span: Span,
-}
-
-impl WhileNode {
-    pub fn new(condition_node: Box<AstNode>, body_node: Box<AstNode>) -> Self {
-        Self {
-            condition_node: condition_node.clone(),
-            body_node: body_node.clone(),
-            span: Span::new(
-                &condition_node.span().filename,
-                condition_node.position_start(),
-                body_node.position_end(),
-            ),
-        }
-    }
 }

@@ -1,14 +1,12 @@
 use crate::{
-    AstNode, BinaryOperatorNode, BreakNode, CallNode, ConstAssignNode, ContinueNode, ForNode,
-    FunctionDefinitionNode, IfNode, ImportNode, ListNode, NumberNode, ParseResult, ReturnNode,
-    StringNode, TryExceptNode, UnaryOperatorNode, VariableAccessNode, VariableAssignNode,
-    VariableRessignNode, WhileNode,
+    ParseResult,
+    ast_node::{AstArena, NodeID},
 };
 use glang_attributes::{Position, Span, StandardError};
 use glang_lexer::{Token, TokenType};
 use std::{rc::Rc, time::Instant};
 
-pub fn parse(tokens: &[Token], contents: &str) -> Result<Box<AstNode>, StandardError> {
+pub fn parse(tokens: &[Token], contents: &str) -> Result<AstArena, StandardError> {
     let parsing_time = Instant::now();
 
     let mut parser = Parser::new(tokens, contents);
@@ -22,7 +20,7 @@ pub fn parse(tokens: &[Token], contents: &str) -> Result<Box<AstNode>, StandardE
         println!("Time to parse: {:?}ms", parsing_time.elapsed().as_millis())
     }
 
-    Ok(ast.node)
+    Ok(parser.arena)
 }
 
 #[derive(Debug, Clone)]
@@ -38,6 +36,7 @@ pub struct Parser {
     pub tokens: Rc<[Token]>,
     pub token_index: isize,
     pub current_token: Option<Token>,
+    pub arena: AstArena,
     contents: String,
 }
 
@@ -47,6 +46,7 @@ impl Parser {
             tokens: Rc::from(tokens),
             token_index: -1,
             current_token: None,
+            arena: AstArena::new(),
             contents: contents.to_owned(),
         };
         parser.advance();
@@ -138,10 +138,10 @@ impl Parser {
                 return parse_result;
             }
 
-            return parse_result.success(Box::new(AstNode::UnaryOperator(UnaryOperatorNode::new(
-                op_token.clone(),
-                node.clone(),
-            ))));
+            return parse_result.success(
+                self.arena
+                    .unary_operator_node(op_token.clone(), node.clone()),
+            );
         }
 
         let node = parse_result.register(self.binary_operator(
@@ -178,7 +178,7 @@ impl Parser {
 
     fn list_expr(&mut self) -> ParseResult {
         let mut parse_result = ParseResult::new();
-        let mut element_nodes: Vec<AstNode> = Vec::new();
+        let mut element_nodes: Vec<NodeID> = Vec::new();
         let pos_start = self.current_position_start();
 
         if self.current_token_ref().token_type != TokenType::TT_LSQUARE {
@@ -206,7 +206,7 @@ impl Parser {
                 ));
             }
 
-            element_nodes.push(*element);
+            element_nodes.push(element);
 
             while self.current_token_ref().token_type == TokenType::TT_COMMA {
                 parse_result.register_advancement();
@@ -222,7 +222,7 @@ impl Parser {
                     return parse_result;
                 }
 
-                element_nodes.push(*element);
+                element_nodes.push(element);
             }
 
             if self.current_token_ref().token_type != TokenType::TT_RSQUARE {
@@ -237,14 +237,14 @@ impl Parser {
             self.advance();
         }
 
-        parse_result.success(Box::new(AstNode::List(ListNode::new(
-            &element_nodes,
+        parse_result.success(self.arena.list_node(
+            element_nodes,
             Span::new(
                 &self.current_span().filename,
                 pos_start.clone(),
                 self.current_position_end().clone(),
             ),
-        ))))
+        ))
     }
 
     fn if_expr(&mut self) -> ParseResult {
@@ -255,22 +255,22 @@ impl Parser {
             return if_parse_result;
         }
 
-        parse_result.success(Box::new(AstNode::If(IfNode::new(&cases, else_case))))
+        parse_result.success(self.arena.if_node(cases, else_case))
     }
 
     fn if_expr_b(
         &mut self,
     ) -> (
         ParseResult,
-        Vec<(AstNode, AstNode, bool)>,
-        Option<(Box<AstNode>, bool)>,
+        Vec<(NodeID, NodeID, bool)>,
+        Option<(NodeID, bool)>,
     ) {
         self.if_expr_cases("alsoif")
     }
 
-    fn if_expr_c(&mut self) -> (ParseResult, Option<(Box<AstNode>, bool)>) {
+    fn if_expr_c(&mut self) -> (ParseResult, Option<(NodeID, bool)>) {
         let mut parse_result = ParseResult::new();
-        let mut else_case: Option<(Box<AstNode>, bool)> = None;
+        let mut else_case: Option<(NodeID, bool)> = None;
 
         if self
             .current_token_ref()
@@ -325,12 +325,12 @@ impl Parser {
         &mut self,
     ) -> (
         ParseResult,
-        Vec<(AstNode, AstNode, bool)>,
-        Option<(Box<AstNode>, bool)>,
+        Vec<(NodeID, NodeID, bool)>,
+        Option<(NodeID, bool)>,
     ) {
         let mut parse_result = ParseResult::new();
-        let mut cases: Vec<(AstNode, AstNode, bool)> = Vec::new();
-        let mut else_case: Option<(Box<AstNode>, bool)> = None;
+        let mut cases: Vec<(NodeID, NodeID, bool)> = Vec::new();
+        let mut else_case: Option<(NodeID, bool)> = None;
 
         while self
             .current_token_ref()
@@ -374,12 +374,12 @@ impl Parser {
         keyword: &str,
     ) -> (
         ParseResult,
-        Vec<(AstNode, AstNode, bool)>,
-        Option<(Box<AstNode>, bool)>,
+        Vec<(NodeID, NodeID, bool)>,
+        Option<(NodeID, bool)>,
     ) {
         let mut parse_result = ParseResult::new();
-        let mut cases: Vec<(AstNode, AstNode, bool)> = Vec::new();
-        let else_case: Option<(Box<AstNode>, bool)>;
+        let mut cases: Vec<(NodeID, NodeID, bool)> = Vec::new();
+        let else_case: Option<(NodeID, bool)>;
 
         if !self
             .current_token_ref()
@@ -426,7 +426,7 @@ impl Parser {
             return (parse_result, Vec::new(), None);
         }
 
-        cases.push((*condition, *statements, true));
+        cases.push((condition, statements, true));
 
         if self.current_token_ref().token_type != TokenType::TT_RBRACKET {
             return (
@@ -528,7 +528,7 @@ impl Parser {
             return parse_result;
         }
 
-        let step_value: Option<Box<AstNode>>;
+        let step_value: Option<NodeID>;
 
         if self
             .current_token_ref()
@@ -585,13 +585,13 @@ impl Parser {
         parse_result.register_advancement();
         self.advance();
 
-        parse_result.success(Box::new(AstNode::For(ForNode::new(
+        parse_result.success(self.arena.for_node(
             var_name,
             start_value,
             end_value,
             step_value,
             body,
-        ))))
+        ))
     }
 
     fn while_expr(&mut self) -> ParseResult {
@@ -645,7 +645,7 @@ impl Parser {
         parse_result.register_advancement();
         self.advance();
 
-        parse_result.success(Box::new(AstNode::While(WhileNode::new(condition, body))))
+        parse_result.success(self.arena.while_node(condition, body))
     }
 
     fn try_expr(&mut self) -> ParseResult {
@@ -748,11 +748,10 @@ impl Parser {
         parse_result.register_advancement();
         self.advance();
 
-        parse_result.success(Box::new(AstNode::TryExcept(TryExceptNode::new(
-            try_body,
-            except_body,
-            error_name_token,
-        ))))
+        parse_result.success(
+            self.arena
+                .try_except_node(try_body, except_body, error_name_token),
+        )
     }
 
     fn import_expr(&mut self) -> ParseResult {
@@ -781,7 +780,7 @@ impl Parser {
         parse_result.register_advancement();
         self.advance();
 
-        parse_result.success(Box::new(AstNode::Import(ImportNode::new(import))))
+        parse_result.success(self.arena.import_node(import))
     }
 
     fn expr(&mut self) -> ParseResult {
@@ -834,9 +833,7 @@ impl Parser {
                 return parse_result;
             }
 
-            return parse_result.success(Box::new(AstNode::VariableAssign(
-                VariableAssignNode::new(var_name, expr),
-            )));
+            return parse_result.success(self.arena.variable_assign_node(var_name, expr));
         } else if self.current_token_copy().token_type == TokenType::TT_IDENTIFIER
             && next_tok.token_type == TokenType::TT_EQ
         {
@@ -855,9 +852,7 @@ impl Parser {
                 return parse_result;
             }
 
-            return parse_result.success(Box::new(AstNode::VariableReassign(
-                VariableRessignNode::new(var_name, expr),
-            )));
+            return parse_result.success(self.arena.variable_reassign_node(var_name, expr));
         } else if self
             .current_token_ref()
             .matches(TokenType::TT_KEYWORD, "stay")
@@ -901,9 +896,7 @@ impl Parser {
                 return parse_result;
             }
 
-            return parse_result.success(Box::new(AstNode::ConstAssign(ConstAssignNode::new(
-                const_name, expr,
-            ))));
+            return parse_result.success(self.arena.const_assign_node(const_name, expr));
         }
 
         let node = parse_result.register(self.binary_operator(
@@ -943,14 +936,14 @@ impl Parser {
                 self.reverse(parse_result.to_reverse_count);
             }
 
-            return parse_result.success(Box::new(AstNode::Return(ReturnNode::new(
+            return parse_result.success(self.arena.return_node(
                 expr,
                 Span::new(
                     &self.current_span().filename,
                     pos_start,
                     self.current_position_end(),
                 ),
-            ))));
+            ));
         } else if self
             .current_token_ref()
             .matches(TokenType::TT_KEYWORD, "next")
@@ -958,13 +951,11 @@ impl Parser {
             parse_result.register_advancement();
             self.advance();
 
-            return parse_result.success(Box::new(AstNode::Continue(ContinueNode::new(
-                Span::new(
-                    &self.current_span().filename,
-                    pos_start,
-                    self.current_position_end(),
-                ),
-            ))));
+            return parse_result.success(self.arena.continue_node(Span::new(
+                &self.current_span().filename,
+                pos_start,
+                self.current_position_end(),
+            )));
         } else if self
             .current_token_ref()
             .matches(TokenType::TT_KEYWORD, "leave")
@@ -972,11 +963,11 @@ impl Parser {
             parse_result.register_advancement();
             self.advance();
 
-            return parse_result.success(Box::new(AstNode::Break(BreakNode::new(Span::new(
+            return parse_result.success(self.arena.break_node(Span::new(
                 &self.current_span().filename,
                 pos_start,
                 self.current_position_end(),
-            )))));
+            )));
         }
 
         let expr = parse_result.register(self.expr());
@@ -998,18 +989,18 @@ impl Parser {
 
     fn statements(&mut self) -> ParseResult {
         let mut parse_result = ParseResult::new();
-        let mut statements: Vec<AstNode> = Vec::new();
+        let mut statements: Vec<NodeID> = Vec::new();
         let pos_start = self.current_position_start();
 
         if self.current_token_ref().token_type == TokenType::TT_EOF {
-            return parse_result.success(Box::new(AstNode::List(ListNode::new(
-                &[],
+            return parse_result.success(self.arena.list_node(
+                Vec::new(),
                 Span::new(
                     &self.current_span().filename,
                     pos_start,
                     self.current_position_end(),
                 ),
-            ))));
+            ));
         }
 
         let statement = parse_result.register(self.statement());
@@ -1018,7 +1009,7 @@ impl Parser {
             return parse_result;
         }
 
-        statements.push(*statement);
+        statements.push(statement);
 
         loop {
             if self.current_token_ref().token_type == TokenType::TT_SEMICOLON {
@@ -1037,17 +1028,17 @@ impl Parser {
                 return parse_result;
             }
 
-            statements.push(*statement);
+            statements.push(statement);
         }
 
-        parse_result.success(Box::new(AstNode::List(ListNode::new(
-            &statements,
+        parse_result.success(self.arena.list_node(
+            statements,
             Span::new(
                 &self.current_span().filename,
                 pos_start,
                 self.current_position_end(),
             ),
-        ))))
+        ))
     }
 
     fn call(&mut self) -> ParseResult {
@@ -1062,7 +1053,7 @@ impl Parser {
             parse_result.register_advancement();
             self.advance();
 
-            let mut arg_nodes: Vec<AstNode> = Vec::new();
+            let mut arg_nodes: Vec<NodeID> = Vec::new();
             let closing_call: Token;
 
             if self.current_token_ref().token_type == TokenType::TT_RPAREN {
@@ -1081,7 +1072,7 @@ impl Parser {
                     ));
                 }
 
-                arg_nodes.push(*expr);
+                arg_nodes.push(expr);
 
                 while self.current_token_ref().token_type == TokenType::TT_COMMA {
                     parse_result.register_advancement();
@@ -1093,7 +1084,7 @@ impl Parser {
                         return parse_result;
                     }
 
-                    arg_nodes.push(*expr);
+                    arg_nodes.push(expr);
                 }
 
                 if self.current_token_ref().token_type != TokenType::TT_RPAREN {
@@ -1110,11 +1101,7 @@ impl Parser {
                 self.advance();
             }
 
-            return parse_result.success(Box::new(AstNode::Call(CallNode::new(
-                atom,
-                arg_nodes,
-                closing_call,
-            ))));
+            return parse_result.success(self.arena.call_node(atom, arg_nodes, closing_call));
         }
 
         parse_result.success(atom)
@@ -1128,19 +1115,17 @@ impl Parser {
             parse_result.register_advancement();
             self.advance();
 
-            return parse_result.success(Box::new(AstNode::Number(NumberNode::new(token))));
+            return parse_result.success(self.arena.number_node(token));
         } else if token.token_type == TokenType::TT_STR {
             parse_result.register_advancement();
             self.advance();
 
-            return parse_result.success(Box::new(AstNode::Strings(StringNode::new(token))));
+            return parse_result.success(self.arena.string_node(token));
         } else if token.token_type == TokenType::TT_IDENTIFIER {
             parse_result.register_advancement();
             self.advance();
 
-            return parse_result.success(Box::new(AstNode::VariableAccess(
-                VariableAccessNode::new(token),
-            )));
+            return parse_result.success(self.arena.variable_access_node(token));
         } else if token.token_type == TokenType::TT_LPAREN {
             parse_result.register_advancement();
             self.advance();
@@ -1249,9 +1234,7 @@ impl Parser {
                 return parse_result;
             }
 
-            return parse_result.success(Box::new(AstNode::UnaryOperator(UnaryOperatorNode::new(
-                token, factor,
-            ))));
+            return parse_result.success(self.arena.unary_operator_node(token, factor));
         }
 
         self.power()
@@ -1391,9 +1374,12 @@ impl Parser {
         parse_result.register_advancement();
         self.advance();
 
-        parse_result.success(Box::new(AstNode::FunctionDefinition(
-            FunctionDefinitionNode::new(var_name_token, &arg_name_tokens, body, false),
-        )))
+        parse_result.success(self.arena.function_definition_node(
+            var_name_token,
+            &arg_name_tokens,
+            body,
+            false,
+        ))
     }
 
     fn binary_operator(
@@ -1442,9 +1428,7 @@ impl Parser {
                 return parse_result;
             }
 
-            left = Box::new(AstNode::BinaryOperator(BinaryOperatorNode::new(
-                left, op_token, right,
-            )));
+            left = self.arena.binary_operator_node(left, op_token, right);
         }
 
         parse_result.success(left)
@@ -1454,6 +1438,7 @@ impl Parser {
 // Test the output AST from parsed tokens
 #[test]
 fn test_ast() {
+    use crate::AstNode;
     use glang_lexer::Lexer;
     use std::path::Path;
 
@@ -1465,11 +1450,14 @@ fn test_ast() {
     let mut parser = Parser::new(&tokens, lexer.contents());
     let ast = parser.parse();
 
-    let node = match *ast.node {
+    let node = match parser.arena.get(ast.node) {
         AstNode::List(l) => l,
         _ => panic!("Expected a list node"),
     };
 
     assert_eq!(node.element_nodes.len(), 1); // only one call node
-    assert!(matches!(node.element_nodes[0], AstNode::Call { .. }));
+    assert!(matches!(
+        parser.arena.get(node.element_nodes[0]),
+        AstNode::Call { .. }
+    ));
 }

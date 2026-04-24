@@ -167,7 +167,7 @@ fn run(filename: &str, code: Option<String>) -> Option<StandardError> {
 
     let error = match lex(filename, &contents) {
         Ok(tokens) => match parse(&tokens, &contents) {
-            Ok(ast_node) => match interpret(&ast_node, &contents, None, None) {
+            Ok(ast_node) => match interpret(ast_node, &contents) {
                 Some(e) => Some(e),
                 None => None,
             },
