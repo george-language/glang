@@ -80,8 +80,8 @@ func clear(value) {
 # returns true if the object is inside the list, or if the string contains the object (str)
 func contains(value, object) {
     if type(value) == "list" {
-        walk i = 0 through length(value) {
-            if retrieve(value, i) == object {
+        walk i through value {
+            if i == object {
                 give true;
             }
         }
