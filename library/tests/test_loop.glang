@@ -10,7 +10,7 @@ assert_eq(x, 9);
 
 obj y = [1, 2, 3];
 
-walk i through 10 {
+walk i through y {
     x = i;
 }
 
