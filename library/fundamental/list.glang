@@ -2,7 +2,7 @@
 
 # add a value to a list
 # returns null
-func push(list, value) {
+func add(list, value) {
     if type(list) != "list" {
         uhoh("argument 'list' must be type list");
     }
@@ -12,7 +12,7 @@ func push(list, value) {
 
 # add two lists together (copy <list_b>'s objects into <list_a>)
 # returns null
-func append(list_a, list_b) {
+func combine(list_a, list_b) {
     if type(list_a) != "list" {
         uhoh("argument 'list_a' must be type list");
     }
@@ -38,9 +38,9 @@ func remove(list, index) {
     give list - index;
 }
 
-# retrieve a value from a list
+# get a value from a list
 # returns the value at the retrieved index
-func retrieve(list, index) {
+func get(list, index) {
     if type(list) != "list" {
         uhoh("argument 'list' must be type list");
     }

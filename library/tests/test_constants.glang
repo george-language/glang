@@ -12,7 +12,7 @@ assert_eq(y, 10); # y should remain 10 because it copied the value of x
 stay CONST = [1, 2, 3];
 obj variable = CONST;
 
-push(variable, 4); # this can happen, because variables copy the values of constants
+add(variable, 4); # this can happen, because variables copy the values of constants
 
 assert_eq(CONST, [1, 2, 3]); # should remain [1, 2, 3]
 

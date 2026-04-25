@@ -10,25 +10,25 @@ func hashmap() {
 # returns null
 func hashmap_set(hashmap_obj, key, value) {
     walk i = 0 through length(hashmap_obj) {
-        obj pair = retrieve(hashmap_obj, i);
+        obj pair = get(hashmap_obj, i);
 
         # the key exists, so remove it
-        if retrieve(pair, 0) == key {
+        if get(pair, 0) == key {
             hashmap_obj = remove(hashmap_obj, i);
         }
     }
 
-    give push(hashmap_obj, [key, value]);
+    give add(hashmap_obj, [key, value]);
 }
 
 # get a value based on the key in a hashmap
 # returns the found value (if any) otherwise tosses an error
 func hashmap_get(hashmap_obj, key) {
     walk i = 0 through length(hashmap_obj) {
-        obj pair = retrieve(hashmap_obj, i);
+        obj pair = get(hashmap_obj, i);
 
-        if retrieve(pair, 0) == key {
-            give retrieve(pair, 1);
+        if get(pair, 0) == key {
+            give get(pair, 1);
         }
     }
 
@@ -39,9 +39,9 @@ func hashmap_get(hashmap_obj, key) {
 # returns the value removed from the hashmap
 func hashmap_remove(hashmap_obj, key) {
     walk i = 0 through length(hashmap_obj) {
-        obj pair = retrieve(hashmap_obj, i);
+        obj pair = get(hashmap_obj, i);
 
-        if retrieve(pair, 0) == key {
+        if get(pair, 0) == key {
             give remove(hashmap_obj, i);
         }
     }
@@ -55,8 +55,8 @@ func hashmap_keys(hashmap_obj) {
     obj keys = [];
 
     walk i = 0 through length(hashmap_obj) {
-        obj pair = retrieve(hashmap_obj, i);
-        push(keys, retrieve(pair, 0));
+        obj pair = get(hashmap_obj, i);
+        add(keys, get(pair, 0));
     }
 
     give keys;
@@ -68,8 +68,8 @@ func hashmap_values(hashmap_obj) {
     obj values = [];
 
     walk i = 0 through length(hashmap_obj) {
-        obj pair = retrieve(hashmap_obj, i);
-        push(values, retrieve(pair, 1));
+        obj pair = get(hashmap_obj, i);
+        add(values, get(pair, 1));
     }
 
     give values;
@@ -82,9 +82,9 @@ func bark_hashmap(hashmap_obj) {
         bark("{");
 
         walk i = 0 through length(hashmap_obj) {
-            obj pair = retrieve(hashmap_obj, i);
-            obj key = retrieve(pair, 0);
-            obj value = retrieve(pair, 1);
+            obj pair = get(hashmap_obj, i);
+            obj key = get(pair, 0);
+            obj value = get(pair, 1);
 
             bark("    " + tostring(key) + ": " + tostring(value));
         }
