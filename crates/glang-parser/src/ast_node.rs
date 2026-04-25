@@ -101,6 +101,20 @@ impl AstArena {
         }))
     }
 
+    pub fn for_each_node(
+        &mut self,
+        var_name_token: Token,
+        iterator: NodeID,
+        body_node: NodeID,
+    ) -> NodeID {
+        self.add(AstNode::ForEach(ForEachNode {
+            iterator_name: var_name_token.value.unwrap(),
+            iterator_node: iterator,
+            body_node,
+            span: var_name_token.span,
+        }))
+    }
+
     pub fn function_definition_node(
         &mut self,
         var_name_token: Option<Token>,
@@ -290,6 +304,7 @@ pub enum AstNode {
     ConstAssign(ConstAssignNode),
     Continue(ContinueNode),
     For(ForNode),
+    ForEach(ForEachNode),
     FunctionDefinition(FunctionDefinitionNode),
     If(IfNode),
     Import(ImportNode),
@@ -314,6 +329,7 @@ impl AstNode {
             AstNode::ConstAssign(node) => node.span.clone(),
             AstNode::Continue(node) => node.span.clone(),
             AstNode::For(node) => node.span.clone(),
+            AstNode::ForEach(node) => node.span.clone(),
             AstNode::FunctionDefinition(node) => node.span.clone(),
             AstNode::If(node) => node.span.clone(),
             AstNode::Import(node) => node.span.clone(),
@@ -338,6 +354,7 @@ impl AstNode {
             AstNode::ConstAssign(node) => node.span.start.clone(),
             AstNode::Continue(node) => node.span.start.clone(),
             AstNode::For(node) => node.span.start.clone(),
+            AstNode::ForEach(node) => node.span.start.clone(),
             AstNode::FunctionDefinition(node) => node.span.start.clone(),
             AstNode::If(node) => node.span.start.clone(),
             AstNode::Import(node) => node.span.start.clone(),
@@ -362,6 +379,7 @@ impl AstNode {
             AstNode::ConstAssign(node) => node.span.end.clone(),
             AstNode::Continue(node) => node.span.end.clone(),
             AstNode::For(node) => node.span.end.clone(),
+            AstNode::ForEach(node) => node.span.end.clone(),
             AstNode::FunctionDefinition(node) => node.span.end.clone(),
             AstNode::If(node) => node.span.end.clone(),
             AstNode::Import(node) => node.span.end.clone(),
@@ -417,6 +435,14 @@ pub struct ForNode {
     pub start_value_node: NodeID,
     pub end_value_node: NodeID,
     pub step_value_node: Option<NodeID>,
+    pub body_node: NodeID,
+    pub span: Span,
+}
+
+#[derive(Debug, Clone)]
+pub struct ForEachNode {
+    pub iterator_name: String,
+    pub iterator_node: NodeID,
     pub body_node: NodeID,
     pub span: Span,
 }

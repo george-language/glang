@@ -505,113 +505,149 @@ impl Parser {
         parse_result.register_advancement();
         self.advance();
 
-        if self.current_token_ref().token_type != TokenType::TT_EQ {
-            return parse_result.failure(StandardError::new(
-                "expected '='",
-                self.current_span(),
-                Some(
-                    format!(
-                        "add an '=' to set the value of the variable '{}'",
-                        var_name.value.unwrap().clone()
-                    )
-                    .as_str(),
-                ),
-            ));
-        }
-
-        parse_result.register_advancement();
-        self.advance();
-
-        let start_value = parse_result.register(self.expr());
-
-        if parse_result.error.is_some() {
-            return parse_result;
-        }
-
-        if !self
-            .current_token_ref()
-            .matches(TokenType::TT_KEYWORD, "through")
-        {
-            return parse_result.failure(StandardError::new(
-                "expected 'through'",
-                self.current_span(),
-                Some("add the 'through' keyword to define a range 'n through n'"),
-            ));
-        }
-
-        parse_result.register_advancement();
-        self.advance();
-
-        let end_value = parse_result.register(self.expr());
-
-        if parse_result.error.is_some() {
-            return parse_result;
-        }
-
-        let step_value: Option<NodeID>;
-
-        if self
-            .current_token_ref()
-            .matches(TokenType::TT_KEYWORD, "step")
-        {
+        if self.current_token_ref().token_type == TokenType::TT_EQ {
             parse_result.register_advancement();
             self.advance();
 
-            if self.current_token_ref().token_type != TokenType::TT_EQ {
+            let start_value = parse_result.register(self.expr());
+
+            if parse_result.error.is_some() {
+                return parse_result;
+            }
+
+            if !self
+                .current_token_ref()
+                .matches(TokenType::TT_KEYWORD, "through")
+            {
                 return parse_result.failure(StandardError::new(
-                    "expected '='",
+                    "expected 'through'",
                     self.current_span(),
-                    Some("add an '=' to set the step amount"),
+                    Some("add the 'through' keyword to define a range 'n through n'"),
                 ));
             }
 
             parse_result.register_advancement();
             self.advance();
 
-            step_value = Some(parse_result.register(self.expr()));
+            let end_value = parse_result.register(self.expr());
 
             if parse_result.error.is_some() {
                 return parse_result;
             }
+
+            let step_value: Option<NodeID>;
+
+            if self
+                .current_token_ref()
+                .matches(TokenType::TT_KEYWORD, "step")
+            {
+                parse_result.register_advancement();
+                self.advance();
+
+                if self.current_token_ref().token_type != TokenType::TT_EQ {
+                    return parse_result.failure(StandardError::new(
+                        "expected '='",
+                        self.current_span(),
+                        Some("add an '=' to set the step amount"),
+                    ));
+                }
+
+                parse_result.register_advancement();
+                self.advance();
+
+                step_value = Some(parse_result.register(self.expr()));
+
+                if parse_result.error.is_some() {
+                    return parse_result;
+                }
+            } else {
+                step_value = None;
+            }
+
+            if self.current_token_ref().token_type != TokenType::TT_LBRACKET {
+                return parse_result.failure(StandardError::new(
+                    "expected '{'",
+                    self.current_span(),
+                    Some("add a '{' to define the body"),
+                ));
+            }
+
+            parse_result.register_advancement();
+            self.advance();
+
+            let body = parse_result.register(self.statements());
+
+            if parse_result.error.is_some() {
+                return parse_result;
+            }
+
+            if self.current_token_ref().token_type != TokenType::TT_RBRACKET {
+                return parse_result.failure(StandardError::new(
+                    "expected '}'",
+                    self.current_span(),
+                    Some("add a '}' to close the body"),
+                ));
+            }
+
+            parse_result.register_advancement();
+            self.advance();
+
+            parse_result.success(self.arena.for_node(
+                var_name,
+                start_value,
+                end_value,
+                step_value,
+                body,
+            ))
+        } else if self
+            .current_token_ref()
+            .matches(TokenType::TT_KEYWORD, "through")
+        {
+            parse_result.register_advancement();
+            self.advance();
+
+            let iterator = parse_result.register(self.expr());
+
+            if parse_result.error.is_some() {
+                return parse_result;
+            }
+
+            if self.current_token_ref().token_type != TokenType::TT_LBRACKET {
+                return parse_result.failure(StandardError::new(
+                    "expected '{'",
+                    self.current_span(),
+                    Some("add a '{' to define the body"),
+                ));
+            }
+
+            parse_result.register_advancement();
+            self.advance();
+
+            let body = parse_result.register(self.statements());
+
+            if parse_result.error.is_some() {
+                return parse_result;
+            }
+
+            if self.current_token_ref().token_type != TokenType::TT_RBRACKET {
+                return parse_result.failure(StandardError::new(
+                    "expected '}'",
+                    self.current_span(),
+                    Some("add a '}' to close the body"),
+                ));
+            }
+
+            parse_result.register_advancement();
+            self.advance();
+
+            parse_result.success(self.arena.for_each_node(var_name, iterator, body))
         } else {
-            step_value = None;
-        }
-
-        if self.current_token_ref().token_type != TokenType::TT_LBRACKET {
             return parse_result.failure(StandardError::new(
-                "expected '{'",
+                "expected '=' or 'through'",
                 self.current_span(),
-                Some("add a '{' to define the body"),
+                None,
             ));
         }
-
-        parse_result.register_advancement();
-        self.advance();
-
-        let body = parse_result.register(self.statements());
-
-        if parse_result.error.is_some() {
-            return parse_result;
-        }
-
-        if self.current_token_ref().token_type != TokenType::TT_RBRACKET {
-            return parse_result.failure(StandardError::new(
-                "expected '}'",
-                self.current_span(),
-                Some("add a '}' to close the body"),
-            ));
-        }
-
-        parse_result.register_advancement();
-        self.advance();
-
-        parse_result.success(self.arena.for_node(
-            var_name,
-            start_value,
-            end_value,
-            step_value,
-            body,
-        ))
     }
 
     fn while_expr(&mut self) -> ParseResult {

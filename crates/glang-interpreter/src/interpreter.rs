@@ -4,7 +4,7 @@ use crate::{
 use glang_attributes::StandardError;
 use glang_lexer::{Lexer, lex};
 use glang_parser::{
-    AstArena, AstNode, BinaryOperatorNode, CallNode, ConstAssignNode, ForNode,
+    AstArena, AstNode, BinaryOperatorNode, CallNode, ConstAssignNode, ForEachNode, ForNode,
     FunctionDefinitionNode, IfNode, ImportNode, ListNode, NodeID, NumberNode, Parser, ReturnNode,
     StringNode, TryExceptNode, UnaryOperatorNode, VariableAccessNode, VariableAssignNode,
     VariableRessignNode, WhileNode, parse,
@@ -139,6 +139,7 @@ impl Interpreter {
             AstNode::If(node) => self.visit_if_node(node, arena, context),
             AstNode::Import(node) => self.visit_import_node(node, arena, context),
             AstNode::For(node) => self.visit_for_node(node, arena, context),
+            AstNode::ForEach(node) => self.visit_for_each_node(node, arena, context),
             AstNode::While(node) => self.visit_while_node(node, arena, context),
             AstNode::TryExcept(node) => self.visit_try_except_node(node, arena, context),
             AstNode::FunctionDefinition(node) => {
@@ -511,6 +512,65 @@ impl Interpreter {
             symbol_table
                 .borrow_mut()
                 .set(iterator_name.clone(), Number::from(i));
+
+            let _ = result.register(self.visit(node.body_node, &arena, context.clone()));
+
+            if result.should_return() && !result.loop_should_continue && !result.loop_should_break {
+                return result;
+            }
+
+            if result.loop_should_continue {
+                continue;
+            }
+
+            if result.loop_should_break {
+                break;
+            }
+        }
+
+        result.success(Number::null_value())
+    }
+
+    fn visit_for_each_node(
+        &mut self,
+        node: &ForEachNode,
+        arena: &AstArena,
+        context: Rc<RefCell<Context>>,
+    ) -> RuntimeResult {
+        let mut result = RuntimeResult::new();
+
+        let elements = match *result
+            .register(self.visit(node.iterator_node, &arena, context.clone()))
+            .borrow()
+        {
+            Value::ListValue(ref v) => v.elements.clone(),
+            Value::StringValue(ref v) => {
+                let mut elements = Vec::new();
+
+                for char in v.value.chars() {
+                    elements.push(Str::from(&char.to_string()));
+                }
+
+                elements
+            }
+            _ => {
+                return result.failure(StandardError::new(
+                    "object is not iterable",
+                    arena.span(node.iterator_node),
+                    None,
+                ));
+            }
+        };
+
+        if result.should_return() {
+            return result;
+        }
+
+        let iterator_name = node.iterator_name.clone();
+        let symbol_table = context.borrow().symbol_table.clone();
+
+        for i in elements {
+            symbol_table.borrow_mut().set(iterator_name.clone(), i);
 
             let _ = result.register(self.visit(node.body_node, &arena, context.clone()));
 
