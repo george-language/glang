@@ -210,6 +210,7 @@ impl BuiltInFunction {
             "dig" => self.execute_read(args, exec_context),
             "bury" => self.execute_write(args, exec_context),
             "copy" => self.execute_copy(args, exec_context),
+            "clear" => self.execute_clear(args, exec_context),
             "tostring" => self.execute_tostring(args, exec_context),
             "tonumber" => self.execute_tonumber(args, exec_context),
             "length" => self.execute_length(args, exec_context),
@@ -394,6 +395,36 @@ impl BuiltInFunction {
         let object_arg = args[0].clone();
 
         result.success(Rc::new(RefCell::new(object_arg.borrow().clone()))) // we need to make a deep copy of the object
+    }
+
+    pub fn execute_clear(
+        &self,
+        args: &[Rc<RefCell<Value>>],
+        exec_ctx: Rc<RefCell<Context>>,
+    ) -> RuntimeResult {
+        let mut result = RuntimeResult::new();
+        result.register(self.check_and_populate_args(&["value".to_string()], args, exec_ctx));
+
+        if result.should_return() {
+            return result;
+        }
+
+        let object_arg = args[0].clone();
+        let span = object_arg.borrow().span();
+
+        match *object_arg.borrow_mut() {
+            Value::ListValue(ref mut v) => v.elements.clear(),
+            Value::StringValue(ref mut v) => v.value.clear(),
+            _ => {
+                return result.failure(StandardError::new(
+                    "expected type list or string",
+                    span,
+                    None,
+                ));
+            }
+        }
+
+        result.success(Number::null_value())
     }
 
     pub fn execute_tostring(

@@ -72,8 +72,8 @@ impl Interpreter {
         };
 
         let builtins = [
-            "bark", "chew", "dig", "bury", "copy", "tostring", "tonumber", "length", "uhoh",
-            "type", "_env",
+            "bark", "chew", "dig", "bury", "copy", "clear", "tostring", "tonumber", "length",
+            "uhoh", "type", "_env",
         ];
 
         for builtin in &builtins {

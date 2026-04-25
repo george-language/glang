@@ -64,18 +64,6 @@ func reverse(value) {
     give value ^ -1;
 }
 
-# clear a list (supports the string type as well)
-# returns an empty version of the value
-func clear(value) {
-    if type(value) == "list" {
-        give [];
-    } also if type(value) == "string" {
-        give "";
-    } otherwise {
-        uhoh("expected type list or string");
-    }
-}
-
 # check if a list or string contains a value
 # returns true if the object is inside the list, or if the string contains the object (str)
 func contains(value, object) {
