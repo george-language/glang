@@ -431,8 +431,8 @@ impl Interpreter {
             Value::NumberValue(ref value) => Number::new(value.value),
             _ => {
                 return result.failure(StandardError::new(
-                    "expected start value as number",
-                    node.span.clone(),
+                    "expected type number",
+                    arena.span(node.start_value_node),
                     None,
                 ));
             }
@@ -449,8 +449,8 @@ impl Interpreter {
             Value::NumberValue(ref value) => Number::new(value.value),
             _ => {
                 return result.failure(StandardError::new(
-                    "expected end value as number",
-                    node.span.clone(),
+                    "expected type number",
+                    arena.span(node.end_value_node),
                     None,
                 ));
             }
@@ -470,8 +470,8 @@ impl Interpreter {
                 Value::NumberValue(ref value) => Number::new(value.value),
                 _ => {
                     return result.failure(StandardError::new(
-                        "expected step value as number",
-                        node.span.clone(),
+                        "expected type number",
+                        start_value.span,
                         None,
                     ));
                 }
@@ -895,7 +895,7 @@ impl Interpreter {
             Value::BuiltInFunction(ref value) => value.execute(&args),
             _ => {
                 return result.failure(StandardError::new(
-                    "expected function as call",
+                    "object is not callable",
                     node.span.clone(),
                     None,
                 ));
