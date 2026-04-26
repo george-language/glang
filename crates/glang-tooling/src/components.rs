@@ -8,12 +8,36 @@ use std::{
     process::{Command, exit},
 };
 
+use reqwest::blocking::Client;
+use serde::Deserialize;
+
+#[derive(Deserialize)]
+struct ReleaseInfo {
+    tag_name: String,
+}
+
+fn fetch_latest_tag() -> String {
+    let client = Client::new();
+
+    let release: ReleaseInfo = client
+        .get("https://api.github.com/repos/george-language/glang/releases/latest")
+        .header("User-Agent", "glang-updater") // required by GitHub
+        .send()
+        .expect("failed to fetch release info")
+        .json()
+        .expect("failed to parse JSON");
+
+    release.tag_name
+}
+
 /// Updates the glang binary and components
 ///
 /// This will download the platform specific binary and components.
 /// - On Windows: download the .exe installer and run it.
 /// - On MacOS: extract the .zip into the `Applications/` and overwrite the GeorgeLanguage folder
 pub fn update_self() {
+    let tag = fetch_latest_tag();
+
     if cfg!(target_os = "windows") {
         log_header("Downloading glang-latest for Windows");
 
@@ -24,9 +48,10 @@ pub fn update_self() {
         {
             log_message("Retrieving installer data");
 
-            let mut resp = get(
-            "https://github.com/george-language/glang/releases/latest/download/GeorgeLanguage+windows_setup.exe",
-        ).expect("Unable to retrieve installer data");
+            let url = format!(
+                "https://github.com/george-language/glang/releases/download/{tag}/GeorgeLanguage-{tag}-windows_setup.exe"
+            );
+            let mut resp = get(url).expect("Unable to retrieve installer data");
 
             log_message("Creating installer file");
 
@@ -55,9 +80,10 @@ pub fn update_self() {
         {
             log_message("Retrieving package data");
 
-            let mut resp = get(
-            "https://github.com/george-language/glang/releases/latest/download/GeorgeLanguage+macos_setup.pkg",
-        ).expect("Unable to download macos content");
+            let url = format!(
+                "https://github.com/george-language/glang/releases/download/{tag}/GeorgeLanguage-{tag}-macos_setup.pkg"
+            );
+            let mut resp = get(url).expect("Unable to download macos content");
 
             log_message("Creating package file");
 
