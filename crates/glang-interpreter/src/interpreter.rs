@@ -9,6 +9,7 @@ use glang_parser::{
     StringNode, TryExceptNode, UnaryOperatorNode, VariableAccessNode, VariableAssignNode,
     VariableRessignNode, WhileNode, parse,
 };
+use glang_tooling::get_latest_version;
 use std::{
     cell::RefCell,
     collections::{HashMap, HashSet},
@@ -30,6 +31,20 @@ pub fn interpret(ast: AstArena, contents: &str) -> Option<StandardError> {
 
     if !cfg!(feature = "no-std") {
         interpreter.preload_standard_library(context.clone());
+    }
+
+    let registry = glang_tooling::read_registry();
+
+    for (name, info) in registry.packages {
+        let version = info
+            .get(&get_latest_version(&name).unwrap().to_string())
+            .unwrap();
+        let entry = version.get("entry").unwrap();
+
+        interpreter
+            .global_symbol_table
+            .borrow_mut()
+            .set(name.to_owned(), Str::from(&entry));
     }
 
     let result = interpreter.visit(

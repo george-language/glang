@@ -29,14 +29,18 @@ enum Commands {
         #[command(subcommand)]
         action: SelfCommands,
     },
+    #[command(about = "Create a new project folder")]
+    New,
     #[command(about = "Run a string of glang source code")]
     Run { code: String },
-    #[command(about = "Install a kennel from the internet")]
+    #[command(about = "Install a '.kennel' file")]
     Install { name: String },
     #[command(about = "Remove an installed kennel")]
     Remove { name: String },
     #[command(about = "Update an installed kennel to the latest version")]
     Update { name: String },
+    #[command(about = "Package a project into an installable '.kennel' file")]
+    Package,
 }
 
 #[derive(Subcommand)]
@@ -67,9 +71,6 @@ fn main() {
 
     set_env_variables();
 
-    // we have to run this everytime the glang executable is ran to double check 'kennels/' always exists
-    glang_tooling::create_package_dir();
-
     let cli = Cli::parse();
 
     match (cli.command, cli.file) {
@@ -81,6 +82,9 @@ fn main() {
                 glang_tooling::uninstall_self();
             }
         },
+        (Some(Commands::New), _) => {
+            glang_tooling::create_package_folder();
+        }
         (Some(Commands::Run { code }), _) => {
             if let Some(err) = run("<stdin>", Some(code)) {
                 println!("{err}");
@@ -94,6 +98,9 @@ fn main() {
         }
         (Some(Commands::Update { name }), _) => {
             glang_tooling::update_package(&name);
+        }
+        (Some(Commands::Package), _) => {
+            glang_tooling::write_package_file(None);
         }
         (None, Some(file)) => {
             if !file.ends_with(".glang") {
