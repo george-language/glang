@@ -399,28 +399,23 @@ pub fn add_package(path: &str) {
 pub fn remove_package(package: &str) {
     create_configuration_folder();
 
-    let package_path = get_configuration_folder().join(package);
+    let mut registry = read_registry();
 
-    if package_path.exists() {
-        let _ = fs::remove_dir_all(&package_path);
+    if let Some(versions) = registry.packages.get(package) {
+        for info in versions.values() {
+            if let Some(location) = info.get("location") {
+                let _ = fs::remove_dir_all(location);
+            }
+        }
     } else {
-        log_header(&format!("Removing '{}'", &package));
-        log_package_status(package, false);
-
-        return;
+        panic!("Kennel '{}' not found", package)
     }
 
-    let kennels_file = get_configuration_folder().join("kennels.glang");
-    let contents = fs::read_to_string(&kennels_file)
-        .expect("Error reading 'kennels.glang'")
-        .lines()
-        .filter(|line| !line.contains(package))
-        .collect::<Vec<_>>()
-        .join("\n");
+    registry.packages.remove(package);
 
-    let _ = fs::write(&kennels_file, contents);
+    write_registry(registry);
 
-    println!("Kennel '{}' removed", &package);
+    println!("Kennel '{}' removed", package);
 }
 
 pub fn update_package(package: &str) {
