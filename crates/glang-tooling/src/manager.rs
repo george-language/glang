@@ -345,6 +345,8 @@ fn add_package_from_file(package: &PackageFile) {
     let config_dir = get_configuration_folder();
 
     let package_path = config_dir.join(&package.name);
+    let incoming_version = Version::new(package.version.0, package.version.1, package.version.2);
+
     fs::create_dir_all(&package_path).expect("Unable to create kennel directory");
 
     log_message(&format!("Unzipping compressed {}", package.name));
@@ -371,14 +373,9 @@ fn add_package_from_file(package: &PackageFile) {
         }
     }
 
-    log_message(&format!("Adding {} to kennels registry", package.name));
-
     let mut registry = read_registry();
 
     if let Some(versions) = registry.packages.get(&package.alias) {
-        let incoming_version =
-            Version::new(package.version.0, package.version.1, package.version.2);
-
         if let Some(existing_info) = versions.get(&incoming_version.to_string()) {
             let existing_hash = existing_info.get("hash").unwrap();
 
@@ -397,22 +394,22 @@ fn add_package_from_file(package: &PackageFile) {
                     return;
                 }
             } else {
-                panic!(
-                    "Hash mismatch for {} {} (possible corruption)",
+                if wait_for_confirmation(&format!(
+                    "Kennel {} {} is potentially corrupted, install it?",
                     package.alias, incoming_version
-                );
-            }
-        }
+                )) {
+                    log_message(&format!(
+                        "Overwriting {} {}",
+                        package.alias, incoming_version
+                    ));
+                } else {
+                    log_message(&format!(
+                        "Cancelling install of {} {}",
+                        package.alias, incoming_version
+                    ));
 
-        // check latest installed version
-        let latest = get_latest_version(&package.name);
-
-        if let Some(latest) = latest {
-            if incoming_version < latest {
-                panic!(
-                    "Refusing to install older version {} (latest installed is {})",
-                    incoming_version, latest
-                );
+                    return;
+                }
             }
         }
     }
@@ -434,16 +431,18 @@ fn add_package_from_file(package: &PackageFile) {
             .to_string_lossy()
             .to_string(),
     );
-    versions.insert(
-        Version::new(package.version.0, package.version.1, package.version.2).to_string(),
-        info,
-    );
+    versions.insert(incoming_version.to_string(), info);
 
     write_registry(registry);
 
     for pkg in &package.dependencies {
         add_package_from_file(&pkg);
     }
+
+    log_message(&format!(
+        "Kennel {} {} installed successfully",
+        package.alias, incoming_version
+    ));
 }
 
 pub fn add_package(path: &str) {
@@ -466,8 +465,6 @@ pub fn add_package(path: &str) {
             .expect("Unable to deserialize kennel file");
 
     add_package_from_file(&package);
-
-    log_message(&format!("Kennel {} installed successfully", &path));
 }
 
 pub fn remove_package(package: &str) {
