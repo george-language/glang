@@ -124,8 +124,4 @@ impl Number {
             help_msg.as_deref(),
         )
     }
-
-    pub fn as_string(&self) -> String {
-        self.value.to_string()
-    }
 }

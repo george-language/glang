@@ -98,10 +98,6 @@ impl Function {
 
         result.success(return_value.unwrap())
     }
-
-    pub fn as_string(&self) -> String {
-        format!("function: {}", self.name).to_string()
-    }
 }
 
 impl FunctionObject for Function {
@@ -255,7 +251,7 @@ impl BuiltInFunction {
         let message_arg = args[0].clone();
 
         let message = match *message_arg.borrow() {
-            Value::StringValue(ref string) => string.as_string(),
+            Value::StringValue(ref string) => string.value.clone(),
             _ => {
                 return result.failure(StandardError::new(
                     "expected type string",
@@ -293,7 +289,7 @@ impl BuiltInFunction {
         let file_arg = args[0].clone();
 
         let filename = match *file_arg.borrow() {
-            Value::StringValue(ref string) => string.as_string(),
+            Value::StringValue(ref string) => string.value.clone(),
             _ => {
                 return result.failure(StandardError::new(
                     "expected type string",
@@ -347,7 +343,7 @@ impl BuiltInFunction {
         let contents_arg = args[1].clone();
 
         let filename = match *file_arg.borrow() {
-            Value::StringValue(ref string) => string.as_string(),
+            Value::StringValue(ref string) => string.value.clone(),
             _ => {
                 return result.failure(StandardError::new(
                     "expected type string",
@@ -358,7 +354,7 @@ impl BuiltInFunction {
         };
 
         let contents = match *contents_arg.borrow() {
-            Value::StringValue(ref string) => string.as_string(),
+            Value::StringValue(ref string) => string.value.clone(),
             _ => {
                 return result.failure(StandardError::new(
                     "expected type string",
@@ -459,7 +455,7 @@ impl BuiltInFunction {
         let string_to_convert = args[0].clone();
 
         let value: f64 = match *string_to_convert.borrow() {
-            Value::StringValue(ref string) => match string.as_string().parse() {
+            Value::StringValue(ref string) => match string.value.clone().parse() {
                 Ok(number) => number,
                 Err(e) => {
                     return result.failure(StandardError::new(
@@ -575,7 +571,7 @@ impl BuiltInFunction {
         let env_arg = args[0].clone();
 
         let variable = match *env_arg.borrow() {
-            Value::StringValue(ref var) => var.as_string(),
+            Value::StringValue(ref var) => var.value.clone(),
             _ => {
                 return result.failure(StandardError::new(
                     "expected type string",
@@ -656,10 +652,6 @@ impl BuiltInFunction {
                 ));
             }
         }
-    }
-
-    pub fn as_string(&self) -> String {
-        format!("built-in-function: {}", self.name).to_string()
     }
 }
 

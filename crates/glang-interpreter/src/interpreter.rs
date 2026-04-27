@@ -698,7 +698,7 @@ impl Interpreter {
             .to_path_buf();
 
         let file_to_import = importing_dir.join(PathBuf::from(match *import_value.borrow() {
-            Value::StringValue(ref string) => string.as_string(),
+            Value::StringValue(ref string) => string.value.clone(),
             _ => {
                 return result.failure(StandardError::new(
                     "expected type string",

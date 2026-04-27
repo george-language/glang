@@ -239,15 +239,4 @@ impl List {
 
         Number::null_value()
     }
-
-    pub fn as_string(&self) -> String {
-        let output = self
-            .elements
-            .iter()
-            .map(|item| item.borrow().as_string())
-            .collect::<Vec<_>>()
-            .join(", ");
-
-        format!("[{output}]").to_string()
-    }
 }

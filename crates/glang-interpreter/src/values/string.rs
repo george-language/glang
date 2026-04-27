@@ -177,8 +177,4 @@ impl Str {
             help_msg.as_deref(),
         )
     }
-
-    pub fn as_string(&self) -> String {
-        self.value.clone()
-    }
 }

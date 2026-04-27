@@ -129,11 +129,20 @@ impl Value {
 
     pub fn as_string(&self) -> String {
         match self {
-            Value::NumberValue(value) => value.as_string(),
-            Value::ListValue(value) => value.as_string(),
-            Value::StringValue(value) => value.as_string(),
-            Value::FunctionValue(value) => value.as_string(),
-            Value::BuiltInFunction(value) => value.as_string(),
+            Value::NumberValue(value) => value.value.to_string(),
+            Value::ListValue(value) => {
+                let output = value
+                    .elements
+                    .iter()
+                    .map(|item| item.borrow().as_string())
+                    .collect::<Vec<_>>()
+                    .join(", ");
+
+                format!("[{output}]").to_string()
+            }
+            Value::StringValue(value) => value.value.clone(),
+            Value::FunctionValue(value) => format!("function: {}", value.name),
+            Value::BuiltInFunction(value) => format!("built-in-function: {}", value.name),
         }
     }
 }
