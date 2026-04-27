@@ -131,6 +131,10 @@ fn verify_package_configuration_file(
         panic!("'name' field must be snake-case (error in kennel.toml)")
     }
 
+    if glang_attributes::BUILT_IN_FUNCTIONS.contains(&name) {
+        panic!("'name' field cannot be the name of a built-in function (error in kennel.toml)")
+    }
+
     let version = package_field["version"]
         .as_str()
         .expect("'version' field is an invalid string (error in kennel.toml)");
