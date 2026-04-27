@@ -1,7 +1,7 @@
 use crate::{
     BuiltInFunction, Context, Function, List, Number, RuntimeResult, Str, SymbolTable, Value,
 };
-use glang_attributes::StandardError;
+use glang_attributes::{BUILT_IN_FUNCTIONS, StandardError};
 use glang_lexer::{Lexer, lex};
 use glang_parser::{
     AstArena, AstNode, BinaryOperatorNode, CallNode, ConstAssignNode, ForEachNode, ForNode,
@@ -86,12 +86,7 @@ impl Interpreter {
             contents: contents.to_owned(),
         };
 
-        let builtins = [
-            "bark", "chew", "dig", "bury", "copy", "clear", "tostring", "tonumber", "length",
-            "uhoh", "type", "_env",
-        ];
-
-        for builtin in &builtins {
+        for builtin in BUILT_IN_FUNCTIONS {
             interpreter
                 .global_symbol_table
                 .borrow_mut()
