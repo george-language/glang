@@ -328,6 +328,11 @@ pub fn write_package_file(root: Option<PathBuf>) {
 
     let data = bincode::serialize(&package_file).expect("Error serializing kennel file");
     fs::write(&path, data).expect("Error writing kennel file");
+
+    log_message(&format!(
+        "Successfully bundled {}",
+        path.file_name().unwrap().to_string_lossy().to_string()
+    ));
 }
 
 fn add_package_from_file(package: &PackageFile) {
