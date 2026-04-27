@@ -28,9 +28,7 @@ pub fn interpret(ast: AstArena, contents: &str) -> Option<StandardError> {
         interpreter.global_symbol_table.clone(),
     )));
 
-    if !cfg!(feature = "no-std") {
-        interpreter.preload_standard_library(context.clone());
-    }
+    interpreter.preload_standard_library(context.clone());
 
     let result = interpreter.visit(
         NodeID(ast.nodes.len() - 1),

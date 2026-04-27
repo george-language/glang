@@ -15,4 +15,3 @@ glang-tooling = { path = "../glang-tooling" }
 
 [features]
 benchmark = []
-no-std = []

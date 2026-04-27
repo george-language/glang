@@ -28,4 +28,3 @@ glang-tooling = { path = "crates/glang-tooling" }
 [workspace.features]
 default = []
 benchmark = ["glang/benchmark"]
-no-std = ["glang/no-std"]
