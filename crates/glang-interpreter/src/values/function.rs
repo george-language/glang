@@ -218,6 +218,7 @@ impl BuiltInFunction {
             "type" => self.execute_type(args, exec_context),
             "_env" => self.execute_env(args, exec_context),
             "split" => self.execute_split(args, exec_context),
+            "round" => self.execute_round(args, exec_context),
             _ => panic!("CRITICAL ERROR: BUILT IN NAME IS NOT DEFINED"),
         }
     }
@@ -629,6 +630,32 @@ impl BuiltInFunction {
         };
 
         result.success(List::from(elements))
+    }
+
+    pub fn execute_round(
+        &self,
+        args: &[Rc<RefCell<Value>>],
+        exec_ctx: Rc<RefCell<Context>>,
+    ) -> RuntimeResult {
+        let mut result = RuntimeResult::new();
+        result.register(self.check_and_populate_args(&["num".to_string()], args, exec_ctx));
+
+        if result.should_return() {
+            return result;
+        }
+
+        let number = args[0].clone();
+
+        match *number.borrow() {
+            Value::NumberValue(ref num) => result.success(Number::from(num.value.round())),
+            _ => {
+                return result.failure(StandardError::new(
+                    "expected type number",
+                    number.borrow().span(),
+                    None,
+                ));
+            }
+        }
     }
 
     pub fn as_string(&self) -> String {
