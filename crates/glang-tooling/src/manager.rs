@@ -1,11 +1,11 @@
-use crate::{log_header, log_message, log_package_status};
+use crate::{log_header, log_message, log_package_status, wait_for_confirmation};
 use semver::Version;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::{
     collections::HashMap,
     env, fs,
-    io::{Cursor, Write, stdin, stdout},
+    io::{Cursor, Write},
     path::PathBuf,
 };
 use stringcase::snake_case;
@@ -383,11 +383,19 @@ fn add_package_from_file(package: &PackageFile) {
             let existing_hash = existing_info.get("hash").unwrap();
 
             if *existing_hash == hex::encode(package.hash) {
-                log_message(&format!(
-                    "{} {} already installed, skipping",
+                if wait_for_confirmation(&format!(
+                    "Kennel {} {} is already installed, overwrite it?",
                     package.alias, incoming_version
-                ));
-                return;
+                )) {
+                    log_message(&format!(
+                        "Overwriting {} {}",
+                        package.alias, incoming_version
+                    ));
+                } else {
+                    log_message(&format!("Skipping {} {}", package.alias, incoming_version));
+
+                    return;
+                }
             } else {
                 panic!(
                     "Hash mismatch for {} {} (possible corruption)",
@@ -470,16 +478,7 @@ pub fn remove_package(package: &str) {
     let mut registry = read_registry();
 
     if let Some(versions) = registry.packages.get(package) {
-        let mut confirmation = String::new();
-
-        print!("    -> Are you sure you want to continue? [Y/n]: ");
-        let _ = stdout().flush();
-
-        stdin()
-            .read_line(&mut confirmation)
-            .expect("Input text was invalid");
-
-        if !(confirmation.trim().to_lowercase() == "y") {
+        if !wait_for_confirmation("Are you sure you want to continue?") {
             log_message("Cancelling removal");
 
             return;

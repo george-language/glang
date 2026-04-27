@@ -1,10 +1,10 @@
-use crate::{log_header, log_message};
+use crate::{log_header, log_message, wait_for_confirmation};
 use dirs::{download_dir, home_dir};
 use reqwest::blocking::get;
 use std::{
     env,
     fs::{self, File},
-    io::{Write, copy, stdin, stdout},
+    io::copy,
     process::{Command, exit},
 };
 
@@ -113,16 +113,7 @@ pub fn update_self() {
 pub fn uninstall_self() {
     log_header("Uninstalling glang and all components");
 
-    let mut confirmation = String::new();
-
-    print!("    -> Are you sure you want to continue? [Y/n]: ");
-    let _ = stdout().flush();
-
-    stdin()
-        .read_line(&mut confirmation)
-        .expect("Input text was invalid");
-
-    if !(confirmation.trim().to_lowercase() == "y") {
+    if !wait_for_confirmation("Are you sure you want to continue?") {
         log_message("Cancelling uninstallation");
 
         return;
