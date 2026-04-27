@@ -136,8 +136,7 @@ fn main() {
 ///
 /// The function sets the following environment variables:
 ///
-/// - `GLANG_STD` is the path to the standard library ('library/')
-/// - `GLANG_PKG` is the path to the kennels directory ('.glang/kennels/')
+/// - `GLANG_STD` is the path to the glang library ('library/')
 fn set_env_variables() {
     unsafe {
         let mut std_path = env::current_exe()
@@ -152,11 +151,6 @@ fn set_env_variables() {
             std_path = PathBuf::from("/Library/GeorgeLanguage/library");
         }
 
-        let pkg_path = dirs::home_dir()
-            .expect("Unable to retrieve user home directory")
-            .join(".glang")
-            .join("kennels");
-
         env::set_var(
             "GLANG_STD",
             &std_path
@@ -165,7 +159,6 @@ fn set_env_variables() {
                 .replace("debug", "")
                 .replace("release", ""),
         );
-        env::set_var("GLANG_PKG", &pkg_path.to_string_lossy().to_string());
     }
 }
 
