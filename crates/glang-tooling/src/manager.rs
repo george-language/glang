@@ -1,11 +1,11 @@
-use crate::{log_header, log_package_status};
+use crate::{log_header, log_message, log_package_status};
 use semver::Version;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::{
     collections::HashMap,
     env, fs,
-    io::{Cursor, Write},
+    io::{Cursor, Write, stdin, stdout},
     path::PathBuf,
 };
 use stringcase::snake_case;
@@ -73,7 +73,7 @@ fn create_configuration_folder() {
 pub fn create_package_folder() {
     let root = get_project_root_folder();
     let source_folder = root.join("src");
-    let entry_file = root.join("main.glang");
+    let entry_file = root.join("lib.glang");
     let package_config = root.join("kennel.toml");
 
     fs::create_dir(&source_folder).expect("Unable to create 'src' folder");
@@ -110,6 +110,8 @@ pub fn create_project_folder() {
 fn verify_package_configuration_file(
     contents: &str,
 ) -> (String, (u64, u64, u64), String, Vec<PathBuf>) {
+    log_message("Parsing 'kennel.toml'");
+
     let package_toml = contents
         .parse::<Table>()
         .expect("Error parsing 'kennel.toml'");
@@ -239,6 +241,10 @@ fn create_package_file(root: Option<PathBuf>) -> (PackageFile, PathBuf) {
 
     let entry_file = root.join(&entry);
 
+    log_message(&format!(
+        "Compressing {name} {version_maj}.{version_min}.{version_patch}"
+    ));
+
     let mut cursor = std::io::Cursor::new(Vec::new());
     let mut archive = ZipWriter::new(&mut cursor);
     let options = SimpleFileOptions::default().compression_method(zip::CompressionMethod::Deflated);
@@ -287,6 +293,10 @@ fn create_package_file(root: Option<PathBuf>) -> (PackageFile, PathBuf) {
         name, version_maj, version_min, version_patch
     ));
 
+    log_message(&format!(
+        "Resolving {name} {version_maj}.{version_min}.{version_patch} requirements"
+    ));
+
     let mut dependencies = Vec::new();
 
     for requirement in requirements {
@@ -312,6 +322,8 @@ fn create_package_file(root: Option<PathBuf>) -> (PackageFile, PathBuf) {
 }
 
 pub fn write_package_file(root: Option<PathBuf>) {
+    log_header("Bundling project into kennel");
+
     let (package_file, path) = create_package_file(root);
 
     let data = bincode::serialize(&package_file).expect("Error serializing kennel file");
@@ -325,6 +337,8 @@ fn add_package_from_file(package: &PackageFile) {
 
     let package_path = config_dir.join(&package.name);
     fs::create_dir_all(&package_path).expect("Unable to create kennel directory");
+
+    log_message(&format!("Unzipping compressed {}", package.name));
 
     let cursor = Cursor::new(&package.data);
     let mut archive = ZipArchive::new(cursor).expect("Failed to read zip archive");
@@ -347,6 +361,8 @@ fn add_package_from_file(package: &PackageFile) {
             std::io::copy(&mut file, &mut outfile).expect("Failed to write file");
         }
     }
+
+    log_message(&format!("Adding {} to kennels registry", package.name));
 
     let mut registry = read_registry();
     let versions = registry
@@ -391,31 +407,54 @@ pub fn add_package(path: &str) {
         panic!("'{:?}' is not a kennel file", package_file)
     }
 
+    log_header(&format!("Adding {path} to kennels registry"));
+
     let package: PackageFile =
         bincode::deserialize(&fs::read(&package_file).expect("Unable to read kennel file"))
             .expect("Unable to deserialize kennel file");
 
     add_package_from_file(&package);
+
+    log_message(&format!("Kennel {} installed successfully", &path));
 }
 
 pub fn remove_package(package: &str) {
     create_configuration_folder();
 
+    log_header("Removing kennel from registry");
+
     let mut registry = read_registry();
 
     if let Some(versions) = registry.packages.get(package) {
+        let mut confirmation = String::new();
+
+        print!("    -> Are you sure you want to continue? [Y/n]: ");
+        let _ = stdout().flush();
+
+        stdin()
+            .read_line(&mut confirmation)
+            .expect("Input text was invalid");
+
+        if !(confirmation.trim().to_lowercase() == "y") {
+            log_message("Cancelling removal");
+
+            return;
+        }
+
         for info in versions.values() {
             if let Some(location) = info.get("location") {
                 let _ = fs::remove_dir_all(location);
             }
         }
     } else {
-        panic!("Kennel '{}' not found", package)
+        log_package_status(package, false);
+
+        return;
     }
 
     registry.packages.remove(package);
 
     write_registry(registry);
 
-    println!("Kennel '{}' removed", package);
+    log_message(&format!("Kennel '{}' removed", package));
 }

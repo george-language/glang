@@ -23,9 +23,7 @@ pub fn log_package_status(package: &str, installed: bool) {
         }
     ));
     log_message(&format!(
-        "To {}, try {BOLD}`glang {} {}`{RESET}",
-        if installed { "update" } else { "install" },
-        if installed { "update" } else { "install" },
+        "To install, download the '.kennel' file, then run {BOLD}glang install {}.kennel{RESET}",
         &package
     ));
 }
