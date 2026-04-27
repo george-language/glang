@@ -1,15 +1,11 @@
-use crate::{log_header, log_message, log_package_status};
-use dirs::config_dir;
-use reqwest::blocking::get;
+use crate::{log_header, log_package_status};
 use semver::Version;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::{
     collections::HashMap,
-    env,
-    fmt::format,
-    fs::{self, File},
-    io::{Cursor, Read, Write, copy},
+    env, fs,
+    io::{Cursor, Write},
     path::PathBuf,
 };
 use stringcase::snake_case;
@@ -96,6 +92,19 @@ entry = "main.glang"
         ),
     )
     .expect("Unable to create 'kennel.toml' file");
+}
+
+pub fn create_project_folder() {
+    let root = get_project_root_folder();
+    let source_folder = root.join("src");
+    let main_file = root.join("main.glang");
+
+    fs::create_dir(&source_folder).expect("Unable to create 'src' folder");
+    fs::write(
+        &main_file,
+        "func main() {\n    bark(\"Hello, World!\");\n }\n\n main();",
+    )
+    .expect("Unable to create 'main.glang' file");
 }
 
 fn verify_package_configuration_file(
@@ -378,7 +387,6 @@ fn add_package_from_file(package: &PackageFile) {
 pub fn add_package(path: &str) {
     create_configuration_folder();
 
-    let config_dir = get_configuration_folder();
     let package_file = PathBuf::from(path);
 
     if !package_file.exists() {

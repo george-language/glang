@@ -30,7 +30,10 @@ enum Commands {
         action: SelfCommands,
     },
     #[command(about = "Create a new project folder")]
-    New,
+    New {
+        #[command(subcommand)]
+        action: NewCommands,
+    },
     #[command(about = "Run a string of glang source code")]
     Run { code: String },
     #[command(about = "Install a '.kennel' file")]
@@ -49,6 +52,14 @@ enum SelfCommands {
     Update,
     #[command(about = "Uninstall glang from the system")]
     Uninstall,
+}
+
+#[derive(Subcommand)]
+enum NewCommands {
+    #[command(about = "Create a new project configuration")]
+    Project,
+    #[command(about = "Create a new kennel configuration")]
+    Kennel,
 }
 
 fn main() {
@@ -82,9 +93,14 @@ fn main() {
                 glang_tooling::uninstall_self();
             }
         },
-        (Some(Commands::New), _) => {
-            glang_tooling::create_package_folder();
-        }
+        (Some(Commands::New { action }), _) => match action {
+            NewCommands::Kennel => {
+                glang_tooling::create_package_folder();
+            }
+            NewCommands::Project => {
+                glang_tooling::create_project_folder();
+            }
+        },
         (Some(Commands::Run { code }), _) => {
             if let Some(err) = run("<stdin>", Some(code)) {
                 println!("{err}");
