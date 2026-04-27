@@ -1,7 +1,7 @@
 use crate::{
     BuiltInFunction, Context, Function, List, Number, RuntimeResult, Str, SymbolTable, Value,
 };
-use glang_attributes::{BUILT_IN_FUNCTIONS, StandardError};
+use glang_attributes::{BUILT_IN_FUNCTIONS, Span, StandardError};
 use glang_lexer::{Lexer, lex};
 use glang_parser::{
     AstArena, AstNode, BinaryOperatorNode, CallNode, ConstAssignNode, ForEachNode, ForNode,
@@ -9,7 +9,6 @@ use glang_parser::{
     StringNode, TryExceptNode, UnaryOperatorNode, VariableAccessNode, VariableAssignNode,
     VariableRessignNode, WhileNode, parse,
 };
-use glang_tooling::get_latest_version;
 use std::{
     cell::RefCell,
     collections::{HashMap, HashSet},
@@ -31,20 +30,6 @@ pub fn interpret(ast: AstArena, contents: &str) -> Option<StandardError> {
 
     if !cfg!(feature = "no-std") {
         interpreter.preload_standard_library(context.clone());
-    }
-
-    let registry = glang_tooling::read_registry();
-
-    for (name, info) in registry.packages {
-        let version = info
-            .get(&get_latest_version(&name).unwrap().to_string())
-            .unwrap();
-        let entry = version.get("entry").unwrap();
-
-        interpreter
-            .global_symbol_table
-            .borrow_mut()
-            .set(name.to_owned(), Str::from(&entry));
     }
 
     let result = interpreter.visit(
@@ -691,30 +676,11 @@ impl Interpreter {
         }
 
         let importing_path = import_value.borrow().span().filename.clone();
-
-        let importing_dir = Path::new(&importing_path)
-            .parent()
-            .unwrap_or_else(|| Path::new(""))
-            .to_path_buf();
-
-        let file_to_import = importing_dir.join(PathBuf::from(match *import_value.borrow() {
-            Value::StringValue(ref string) => string.value.clone(),
-            _ => {
-                return result.failure(StandardError::new(
-                    "expected type string",
-                    import_value.borrow().span(),
-                    Some("add the '.glang' file to import"),
-                ));
-            }
-        }));
-
-        if !(file_to_import.exists() || !file_to_import.ends_with(".glang")) {
-            return result.failure(StandardError::new(
-                "invalid import",
-                import_value.borrow().span(),
-                Some("add the '.glang' file to import"),
-            ));
-        }
+        let file_to_import =
+            match self.resolve_import_path(&import_value.borrow(), &import_value.borrow().span()) {
+                Ok(path) => path,
+                Err(e) => return result.failure(e),
+            };
 
         if file_to_import == importing_path {
             return result.failure(StandardError::new(
@@ -1048,6 +1014,69 @@ impl Interpreter {
 
     fn visit_break_node(&mut self) -> RuntimeResult {
         RuntimeResult::new().success_break()
+    }
+
+    fn resolve_import_path(
+        &self,
+        import_value: &Value,
+        span: &Span,
+    ) -> Result<PathBuf, StandardError> {
+        let package_name = match import_value {
+            Value::StringValue(v) => &v.value,
+            _ => {
+                return Err(StandardError::new(
+                    "expected type string",
+                    span.clone(),
+                    None,
+                ));
+            }
+        };
+
+        let base_dir = span.filename.parent().unwrap_or_else(|| Path::new(""));
+
+        let path = base_dir.join(package_name);
+
+        // case 1: package@version
+        if let Some((name, version)) = package_name.split_once('@') {
+            let registry = glang_tooling::read_registry();
+
+            if let Some(pkg) = registry.packages.get(name) {
+                if let Some(info) = pkg.get(version) {
+                    if let Some(entry) = info.get("entry") {
+                        return Ok(PathBuf::from(entry));
+                    }
+                }
+            }
+
+            return Err(StandardError::new(
+                "kennel or version not found",
+                span.clone(),
+                Some("kennels can be installed using 'glang install <kennel>'"),
+            ));
+        }
+
+        // case 2: direct file
+        if let Some(ext) = path.extension() {
+            if ext == "glang" {
+                if path.exists() {
+                    return Ok(path);
+                } else {
+                    return Err(StandardError::new(
+                        "the specified import does not exist",
+                        span.clone(),
+                        None,
+                    ));
+                }
+            } else {
+                return Err(StandardError::new(
+                    "the specified import is not a '.glang' file",
+                    span.clone(),
+                    None,
+                ));
+            }
+        }
+
+        Err(StandardError::new("invalid import", span.clone(), None))
     }
 
     fn is_constant(&self, name: &str, context: Rc<RefCell<Context>>) -> bool {
