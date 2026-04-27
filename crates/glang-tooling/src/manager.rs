@@ -370,6 +370,41 @@ fn add_package_from_file(package: &PackageFile) {
     log_message(&format!("Adding {} to kennels registry", package.name));
 
     let mut registry = read_registry();
+
+    if let Some(versions) = registry.packages.get(&package.alias) {
+        let incoming_version =
+            Version::new(package.version.0, package.version.1, package.version.2);
+
+        if let Some(existing_info) = versions.get(&incoming_version.to_string()) {
+            let existing_hash = existing_info.get("hash").unwrap();
+
+            if *existing_hash == hex::encode(package.hash) {
+                log_message(&format!(
+                    "{} {} already installed, skipping",
+                    package.alias, incoming_version
+                ));
+                return;
+            } else {
+                panic!(
+                    "Hash mismatch for {} {} (possible corruption)",
+                    package.alias, incoming_version
+                );
+            }
+        }
+
+        // check latest installed version
+        let latest = get_latest_version(&package.name);
+
+        if let Some(latest) = latest {
+            if incoming_version < latest {
+                panic!(
+                    "Refusing to install older version {} (latest installed is {})",
+                    incoming_version, latest
+                );
+            }
+        }
+    }
+
     let versions = registry
         .packages
         .entry(package.alias.clone())
