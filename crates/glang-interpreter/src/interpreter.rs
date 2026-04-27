@@ -684,7 +684,7 @@ impl Interpreter {
 
         if file_to_import == importing_path {
             return result.failure(StandardError::new(
-                "circular import",
+                "circular import (cannot import files into themselves)",
                 import_value.borrow().span(),
                 None,
             ));
