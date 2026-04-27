@@ -40,8 +40,6 @@ enum Commands {
     Install { name: String },
     #[command(about = "Remove an installed kennel")]
     Remove { name: String },
-    #[command(about = "Update an installed kennel to the latest version")]
-    Update { name: String },
     #[command(about = "Package a project into an installable '.kennel' file")]
     Package,
 }
@@ -111,9 +109,6 @@ fn main() {
         }
         (Some(Commands::Remove { name }), _) => {
             glang_tooling::remove_package(&name);
-        }
-        (Some(Commands::Update { name }), _) => {
-            glang_tooling::update_package(&name);
         }
         (Some(Commands::Package), _) => {
             glang_tooling::write_package_file(None);

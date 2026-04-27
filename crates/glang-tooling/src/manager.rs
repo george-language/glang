@@ -200,12 +200,6 @@ fn verify_package_configuration_file(
     )
 }
 
-pub fn is_package_installed(package: &str) -> bool {
-    let package_path = get_configuration_folder().join(package);
-
-    package_path.exists()
-}
-
 pub fn read_registry() -> PackageRegistry {
     create_configuration_folder();
 
@@ -424,14 +418,4 @@ pub fn remove_package(package: &str) {
     write_registry(registry);
 
     println!("Kennel '{}' removed", package);
-}
-
-pub fn update_package(package: &str) {
-    if is_package_installed(package) {
-        remove_package(package);
-        add_package(package);
-    } else {
-        log_header(&format!("Updating '{}'", &package));
-        log_package_status(package, false);
-    }
 }
