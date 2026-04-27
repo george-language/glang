@@ -84,7 +84,7 @@ pub fn create_package_folder() {
             r#"[package]
 name = {:?}
 version = "0.1.0"
-entry = "main.glang"
+entry = "lib.glang"
 
 [requirements]
         "#,
