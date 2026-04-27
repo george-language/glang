@@ -3,7 +3,7 @@ pub const LETTERS: &str = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_
 pub const LETTERS_DIGITS: &str = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_";
 pub const BUILT_IN_FUNCTIONS: &[&str] = &[
     "bark", "chew", "dig", "bury", "copy", "clear", "tostring", "tonumber", "length", "uhoh",
-    "type", "_env",
+    "type", "_env", "split",
 ];
 pub const KEYWORDS: &[&str] = &[
     "obj",

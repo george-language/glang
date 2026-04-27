@@ -1,5 +1,5 @@
 use crate::{
-    Str,
+    List, Str,
     context::Context,
     interpreter::Interpreter,
     runtime_result::RuntimeResult,
@@ -217,6 +217,7 @@ impl BuiltInFunction {
             "uhoh" => self.execute_error(args, exec_context),
             "type" => self.execute_type(args, exec_context),
             "_env" => self.execute_env(args, exec_context),
+            "split" => self.execute_split(args, exec_context),
             _ => panic!("CRITICAL ERROR: BUILT IN NAME IS NOT DEFINED"),
         }
     }
@@ -578,7 +579,7 @@ impl BuiltInFunction {
                 return result.failure(StandardError::new(
                     "expected type string",
                     env_arg.borrow().span(),
-                    Some("add the glang code to execute"),
+                    None,
                 ));
             }
         };
@@ -591,6 +592,43 @@ impl BuiltInFunction {
                 None,
             )),
         }
+    }
+
+    pub fn execute_split(
+        &self,
+        args: &[Rc<RefCell<Value>>],
+        exec_ctx: Rc<RefCell<Context>>,
+    ) -> RuntimeResult {
+        let mut result = RuntimeResult::new();
+        result.register(self.check_and_populate_args(
+            &["str".to_string(), "pattern".to_string()],
+            args,
+            exec_ctx,
+        ));
+
+        if result.should_return() {
+            return result;
+        }
+
+        let string = args[0].clone();
+        let pattern = args[1].clone();
+
+        let elements = match (&*string.borrow(), &*pattern.borrow()) {
+            (Value::StringValue(input), Value::StringValue(pat)) => input
+                .value
+                .split(&pat.value)
+                .map(|s| Str::from(s))
+                .collect::<Vec<_>>(),
+            _ => {
+                return result.failure(StandardError::new(
+                    "expected type string",
+                    string.borrow().span(),
+                    None,
+                ));
+            }
+        };
+
+        result.success(List::from(elements))
     }
 
     pub fn as_string(&self) -> String {
