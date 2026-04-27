@@ -1,0 +1,14 @@
+# file lib.glang: core library providing a set of features and functions for the George programming language
+
+fetch _env("GLANG_STD") + "/core/objects.glang";
+fetch _env("GLANG_STD") + "/core/type.glang";
+fetch _env("GLANG_STD") + "/core/list.glang";
+fetch _env("GLANG_STD") + "/core/string.glang";
+fetch _env("GLANG_STD") + "/core/number.glang";
+fetch _env("GLANG_STD") + "/core/debug.glang";
+
+# std library imports
+obj std_os = _env("GLANG_STD") + "/std/os.glang";
+obj std_hashmap = _env("GLANG_STD") + "/std/hashmap.glang";
+obj std_format = _env("GLANG_STD") + "/std/format.glang";
+obj std_math = _env("GLANG_STD") + "/std/math.glang";

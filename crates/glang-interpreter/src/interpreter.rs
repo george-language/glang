@@ -98,7 +98,7 @@ impl Interpreter {
 
     pub fn preload_standard_library(&mut self, context: Rc<RefCell<Context>>) {
         if let Some(e) = self.evaluate(
-            "fetch _env(\"GLANG_STD\") + \"/fundamental/lib.glang\";",
+            "fetch _env(\"GLANG_STD\") + \"/core/lib.glang\";",
             context.clone(),
         ) {
             println!("{}", e);

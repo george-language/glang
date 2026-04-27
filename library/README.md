@@ -1,9 +1,9 @@
 # GLang Library
 This is the entire module system included with the glang installer.
 
-**Folder** `fundamental`:
+**Folder** `core`:
 
-GLang's fundamental library
+GLang's core library.
 
 **Folder** `std`:
 
