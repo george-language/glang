@@ -19,7 +19,7 @@ struct PackageFile {
     name: String,
     alias: String,
     entry: PathBuf,
-    version: (u64, u64, u64), // major, minor, patch (semantic)
+    version: String, // semantic format
     dependencies: Vec<PackageFile>,
     hash: [u8; 32],
 }
@@ -107,9 +107,7 @@ pub fn create_project_folder() {
     .expect("Unable to create 'main.glang' file");
 }
 
-fn verify_package_configuration_file(
-    contents: &str,
-) -> (String, (u64, u64, u64), String, Vec<PathBuf>) {
+fn verify_package_configuration_file(contents: &str) -> (String, Version, String, Vec<PathBuf>) {
     log_message("Parsing 'kennel.toml'");
 
     let package_toml = contents
@@ -198,12 +196,7 @@ fn verify_package_configuration_file(
         requirements.push(PathBuf::from(entry_path));
     }
 
-    (
-        name.to_string(),
-        (version.major, version.minor, version.patch),
-        entry.to_string(),
-        requirements,
-    )
+    (name.to_string(), version, entry.to_string(), requirements)
 }
 
 pub fn read_registry() -> PackageRegistry {
@@ -239,15 +232,10 @@ fn create_package_file(root: Option<PathBuf>) -> (PackageFile, PathBuf) {
     let (name, version, entry, requirements) = verify_package_configuration_file(
         &fs::read_to_string(&package_config_file).expect("Unable to read 'kennel.toml' file"),
     );
-    let version_maj = version.0;
-    let version_min = version.1;
-    let version_patch = version.2;
 
     let entry_file = root.join(&entry);
 
-    log_message(&format!(
-        "Compressing {name} {version_maj}.{version_min}.{version_patch}"
-    ));
+    log_message(&format!("Compressing {name} {version}"));
 
     let mut cursor = std::io::Cursor::new(Vec::new());
     let mut archive = ZipWriter::new(&mut cursor);
@@ -292,14 +280,9 @@ fn create_package_file(root: Option<PathBuf>) -> (PackageFile, PathBuf) {
     let zip_bytes = cursor.into_inner();
     let hash = Sha256::digest(&zip_bytes);
 
-    let path = root.join(format!(
-        "{}-{}.{}.{}.kennel",
-        name, version_maj, version_min, version_patch
-    ));
+    let path = root.join(format!("{}-{}.kennel", name, version));
 
-    log_message(&format!(
-        "Resolving {name} {version_maj}.{version_min}.{version_patch} requirements"
-    ));
+    log_message(&format!("Resolving {name} {version} requirements"));
 
     let mut dependencies = Vec::new();
 
@@ -318,7 +301,7 @@ fn create_package_file(root: Option<PathBuf>) -> (PackageFile, PathBuf) {
                 .to_string(),
             alias: name,
             entry: entry_file.strip_prefix(&root).unwrap().to_owned(),
-            version: (version_maj, version_min, version_patch),
+            version: version.to_string(),
             dependencies: dependencies,
         },
         path,
@@ -345,7 +328,7 @@ fn add_package_from_file(package: &PackageFile) {
     let config_dir = get_configuration_folder();
 
     let package_path = config_dir.join(&package.name);
-    let incoming_version = Version::new(package.version.0, package.version.1, package.version.2);
+    let incoming_version = Version::parse(&package.version).expect("Error parsing kennel version");
 
     fs::create_dir_all(&package_path).expect("Unable to create kennel directory");
 
