@@ -9,6 +9,7 @@ use glang_parser::{
     StringNode, TryExceptNode, UnaryOperatorNode, VariableAccessNode, VariableAssignNode,
     VariableRessignNode, WhileNode, parse,
 };
+use glang_tooling::get_latest_version;
 use std::{
     cell::RefCell,
     collections::{HashMap, HashSet},
@@ -1039,6 +1040,16 @@ impl Interpreter {
             let registry = glang_tooling::read_registry();
 
             if let Some(pkg) = registry.packages.get(name) {
+                if version == "latest" {
+                    if let Some(latest_version) = get_latest_version(name) {
+                        if let Some(info) = pkg.get(&latest_version.to_string()) {
+                            if let Some(entry) = info.get("entry") {
+                                return Ok(PathBuf::from(entry));
+                            }
+                        }
+                    }
+                }
+
                 if let Some(info) = pkg.get(version) {
                     if let Some(entry) = info.get("entry") {
                         return Ok(PathBuf::from(entry));
