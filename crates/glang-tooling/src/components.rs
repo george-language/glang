@@ -1,4 +1,4 @@
-use crate::{log_header, log_message, wait_for_confirmation};
+use crate::{add_package, log_header, log_message, wait_for_confirmation};
 use dirs::{download_dir, home_dir};
 use reqwest::blocking::get;
 use std::{
@@ -30,42 +30,57 @@ fn fetch_latest_tag() -> String {
     release.tag_name
 }
 
+pub fn install_library() {
+    let download_path = download_dir().expect("Unable to get user downloads directory");
+    let installer_path = download_path.join("lib.kennel");
+
+    let mut resp =
+        get("https://github.com/george-language/glang-lib/releases/latest/download/lib.kennel")
+            .expect("Unable to retrieve 'glang-lib' kennel data");
+
+    let mut file = File::create(&installer_path).expect("Unable to create lib.kennel file");
+
+    copy(&mut resp, &mut file).expect("Unable to write lib.kennel file");
+
+    add_package(&installer_path.to_string_lossy().to_string(), true);
+
+    fs::remove_file(&installer_path).expect("Unable to remove lib.kennel file");
+}
+
 /// Updates the glang binary and components
 ///
 /// This will download the platform specific binary and components.
 /// - On Windows: download the .exe installer and run it.
 /// - On MacOS: extract the .zip into the `Applications/` and overwrite the GeorgeLanguage folder
 pub fn update_self() {
+    let download_path = download_dir().expect("Unable to get user downloads directory");
     let tag = fetch_latest_tag();
 
     if cfg!(target_os = "windows") {
         log_header("Downloading glang-latest for Windows");
 
-        let download_path = download_dir()
-            .expect("Unable to get user downloads directory")
-            .with_file_name("glang-installer.exe");
+        log_message("Installing glang-lib (latest)");
 
-        {
-            log_message("Retrieving installer data");
+        install_library();
 
-            let url = format!(
-                "https://github.com/george-language/glang/releases/download/{tag}/GeorgeLanguage-{tag}-windows_setup.exe"
-            );
-            let mut resp = get(url).expect("Unable to retrieve installer data");
+        let installer_path = download_path.join("glang-installer.exe");
 
-            log_message("Creating installer file");
+        log_message("Installing glang-binary (latest)");
 
-            let mut file =
-                File::create(&download_path).expect("Unable to create glang installer file");
+        let url = format!(
+            "https://github.com/george-language/glang/releases/download/{tag}/GeorgeLanguage-{tag}-windows_setup.exe"
+        );
+        let mut resp = get(url).expect("Unable to retrieve installer data");
+        let mut file =
+            File::create(&installer_path).expect("Unable to create glang installer file");
 
-            log_message("Writing data");
+        log_message("Writing data");
 
-            copy(&mut resp, &mut file).expect("Unable to write installer file");
-        }
+        copy(&mut resp, &mut file).expect("Unable to write installer file");
 
         log_message("Launching glang installer");
 
-        let _ = Command::new(&download_path)
+        let _ = Command::new(&installer_path)
             .spawn()
             .expect("Unable to launch installer");
 
@@ -73,32 +88,28 @@ pub fn update_self() {
     } else if cfg!(target_os = "macos") {
         log_header("Downloading glang-latest for macOS");
 
-        let download_path = download_dir()
-            .expect("Unable to get user downloads directory")
-            .with_file_name("glang-binary.pkg");
+        log_message("Installing glang-lib (latest)");
 
-        {
-            log_message("Retrieving package data");
+        install_library();
 
-            let url = format!(
-                "https://github.com/george-language/glang/releases/download/{tag}/GeorgeLanguage-{tag}-macos_setup.pkg"
-            );
-            let mut resp = get(url).expect("Unable to download macos content");
+        let installer_path = download_path.join("glang-binary.pkg");
 
-            log_message("Creating package file");
+        log_message("Installing glang-binary (latest)");
 
-            let mut file =
-                File::create(&download_path).expect("Unable to create glang package file");
+        let url = format!(
+            "https://github.com/george-language/glang/releases/download/{tag}/GeorgeLanguage-{tag}-macos_setup.pkg"
+        );
+        let mut resp = get(url).expect("Unable to download macos content");
+        let mut file = File::create(&installer_path).expect("Unable to create glang package file");
 
-            log_message("Writing data");
+        log_message("Writing data");
 
-            copy(&mut resp, &mut file).expect("Unable to write package file");
-        }
+        copy(&mut resp, &mut file).expect("Unable to write package file");
 
         log_message("Launching glang installer");
 
         let _ = Command::new("open")
-            .arg(&download_path)
+            .arg(&installer_path)
             .spawn()
             .expect("Unable to launch installer");
 

@@ -29,7 +29,7 @@ pub fn interpret(ast: AstArena, contents: &str) -> Option<StandardError> {
         interpreter.global_symbol_table.clone(),
     )));
 
-    interpreter.preload_standard_library(context.clone());
+    interpreter.preload_library(context.clone());
 
     let result = interpreter.visit(
         NodeID(ast.nodes.len() - 1),
@@ -54,7 +54,7 @@ pub fn interpret(ast: AstArena, contents: &str) -> Option<StandardError> {
 
 pub struct Interpreter {
     pub global_symbol_table: Rc<RefCell<SymbolTable>>,
-    pub cached_standard_library: Option<Rc<RefCell<SymbolTable>>>,
+    pub cached_library: Option<Rc<RefCell<SymbolTable>>>,
     pub arena: Rc<AstArena>,
     cached_modules: Rc<RefCell<HashMap<PathBuf, Rc<RefCell<SymbolTable>>>>>,
     contents: String,
@@ -64,7 +64,7 @@ impl Interpreter {
     pub fn new(arena: AstArena, contents: &str) -> Self {
         let interpreter = Self {
             global_symbol_table: Rc::new(RefCell::new(SymbolTable::new(None))),
-            cached_standard_library: None,
+            cached_library: None,
             cached_modules: Rc::new(RefCell::new(HashMap::new())),
             arena: Rc::new(arena),
             contents: contents.to_owned(),
@@ -80,17 +80,14 @@ impl Interpreter {
         interpreter
     }
 
-    pub fn preload_standard_library(&mut self, context: Rc<RefCell<Context>>) {
-        if let Some(e) = self.evaluate(
-            "fetch _env(\"GLANG_STD\") + \"/core/lib.glang\";",
-            context.clone(),
-        ) {
+    pub fn preload_library(&mut self, context: Rc<RefCell<Context>>) {
+        if let Some(e) = self.evaluate("fetch \"lib@latest\";", context.clone()) {
             println!("{}", e);
 
             return;
         }
 
-        self.cached_standard_library = Some(context.borrow().symbol_table.clone());
+        self.cached_library = Some(context.borrow().symbol_table.clone());
     }
 
     pub fn evaluate(&mut self, src: &str, context: Rc<RefCell<Context>>) -> Option<StandardError> {
@@ -732,7 +729,7 @@ impl Interpreter {
         };
 
         let mut interpreter = Interpreter::new(ast_node.clone(), &contents);
-        interpreter.cached_standard_library = self.cached_standard_library.clone();
+        interpreter.cached_library = self.cached_library.clone();
         interpreter.cached_modules = self.cached_modules.clone();
         let module_context = Rc::new(RefCell::new(Context::new(
             None,
@@ -740,7 +737,7 @@ impl Interpreter {
             interpreter.global_symbol_table.clone(),
         )));
 
-        if let Some(std_lib) = self.cached_standard_library.clone() {
+        if let Some(std_lib) = self.cached_library.clone() {
             for (name, value) in std_lib.borrow().symbols.clone() {
                 module_context
                     .borrow_mut()

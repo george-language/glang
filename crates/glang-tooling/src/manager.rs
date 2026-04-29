@@ -324,7 +324,7 @@ pub fn write_package_file(root: Option<PathBuf>) {
     ));
 }
 
-fn add_package_from_file(package: &PackageFile) {
+fn add_package_from_file(package: &PackageFile, force: bool) {
     create_configuration_folder();
 
     let config_dir = get_configuration_folder();
@@ -365,35 +365,39 @@ fn add_package_from_file(package: &PackageFile) {
             let existing_hash = existing_info.get("hash").unwrap();
 
             if *existing_hash == hex::encode(package.hash) {
-                if wait_for_confirmation(&format!(
-                    "Kennel {} {} is already installed, overwrite it?",
-                    package.alias, incoming_version
-                )) {
-                    log_message(&format!(
-                        "Overwriting {} {}",
+                if !force {
+                    if wait_for_confirmation(&format!(
+                        "Kennel {} {} is already installed, overwrite it?",
                         package.alias, incoming_version
-                    ));
-                } else {
-                    log_message(&format!("Skipping {} {}", package.alias, incoming_version));
+                    )) {
+                        log_message(&format!(
+                            "Overwriting {} {}",
+                            package.alias, incoming_version
+                        ));
+                    } else {
+                        log_message(&format!("Skipping {} {}", package.alias, incoming_version));
 
-                    return;
+                        return;
+                    }
                 }
             } else {
-                if wait_for_confirmation(&format!(
-                    "Kennel {} {} is potentially corrupted, install it?",
-                    package.alias, incoming_version
-                )) {
-                    log_message(&format!(
-                        "Overwriting {} {}",
+                if !force {
+                    if wait_for_confirmation(&format!(
+                        "Kennel {} {} is potentially corrupted, install it?",
                         package.alias, incoming_version
-                    ));
-                } else {
-                    log_message(&format!(
-                        "Cancelling install of {} {}",
-                        package.alias, incoming_version
-                    ));
+                    )) {
+                        log_message(&format!(
+                            "Overwriting {} {}",
+                            package.alias, incoming_version
+                        ));
+                    } else {
+                        log_message(&format!(
+                            "Cancelling install of {} {}",
+                            package.alias, incoming_version
+                        ));
 
-                    return;
+                        return;
+                    }
                 }
             }
         }
@@ -421,7 +425,7 @@ fn add_package_from_file(package: &PackageFile) {
     write_registry(registry);
 
     for pkg in &package.dependencies {
-        add_package_from_file(&pkg);
+        add_package_from_file(&pkg, force);
     }
 
     log_message(&format!(
@@ -430,7 +434,7 @@ fn add_package_from_file(package: &PackageFile) {
     ));
 }
 
-pub fn add_package(path: &str) {
+pub fn add_package(path: &str, force: bool) {
     create_configuration_folder();
 
     let package_file = PathBuf::from(path);
@@ -449,10 +453,10 @@ pub fn add_package(path: &str) {
         bincode::deserialize(&fs::read(&package_file).expect("Unable to read kennel file"))
             .expect("Unable to deserialize kennel file");
 
-    add_package_from_file(&package);
+    add_package_from_file(&package, force);
 }
 
-pub fn remove_package(package: &str) {
+pub fn remove_package(package: &str, force: bool) {
     create_configuration_folder();
 
     log_header("Removing kennel from registry");
@@ -460,10 +464,12 @@ pub fn remove_package(package: &str) {
     let mut registry = read_registry();
 
     if let Some(versions) = registry.packages.get(package) {
-        if !wait_for_confirmation("Are you sure you want to continue?") {
-            log_message("Cancelling removal");
+        if !force {
+            if !wait_for_confirmation("Are you sure you want to continue?") {
+                log_message("Cancelling removal");
 
-            return;
+                return;
+            }
         }
 
         for info in versions.values() {

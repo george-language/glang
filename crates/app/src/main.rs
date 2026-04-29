@@ -8,7 +8,7 @@ use std::{
     env, fs,
     io::{Write, stdin, stdout},
     panic,
-    path::{Path, PathBuf},
+    path::Path,
     time::Instant,
 };
 
@@ -37,9 +37,17 @@ enum Commands {
     #[command(about = "Run a string of glang source code")]
     Run { code: String },
     #[command(about = "Install a '.kennel' file")]
-    Install { name: String },
+    Install {
+        name: String,
+        #[arg(long, help = "Force overwriting of the installed '.kennel'")]
+        force: bool,
+    },
     #[command(about = "Remove an installed kennel")]
-    Remove { name: String },
+    Remove {
+        name: String,
+        #[arg(long, help = "Force removal of the kennel")]
+        force: bool,
+    },
     #[command(about = "Package a project into an installable '.kennel' file")]
     Package,
 }
@@ -78,7 +86,13 @@ fn main() {
         }
     }));
 
-    set_env_variables();
+    let registry = glang_tooling::read_registry();
+
+    // if 'glang-lib' isn't installed, retreive it
+    if let Some(_) = registry.packages.get("lib") {
+    } else {
+        glang_tooling::install_library()
+    }
 
     let cli = Cli::parse();
 
@@ -104,11 +118,11 @@ fn main() {
                 println!("{err}");
             }
         }
-        (Some(Commands::Install { name }), _) => {
-            glang_tooling::add_package(&name);
+        (Some(Commands::Install { name, force }), _) => {
+            glang_tooling::add_package(&name, force);
         }
-        (Some(Commands::Remove { name }), _) => {
-            glang_tooling::remove_package(&name);
+        (Some(Commands::Remove { name, force }), _) => {
+            glang_tooling::remove_package(&name, force);
         }
         (Some(Commands::Package), _) => {
             glang_tooling::write_package_file(None);
@@ -129,36 +143,6 @@ fn main() {
             // 'glang' by itself will just run the REPL, similar to python
             launch_repl();
         }
-    }
-}
-
-/// Creates and sets environment variables used internally by glang's source code.
-///
-/// The function sets the following environment variables:
-///
-/// - `GLANG_STD` is the path to the glang library ('library/')
-fn set_env_variables() {
-    unsafe {
-        let mut std_path = env::current_exe()
-            .expect("Unable to retrieve executable path")
-            .parent()
-            .unwrap()
-            .join("library");
-
-        // on macos, library is only next to the executable during development
-        // on actual install its inside /Library/GeorgeLanguage/
-        if cfg!(target_os = "macos") && !std_path.exists() {
-            std_path = PathBuf::from("/Library/GeorgeLanguage/library");
-        }
-
-        env::set_var(
-            "GLANG_STD",
-            &std_path
-                .to_string_lossy()
-                .replace("target", "") // on development, get rid of the target folder in the path
-                .replace("debug", "")
-                .replace("release", ""),
-        );
     }
 }
 
