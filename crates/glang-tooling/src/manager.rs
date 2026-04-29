@@ -75,6 +75,7 @@ pub fn create_package_folder() {
     let source_folder = root.join("src");
     let entry_file = root.join("lib.glang");
     let package_config = root.join("kennel.toml");
+    let git_config = root.join(".gitignore");
 
     fs::create_dir(&source_folder).expect("Unable to create 'src' folder");
     fs::write(&entry_file, "# this is the entrypoint of your kennel\n# see https://george-language.github.io/docs/kennels/creating for more info").expect("Unable to create 'lib.glang' file");
@@ -92,6 +93,7 @@ entry = "lib.glang"
         ),
     )
     .expect("Unable to create 'kennel.toml' file");
+    fs::write(&git_config, "*.kennel").expect("Unable to create '.gitignore' file");
 }
 
 pub fn create_project_folder() {
