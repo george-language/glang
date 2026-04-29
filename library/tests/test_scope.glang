@@ -8,9 +8,7 @@ import();
 
 try {
     math_pi # can't access this, it's in import()
-} catch _ {
-    skip;
-}
+} catch _ {}
 
 obj x = 10;
 

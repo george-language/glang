@@ -55,9 +55,7 @@ func get(list, index) {
 # reverse a list (supports the string type as well)
 # returns null if reversing a list otherwise returns a copy of the string reversed
 func reverse(value) {
-    if type(value) == "list" or type(value) == "string" {
-        skip;
-    } otherwise {
+    if (type(value) != "list") or (type(value) != "string") {
         uhoh("expected type list or string");
     }
 

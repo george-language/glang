@@ -8,11 +8,3 @@ stay false = 0;
 # bark(not null);
 # ```
 stay null = 0;
-
-# use on any unimplemented code:
-# ```
-# func main() {
-#     skip;
-# }
-# ```
-stay skip = "unimplemented";

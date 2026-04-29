@@ -1048,7 +1048,10 @@ impl Parser {
         let mut statements: Vec<NodeID> = Vec::new();
         let pos_start = self.current_position_start();
 
-        if self.current_token_ref().token_type == TokenType::TT_EOF {
+        if matches!(
+            self.current_token_ref().token_type,
+            TokenType::TT_EOF | TokenType::TT_RBRACKET // allow syntax like {}
+        ) {
             return parse_result.success(self.arena.list_node(
                 Vec::new(),
                 Span::new(
