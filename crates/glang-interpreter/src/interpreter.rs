@@ -90,23 +90,24 @@ impl Interpreter {
         self.cached_library = Some(context.borrow().symbol_table.clone());
     }
 
-    pub fn evaluate(&mut self, src: &str, context: Rc<RefCell<Context>>) -> Option<StandardError> {
-        let mut lexer = Lexer::new(Path::new("<eval>"), src);
-        let token_result = lexer.make_tokens();
+    fn evaluate(&mut self, src: &str, context: Rc<RefCell<Context>>) -> Option<StandardError> {
+        let error = match lex(Path::new("<eval>"), &src) {
+            Ok(tokens) => match parse(&tokens, &src) {
+                Ok(ast_node) => {
+                    match self
+                        .visit(NodeID(ast_node.nodes.len() - 1), &ast_node, context)
+                        .error
+                    {
+                        Some(e) => Some(e),
+                        None => None,
+                    }
+                }
+                Err(e) => Some(e),
+            },
+            Err(e) => Some(e),
+        };
 
-        if token_result.is_err() {
-            return token_result.err();
-        }
-
-        let mut parser = Parser::new(&token_result.ok().unwrap(), lexer.contents());
-        let ast = parser.parse();
-
-        if ast.error.is_some() {
-            return ast.error;
-        }
-
-        let result = self.visit(ast.node, &parser.arena, context);
-        result.error
+        error
     }
 
     pub fn visit(
