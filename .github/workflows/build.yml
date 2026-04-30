@@ -41,13 +41,6 @@ jobs:
             -output dist/payload/usr/local/bin/glang
           chmod +x dist/payload/usr/local/bin/glang
 
-      - name: Add library files
-        run: |
-          mkdir -p dist/payload/Library/GeorgeLanguage
-          cp -r library dist/payload/Library/GeorgeLanguage/
-          cp LICENSE dist/payload/Library/GeorgeLanguage/
-          cp README.md dist/payload/Library/GeorgeLanguage/
-
       - name: Create pkg installer
         run: |
           pkgbuild \
