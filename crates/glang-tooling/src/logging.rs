@@ -32,7 +32,7 @@ pub fn log_package_status(package: &str, installed: bool) {
 pub fn wait_for_confirmation(msg: &str) -> bool {
     let mut confirmation = String::new();
 
-    print!("    -> {msg} [Y/n]:");
+    print!("    -> {msg} [Y/n]: ");
     let _ = stdout().flush();
 
     stdin()

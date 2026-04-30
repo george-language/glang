@@ -419,7 +419,7 @@ fn add_package_from_file(package: &PackageFile, force: bool) {
     }
 
     log_message(&format!(
-        "Kennel {} {} installed successfully",
+        "Successfully installed {} {}",
         package.alias, incoming_version
     ));
 }
