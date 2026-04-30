@@ -2,10 +2,10 @@ use crate::{
     BuiltInFunction, Context, Function, List, Number, RuntimeResult, Str, SymbolTable, Value,
 };
 use glang_attributes::{BUILT_IN_FUNCTIONS, Span, StandardError};
-use glang_lexer::{Lexer, lex};
+use glang_lexer::lex;
 use glang_parser::{
     AstArena, AstNode, BinaryOperatorNode, CallNode, ConstAssignNode, ForEachNode, ForNode,
-    FunctionDefinitionNode, IfNode, ImportNode, ListNode, NodeID, NumberNode, Parser, ReturnNode,
+    FunctionDefinitionNode, IfNode, ImportNode, ListNode, NodeID, NumberNode, ReturnNode,
     StringNode, TryExceptNode, UnaryOperatorNode, VariableAccessNode, VariableAssignNode,
     VariableRessignNode, WhileNode, parse,
 };
