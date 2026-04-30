@@ -35,7 +35,7 @@ pub enum TokenType {
 #[derive(Debug, Clone)]
 pub struct Token {
     pub token_type: TokenType,
-    pub value: Option<String>,
+    pub value: String,
     pub span: Span,
 }
 
@@ -43,16 +43,12 @@ impl Token {
     pub fn new(token_type: TokenType, value: Option<String>, span: Span) -> Self {
         Self {
             token_type,
-            value,
+            value: value.unwrap_or("".to_string()),
             span,
         }
     }
 
     pub fn matches(&self, token_type: TokenType, value: &str) -> bool {
-        if self.value.is_some() {
-            self.token_type == token_type && self.value.as_ref().unwrap() == value
-        } else {
-            false
-        }
+        self.token_type == token_type && self.value == value
     }
 }

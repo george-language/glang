@@ -873,7 +873,7 @@ impl Parser {
                     Some(
                         format!(
                             "add an '=' to set the value of the variable '{}'",
-                            &var_name.value.unwrap()
+                            &var_name.value
                         )
                         .as_str(),
                     ),
@@ -936,7 +936,7 @@ impl Parser {
                     Some(
                         format!(
                             "add an '=' to set the value of the constant '{}'",
-                            &const_name.value.unwrap()
+                            &const_name.value
                         )
                         .as_str(),
                     ),
@@ -1464,12 +1464,7 @@ impl Parser {
 
         while ops.contains(&(
             self.current_token.clone().unwrap().token_type,
-            self.current_token
-                .clone()
-                .unwrap()
-                .value
-                .unwrap_or_default()
-                .as_str(),
+            &self.current_token.clone().unwrap().value,
         )) || ops.contains(&(self.current_token.clone().unwrap().token_type, ""))
         {
             let op_token = self.current_token.clone().unwrap().clone();

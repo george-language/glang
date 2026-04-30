@@ -797,7 +797,7 @@ impl Interpreter {
         let mut arg_names: Vec<String> = Vec::new();
 
         for arg_name_tok in node.argument_names.iter() {
-            arg_names.push(arg_name_tok.value.clone().unwrap());
+            arg_names.push(arg_name_tok.value.clone());
         }
 
         let mut seen = HashSet::new();

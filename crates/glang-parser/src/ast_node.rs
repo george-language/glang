@@ -73,7 +73,7 @@ impl AstArena {
 
     pub fn const_assign_node(&mut self, var_name_token: Token, value_node: NodeID) -> NodeID {
         self.add(AstNode::ConstAssign(ConstAssignNode {
-            name: var_name_token.value.unwrap(),
+            name: var_name_token.value,
             value_node,
             span: var_name_token.span,
         }))
@@ -92,7 +92,7 @@ impl AstArena {
         body_node: NodeID,
     ) -> NodeID {
         self.add(AstNode::For(ForNode {
-            iterator_name: var_name_token.value.unwrap(),
+            iterator_name: var_name_token.value,
             start_value_node,
             end_value_node,
             step_value_node,
@@ -108,7 +108,7 @@ impl AstArena {
         body_node: NodeID,
     ) -> NodeID {
         self.add(AstNode::ForEach(ForEachNode {
-            iterator_name: var_name_token.value.unwrap(),
+            iterator_name: var_name_token.value,
             iterator_node: iterator,
             body_node,
             span: var_name_token.span,
@@ -124,7 +124,7 @@ impl AstArena {
     ) -> NodeID {
         self.add(AstNode::FunctionDefinition(FunctionDefinitionNode {
             name: if let Some(ref tok) = var_name_token {
-                tok.value.clone()
+                Some(tok.value.clone())
             } else {
                 None
             },
@@ -181,7 +181,7 @@ impl AstArena {
 
     pub fn number_node(&mut self, token: Token) -> NodeID {
         self.add(AstNode::Number(NumberNode {
-            value: token.value.as_ref().unwrap().parse::<f64>().unwrap(),
+            value: token.value.parse::<f64>().unwrap(),
             span: token.span,
         }))
     }
@@ -195,7 +195,7 @@ impl AstArena {
 
     pub fn string_node(&mut self, token: Token) -> NodeID {
         self.add(AstNode::Strings(StringNode {
-            value: token.value.unwrap(),
+            value: token.value,
             span: token.span,
         }))
     }
@@ -209,7 +209,7 @@ impl AstArena {
         self.add(AstNode::TryExcept(TryExceptNode {
             try_body_node: try_body_node,
             except_body_node: except_body_node,
-            passed_error: error_name_token.value.unwrap(),
+            passed_error: error_name_token.value,
             span: Span::new(
                 &self.span(try_body_node).filename,
                 self.position_start(try_body_node),
@@ -243,14 +243,14 @@ impl AstArena {
 
     pub fn variable_access_node(&mut self, var_name_token: Token) -> NodeID {
         self.add(AstNode::VariableAccess(VariableAccessNode {
-            name: var_name_token.value.unwrap(),
+            name: var_name_token.value,
             span: var_name_token.span,
         }))
     }
 
     pub fn variable_assign_node(&mut self, var_name_token: Token, value_node: NodeID) -> NodeID {
         self.add(AstNode::VariableAssign(VariableAssignNode {
-            name: var_name_token.value.unwrap(),
+            name: var_name_token.value,
             value_node,
             span: var_name_token.span,
         }))
@@ -258,7 +258,7 @@ impl AstArena {
 
     pub fn variable_reassign_node(&mut self, var_name_token: Token, value_node: NodeID) -> NodeID {
         self.add(AstNode::VariableReassign(VariableRessignNode {
-            name: var_name_token.value.unwrap(),
+            name: var_name_token.value,
             value_node,
             span: var_name_token.span,
         }))
