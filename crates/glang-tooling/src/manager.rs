@@ -381,12 +381,14 @@ fn add_package_from_file(package: &PackageFile, force: bool) {
                     }
                 }
             } else {
-                log_message(&format!(
-                    "Skipping install of {} {} (potentially corrupted)",
-                    package.alias, incoming_version
-                ));
+                if !force {
+                    log_message(&format!(
+                        "Skipping install of {} {} (potentially corrupted)",
+                        package.alias, incoming_version
+                    ));
 
-                return;
+                    return;
+                }
             }
         }
     }
