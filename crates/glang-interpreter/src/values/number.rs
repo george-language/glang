@@ -61,7 +61,7 @@ impl Number {
                         Some(left_val / right_val)
                     }
                     "^" => {
-                        if right_val <= 0.0 {
+                        if right_val < 0.0 {
                             return Err(StandardError::new(
                                 "powered by operator less than or equal to 0",
                                 value.span.clone(),
