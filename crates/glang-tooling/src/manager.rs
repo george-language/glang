@@ -381,24 +381,12 @@ fn add_package_from_file(package: &PackageFile, force: bool) {
                     }
                 }
             } else {
-                if !force {
-                    if wait_for_confirmation(&format!(
-                        "Kennel {} {} is potentially corrupted, install it?",
-                        package.alias, incoming_version
-                    )) {
-                        log_message(&format!(
-                            "Overwriting {} {}",
-                            package.alias, incoming_version
-                        ));
-                    } else {
-                        log_message(&format!(
-                            "Cancelling install of {} {}",
-                            package.alias, incoming_version
-                        ));
+                log_message(&format!(
+                    "Skipping install of {} {} (potentially corrupted)",
+                    package.alias, incoming_version
+                ));
 
-                        return;
-                    }
-                }
+                return;
             }
         }
     }
