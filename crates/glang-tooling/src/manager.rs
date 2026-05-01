@@ -104,7 +104,7 @@ pub fn create_project_folder() {
     fs::create_dir(&source_folder).expect("Unable to create 'src' folder");
     fs::write(
         &main_file,
-        "func main() {\n    bark(\"Hello, World!\");\n }\n\n main();",
+        "func main() {\n    bark(\"Hello, World!\");\n}\n\nmain();",
     )
     .expect("Unable to create 'main.glang' file");
 }
