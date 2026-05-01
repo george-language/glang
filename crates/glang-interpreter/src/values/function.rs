@@ -213,6 +213,7 @@ impl BuiltInFunction {
             "uhoh" => self.execute_error(args, exec_context),
             "type" => self.execute_type(args, exec_context),
             "_env" => self.execute_env(args, exec_context),
+            "_now" => self.execute_now(args, exec_context),
             "split" => self.execute_split(args, exec_context),
             "round" => self.execute_round(args, exec_context),
             _ => panic!("CRITICAL ERROR: BUILT IN NAME IS NOT DEFINED"),
@@ -591,6 +592,23 @@ impl BuiltInFunction {
                 None,
             )),
         }
+    }
+
+    pub fn execute_now(
+        &self,
+        args: &[Rc<RefCell<Value>>],
+        exec_ctx: Rc<RefCell<Context>>,
+    ) -> RuntimeResult {
+        let mut result = RuntimeResult::new();
+        result.register(self.check_and_populate_args(&[], args, exec_ctx));
+
+        if result.should_return() {
+            return result;
+        }
+
+        result.success(Number::from(
+            std::time::UNIX_EPOCH.elapsed().unwrap().as_millis() as f64,
+        ))
     }
 
     pub fn execute_split(
