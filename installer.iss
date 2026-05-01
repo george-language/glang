@@ -63,11 +63,6 @@ Source: "target\x86_64-pc-windows-msvc\release\{#MyAppExeName}"; \
     DestDir: "{app}\bin"; \
     Flags: ignoreversion
 
-; Install standard library into ~/.glang/library
-Source: "library\*"; \
-    DestDir: "{app}\library"; \
-    Flags: ignoreversion recursesubdirs createallsubdirs
-
 
 [Registry]
 
