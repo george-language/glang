@@ -11,6 +11,8 @@ assert(not x > x);
 assert(not x < x);
 assert(x >= x);
 assert(x <= x);
+assert(x and x);
+assert(x or x);
 
 # in glang, string comparisons are based on the characters of the string
 # for example, '>' compares the character positions, ("a" is lower in the alphabet, so "a" > "z" is false)
@@ -23,6 +25,8 @@ assert(y > "");
 assert(y < "ab");
 assert(y >= "a");
 assert(y <= "b");
+assert(y and y);
+assert(y or y);
 
 # in glang, list comparisons are based on the elements and length of the lists
 # for example, '>' compares the length of the two lists (which is larger)
@@ -35,5 +39,7 @@ assert(not z > z);
 assert(not z < z);
 assert(z >= z);
 assert(z <= z);
+assert(z and z);
+assert(z or z);
 
 bark("test_comparisons.glang: Successful");
