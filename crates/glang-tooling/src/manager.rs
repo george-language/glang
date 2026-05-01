@@ -1,15 +1,18 @@
 use crate::{log_header, log_message, log_package_status, wait_for_confirmation};
+use reqwest::blocking::get;
 use semver::Version;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::{
     collections::HashMap,
-    env, fs,
-    io::{Cursor, Write},
+    env,
+    fs::{self, File},
+    io::{Cursor, Write, copy},
     path::PathBuf,
 };
 use stringcase::snake_case;
 use toml::Table;
+use url::Url;
 use walkdir::WalkDir;
 use zip::{ZipArchive, ZipWriter, write::SimpleFileOptions};
 
@@ -336,6 +339,20 @@ pub fn write_package_file(root: Option<PathBuf>) {
     ));
 }
 
+fn download_package_from_url(url: &str) -> PathBuf {
+    log_message(&format!("Downloading kennel from {url}"));
+
+    let temp_dir = std::env::temp_dir();
+    let temp_file = temp_dir.join("downloaded_package.kennel");
+
+    let mut response = get(url).expect("Failed to download kennel");
+    let mut file = File::create(&temp_file).expect("Failed to create temp kennel file");
+
+    copy(&mut response, &mut file).expect("Failed to write downloaded kennel");
+
+    temp_file
+}
+
 fn add_package_from_file(package: &PackageFile, force: bool) {
     create_configuration_folder();
 
@@ -439,7 +456,19 @@ fn add_package_from_file(package: &PackageFile, force: bool) {
 pub fn add_package(path: &str, force: bool) {
     create_configuration_folder();
 
-    let package_file = PathBuf::from(path);
+    log_header(&format!("Adding '{path}' to kennels registry"));
+
+    let mut should_remove = false;
+    let package_file = if Url::parse(path)
+        .map(|url| url.scheme() == "http" || url.scheme() == "https")
+        .unwrap_or(false)
+    {
+        should_remove = true;
+
+        download_package_from_url(path)
+    } else {
+        PathBuf::from(path)
+    };
 
     if !package_file.exists() {
         panic!("'{:?}' does not exist", package_file)
@@ -449,13 +478,15 @@ pub fn add_package(path: &str, force: bool) {
         panic!("'{:?}' is not a kennel file", package_file)
     }
 
-    log_header(&format!("Adding {path} to kennels registry"));
-
     let package: PackageFile =
         bincode::deserialize(&fs::read(&package_file).expect("Unable to read kennel file"))
             .expect("Unable to deserialize kennel file");
 
     add_package_from_file(&package, force);
+
+    if should_remove {
+        fs::remove_file(&package_file).expect("Unable to remove temporary file")
+    }
 }
 
 pub fn remove_package(package: &str, force: bool) {

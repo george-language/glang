@@ -31,20 +31,10 @@ fn fetch_latest_tag() -> String {
 }
 
 pub fn install_library() {
-    let download_path = download_dir().expect("Unable to get user downloads directory");
-    let installer_path = download_path.join("lib.kennel");
-
-    let mut resp =
-        get("https://github.com/george-language/glang-lib/releases/latest/download/lib.kennel")
-            .expect("Unable to retrieve 'glang-lib' kennel data");
-
-    let mut file = File::create(&installer_path).expect("Unable to create lib.kennel file");
-
-    copy(&mut resp, &mut file).expect("Unable to write lib.kennel file");
-
-    add_package(&installer_path.to_string_lossy().to_string(), true);
-
-    fs::remove_file(&installer_path).expect("Unable to remove lib.kennel file");
+    add_package(
+        "https://github.com/george-language/glang-lib/releases/latest/download/lib.kennel",
+        true,
+    );
 }
 
 /// Updates the glang binary and components
