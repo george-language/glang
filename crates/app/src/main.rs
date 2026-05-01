@@ -75,7 +75,7 @@ fn main() {
     panic::set_hook(Box::new(|info| {
         if let Some(location) = info.location() {
             log_error(&format!(
-                "Error occured in {}:{}:{}",
+                "Error occurred in {}:{}:{}",
                 location.file(),
                 location.line(),
                 location.column()
@@ -91,7 +91,7 @@ fn main() {
 
     let registry = glang_tooling::read_registry();
 
-    // if 'glang-lib' isn't installed, retreive it
+    // if 'glang-lib' isn't installed, retrieve it
     if !registry.packages.contains_key("lib") {
         glang_tooling::install_library();
     }
