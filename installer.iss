@@ -26,7 +26,7 @@ AppSupportURL={#MyAppURL}
 AppUpdatesURL={#MyAppURL}
 
 ; Install to ~/.glang style location
-DefaultDirName={userprofile}\.glang
+DefaultDirName={%USERPROFILE%}\.glang
 
 ChangesAssociations=yes
 ChangesEnvironment=yes
