@@ -271,7 +271,9 @@ impl BuiltInFunction {
             .read_line(&mut input)
             .expect("did not enter a valid string");
 
-        result.success(Number::null_value())
+        let input = input.trim_end();
+
+        result.success(Str::from(&input))
     }
 
     pub fn execute_read(
