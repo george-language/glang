@@ -48,19 +48,19 @@ jobs:
             --identifier com.george-language.glang \
             --version ${{ env.VERSION }} \
             --install-location / \
-            dist/GeorgeLanguage-${{ env.VERSION }}-macos_setup.pkg
+            dist/glang-installer.pkg
 
       - name: Upload pkg artifact
         uses: actions/upload-artifact@v7
         with:
-          name: GeorgeLanguage-${{ env.VERSION }}-macos_setup
-          path: dist/GeorgeLanguage-${{ env.VERSION }}-macos_setup.pkg
+          name: glang-installer
+          path: dist/glang-installer.pkg
 
       - name: Upload to GitHub Release
         if: github.event_name == 'release'
         run: |
           gh release upload ${{ github.event.release.tag_name }} \
-            dist/GeorgeLanguage-${{ env.VERSION }}-macos_setup.pkg \
+            dist/glang-installer.pkg \
             --clobber
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -91,19 +91,19 @@ jobs:
         run: iscc /DMyAppVersion=${{ env.VERSION }} installer.iss
 
       - name: Rename exe
-        run: ren "dist/GeorgeLanguage.exe" "GeorgeLanguage-${{ env.VERSION }}-windows_setup.exe"
+        run: ren "dist/GeorgeLanguage.exe" "glang-installer.exe"
 
       - name: Upload exe artifact
         uses: actions/upload-artifact@v7
         with:
-          name: GeorgeLanguage-${{ env.VERSION }}-windows_setup
-          path: dist/GeorgeLanguage-${{ env.VERSION }}-windows_setup.exe
+          name: glang-installer
+          path: dist/glang-installer.exe
 
       - name: Upload to GitHub Release
         if: github.event_name == 'release'
         run: |
           gh release upload ${{ github.event.release.tag_name }} \
-            dist/GeorgeLanguage-${{ env.VERSION }}-windows_setup.exe \
+            dist/glang-installer.exe \
             --clobber
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

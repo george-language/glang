@@ -8,28 +8,6 @@ use std::{
     process::{Command, exit},
 };
 
-use reqwest::blocking::Client;
-use serde::Deserialize;
-
-#[derive(Deserialize)]
-struct ReleaseInfo {
-    tag_name: String,
-}
-
-fn fetch_latest_tag() -> String {
-    let client = Client::new();
-
-    let release: ReleaseInfo = client
-        .get("https://api.github.com/repos/george-language/glang/releases/latest")
-        .header("User-Agent", "glang-updater") // required by GitHub
-        .send()
-        .expect("failed to fetch release info")
-        .json()
-        .expect("failed to parse JSON");
-
-    release.tag_name
-}
-
 pub fn install_library() {
     add_package(
         "https://github.com/george-language/glang-lib/releases/latest/download/lib.kennel",
@@ -44,10 +22,9 @@ pub fn install_library() {
 /// - On MacOS: extract the .zip into the `Applications/` and overwrite the GeorgeLanguage folder
 pub fn update_self() {
     let download_path = download_dir().expect("Unable to get user downloads directory");
-    let tag = fetch_latest_tag();
 
     if cfg!(target_os = "windows") {
-        log_header("Downloading glang-latest for Windows");
+        log_header("Downloading glang for Windows");
 
         log_message("Installing glang-lib (latest)");
 
@@ -55,16 +32,12 @@ pub fn update_self() {
 
         let installer_path = download_path.join("glang-installer.exe");
 
-        log_message("Installing glang-binary (latest)");
-
-        let url = format!(
-            "https://github.com/george-language/glang/releases/download/{tag}/GeorgeLanguage-{tag}-windows_setup.exe"
-        );
-        let mut resp = get(url).expect("Unable to retrieve installer data");
+        let mut resp = get(
+            "https://github.com/george-language/glang/releases/latest/download/glang-installer.exe",
+        )
+        .expect("Unable to retrieve installer data");
         let mut file =
             File::create(&installer_path).expect("Unable to create glang installer file");
-
-        log_message("Writing data");
 
         copy(&mut resp, &mut file).expect("Unable to write installer file");
 
@@ -76,27 +49,26 @@ pub fn update_self() {
 
         exit(0);
     } else if cfg!(target_os = "macos") {
-        log_header("Downloading glang-latest for macOS");
+        log_header("Downloading glang for macOS");
 
         log_message("Installing glang-lib (latest)");
 
         install_library();
 
-        let installer_path = download_path.join("glang-binary.pkg");
+        let installer_path = download_path.join("glang-installer.pkg");
 
-        log_message("Installing glang-binary (latest)");
+        log_message("Installing glang-installer (latest)");
 
         let url = format!(
-            "https://github.com/george-language/glang/releases/download/{tag}/GeorgeLanguage-{tag}-macos_setup.pkg"
+            "https://github.com/george-language/glang/releases/latest/download/glang-installer.exe"
         );
-        let mut resp = get(url).expect("Unable to download macos content");
-        let mut file = File::create(&installer_path).expect("Unable to create glang package file");
+        let mut resp = get(url).expect("Unable to retrieve installer data");
+        let mut file =
+            File::create(&installer_path).expect("Unable to create glang installer file");
 
-        log_message("Writing data");
+        copy(&mut resp, &mut file).expect("Unable to write installer file");
 
-        copy(&mut resp, &mut file).expect("Unable to write package file");
-
-        log_message("Launching glang installer");
+        log_message("Launching glang-installer");
 
         let _ = Command::new("open")
             .arg(&installer_path)
@@ -149,7 +121,6 @@ pub fn uninstall_self() {
         let cmd = r#"
             sleep 2;
             rm -f /usr/local/bin/glang;
-            rm -rf /Library/GeorgeLanguage;
         "#;
 
         log_message("Removing glang library");
@@ -158,7 +129,7 @@ pub fn uninstall_self() {
             .arg("-c")
             .arg(cmd)
             .spawn()
-            .expect("Unable to remove glang binary and library");
+            .expect("Unable to remove glang binary");
 
         exit(0);
     }
