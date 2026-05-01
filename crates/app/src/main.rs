@@ -55,7 +55,10 @@ enum Commands {
 #[derive(Subcommand)]
 enum SelfCommands {
     #[command(about = "Update glang to the latest version")]
-    Update,
+    Update {
+        #[arg(long, help = "Only update glang-lib to the latest version")]
+        lib: bool,
+    },
     #[command(about = "Uninstall glang from the system")]
     Uninstall,
 }
@@ -89,16 +92,22 @@ fn main() {
     let registry = glang_tooling::read_registry();
 
     // if 'glang-lib' isn't installed, retreive it
-    if let Some(_) = registry.packages.get("lib") {
-    } else {
-        glang_tooling::install_library()
+    if !registry.packages.contains_key("lib") {
+        glang_tooling::install_library();
     }
 
     let cli = Cli::parse();
 
     match (cli.command, cli.file) {
         (Some(Commands::GlangSelf { action }), _) => match action {
-            SelfCommands::Update => {
+            SelfCommands::Update { lib } => {
+                // only update the lib package if --lib is specified
+                if lib {
+                    glang_tooling::install_library();
+
+                    return;
+                }
+
                 glang_tooling::update_self();
             }
             SelfCommands::Uninstall => {
