@@ -29,6 +29,18 @@ pub struct PackageRegistry {
     pub packages: HashMap<String, HashMap<String, HashMap<String, String>>>, // {name: { version: { info } }
 }
 
+impl PackageRegistry {
+    pub fn get_package(&self, name: &str, version: &str) -> HashMap<String, String> {
+        if let Some(versions) = self.packages.get(name) {
+            if let Some(ver) = versions.get(version) {
+                return ver.to_owned();
+            }
+        }
+
+        HashMap::new()
+    }
+}
+
 fn get_project_root_folder() -> PathBuf {
     env::current_dir().expect("Unable to get project root folder")
 }

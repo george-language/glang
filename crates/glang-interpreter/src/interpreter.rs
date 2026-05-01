@@ -77,6 +77,19 @@ impl Interpreter {
                 .set(builtin.to_string(), BuiltInFunction::from(builtin));
         }
 
+        // set runtime constants
+        let registry = glang_tooling::read_registry();
+
+        interpreter.global_symbol_table.borrow_mut().set(
+            "GLANG_LIB".to_string(),
+            Str::from(
+                registry
+                    .get_package("lib", &get_latest_version("lib").unwrap().to_string())
+                    .get("location")
+                    .unwrap(),
+            ),
+        );
+
         interpreter
     }
 
