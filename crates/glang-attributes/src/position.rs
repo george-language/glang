@@ -14,7 +14,7 @@ impl Position {
         }
     }
 
-    pub fn advance(&mut self, current_char: Option<char>) -> Self {
+    pub fn advance(&mut self, current_char: Option<char>) {
         self.index += 1;
         self.column_num += 1;
 
@@ -24,7 +24,5 @@ impl Position {
             self.line_num += 1;
             self.column_num = 1;
         }
-
-        self.clone()
     }
 }
